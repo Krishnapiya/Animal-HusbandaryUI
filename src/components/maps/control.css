@@ -1,0 +1,29 @@
+/* .area-finder {
+  top: calc(var(--initial-top) + var(--gap) * 2);
+  right: 0.5em;
+  position: absolute;
+}
+
+.clear-canvas {
+  top: calc(var(--initial-top) + var(--gap) * 3);
+  right: 0.5em;
+  position: absolute;
+}
+
+.disable-measure {
+  top: calc(var(--initial-top) + var(--gap) * 4);
+  right: 0.5em;
+  position: absolute;
+}
+
+.drag-zoom {
+  top: calc(var(--initial-top) + var(--gap) * 5);
+  right: 0.5em;
+  position: absolute;
+}
+
+.layer-upload-menu {
+  top: calc(var(--initial-top) + var(--gap) * 6);
+  right: 0.5em;
+  position: absolute;
+} */

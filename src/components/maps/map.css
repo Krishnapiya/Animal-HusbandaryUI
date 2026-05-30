@@ -1,0 +1,255 @@
+.ol-popup-closer:after {
+  content: url(./icons/pop_up_close.svg) !important;
+}
+.ol-popup-content {
+  min-width: 350px !important;
+  font-size: small !important;
+  overflow-y: scroll !important;
+}
+.ol-ext-dialog {
+  z-index: 3000 !important;
+}
+.layer-switcher {
+  top: 1.5em !important;
+}
+/* .layer-switcher button {
+  background-image: url(./icons/layer_switcher.svg) !important;
+} */
+.ol-control {
+  background-color: unset !important;
+}
+.ol-control button {
+  /* color: #fff; */
+
+  font-size: x-large !important;
+  /* border-radius: 50% !important; */
+  outline: 3px solid #2e7d32 !important;
+  /* background-color: var(--ol-subtle-background-color); */
+  /* background-color: #ecfce9 !important; */
+}
+.ol-control button:hover {
+  text-decoration: none;
+  outline: 4px solid #4fe468 !important;
+  /* color: #eec8c8 !important; */
+}
+.ol-ext-dialog {
+  font: 1em sans-serif !important;
+}
+.ol-mouse-position {
+  top: auto;
+  bottom: 1px !important;
+  right: 5px !important;
+  padding: 2px;
+  color: #064210;
+  /* font-family: math; */
+  background-color: #abf5ab;
+}
+
+.ol-overviewmap {
+  bottom: 3.5em;
+  left: 0em;
+}
+.layer-switcher .panel {
+  z-index: 1;
+}
+.map-popup {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.map-popup th,
+.map-popup td {
+  padding: 4px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+.map-popup tr:hover {
+  background-color: #d6eeee;
+}
+.map-popup .table-title {
+  text-align: center;
+}
+@keyframes spinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinner:after {
+  content: "";
+  box-sizing: border-box;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 40px;
+  height: 40px;
+  margin-top: -20px;
+  margin-left: -20px;
+  border-radius: 50%;
+  border: 5px solid rgba(180, 180, 180, 0.6);
+  border-top-color: rgba(0, 0, 0, 0.6);
+  animation: spinner 0.6s linear infinite;
+}
+/* .spinner {
+  position: fixed;
+  width: 100%;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.7);
+  z-index: 9999;
+  display: none;
+} */
+.ol-dragzoom {
+  background-color: rgba(180, 18, 18, 0.253);
+  border-color: rgb(255, 255, 0);
+  border-width: 0.2em;
+  border-style: dashed;
+}
+:root {
+  --initial-top: 48px;
+  --gap: 43px;
+}
+.layerswitcher-menu {
+  top: var(--initial-top) !important;
+  right: 0.5em !important;
+  position: absolute;
+}
+.ol-zoom {
+  top: calc(var(--initial-top) + var(--gap) * 1) !important;
+  right: 0.5em !important;
+  left: auto !important;
+}
+
+.drag-zoom {
+  top: calc(var(--initial-top) + var(--gap) * 3) !important;
+  right: 0.5em;
+  position: absolute;
+}
+.ol-zoom-extent {
+  left: auto;
+  top: calc(var(--initial-top) + var(--gap) * 4) !important;
+  right: 0.5em;
+  position: absolute;
+}
+
+.gotoxy-menu {
+  top: calc(var(--initial-top) + var(--gap) * 5) !important;
+  right: 0.5em;
+  position: absolute;
+}
+.length-finder {
+  top: calc(var(--initial-top) + var(--gap) * 6) !important;
+  right: 0.5em;
+  position: absolute;
+}
+.area-finder {
+  top: calc(var(--initial-top) + var(--gap) * 7) !important;
+  right: 0.5em;
+  position: absolute;
+}
+
+.clear-canvas {
+  top: calc(var(--initial-top) + var(--gap) * 8) !important;
+  right: 0.5em;
+  position: absolute;
+}
+
+.disable-measure {
+  top: calc(var(--initial-top) + var(--gap) * 9) !important;
+  right: 0.5em;
+  position: absolute;
+}
+.draw-control {
+  top: calc(var(--initial-top) + var(--gap) * 10) !important;
+  right: 0.5em;
+  position: absolute;
+}
+.layer-upload-menu {
+  top: calc(var(--initial-top) + var(--gap) * 11) !important;
+  right: 0.5em;
+  position: absolute;
+}
+
+.ol-control.ol-print {
+  left: auto !important;
+  top: calc(var(--initial-top) + var(--gap) * 12) !important;
+  right: 0.5em;
+  position: absolute;
+}
+
+.ol-zoom-in,
+.ol-zoom-out,
+.ol-full-screen-false,
+.ol-full-screen-true {
+  text-indent: -9999px;
+  background-size: 25px 25px;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+.ol-zoom-in {
+  background-image: url(./icons/zoom_in.svg); /* Path to your custom zoom-in icon */
+}
+.ol-zoom-out {
+  background-image: url(./icons/zoom_out.svg); /* Path to your custom zoom-in icon */
+  margin-top: 5px !important;
+}
+.ol-full-screen-false {
+  background-image: url(./icons/fullscreen.svg); /* Path to your custom zoom-in icon */
+}
+.ol-full-screen-true {
+  background-image: url(./icons/fullscreen_exit.svg); /* Path to your custom zoom-in icon */
+}
+.text-center {
+  text-align: center;
+}
+
+.query-builder-menu {
+  top: 0.5em !important;
+  left: 0.5em !important;
+  position: absolute;
+}
+
+.ol-control-title {
+  position: absolute;
+  left: 50% !important;
+  right: 50% !important;
+}
+
+.place-search-textbox {
+  position: absolute;
+  top: 0.4em; /* Position at the top, adjust as needed */
+  left: 48px; /* Position on the left, adjust as needed */
+  z-index: 1000; /* Ensure it appears above other map elements */
+  background-color: white; /* Set background for the TextField */
+  border-radius: 5px; /* Rounded corners for the control */
+
+  display: flex; /* Ensure proper layout for the TextField */
+  align-items: center; /* Vertically center align contents */
+  justify-content: center; /* Horizontally center align contents */
+  width: 300px; /* Allow auto width based on the content */
+  height: auto; /* Allow auto height based on the content */
+}
+
+.ol-control.ol-legend button.ol-closebox {
+  outline: unset !important;
+}
+.ol-control.ol-legend {
+  bottom: 0.5em;
+  left: 0.5em;
+  z-index: 1;
+  max-height: 90%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background-color: rgba(145, 38, 38);
+}
+.ol-scale-line {
+  bottom: 35px !important;
+  right: 8px;
+  left: auto; /* Override left positioning */
+  bottom: auto; /* Override bottom positioning */
+  z-index: 1000; /* Ensure it appears above map elements */
+  position: absolute;
+}

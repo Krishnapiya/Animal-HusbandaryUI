@@ -1,0 +1,52 @@
+{
+  "name": "mui-template",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host --port 5030",
+    "build": "vite build",
+    "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
+    "preview": "vite preview",
+    "generate-pwa-assets": "pwa-assets-generator --preset minimal public/logo.svg",
+    "start": "vite"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@mui/icons-material": "^6.4.0",
+    "@mui/material": "^6.4.0",
+    "@mui/x-charts": "^7.23.6",
+    "@mui/x-data-grid": "^7.23.6",
+    "@react-pdf-viewer/core": "^3.12.0",
+    "@react-pdf-viewer/default-layout": "^3.12.0",
+    "@toolpad/core": "^0.12.0",
+    "apexcharts": "^4.3.0",
+    "axios": "^1.7.9",
+    "chart.js": "^4.4.7",
+    "encrypt-storage": "^2.14.6",
+    "eslint": "^9.18.0",
+    "material-react-toastify": "^10.0.5",
+    "mui-file-input": "^6.0.0",
+    "pdfjs-dist": "^3.11.174",
+    "react": "^19.0.0",
+    "react-apexcharts": "^1.7.0",
+    "react-chartjs-2": "^5.3.0",
+    "react-dom": "^19.0.0",
+    "react-router-dom": "^7.1.2",
+    "react-toastify": "^11.0.3",
+    "recharts": "^2.15.0",
+    "vite-plugin-eslint": "^1.8.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.18.0",
+    "@types/react": "^19.0.7",
+    "@types/react-dom": "^19.0.3",
+    "@vitejs/plugin-react": "^4.3.4",
+    "eslint-plugin-react": "^7.37.4",
+    "eslint-plugin-react-hooks": "^5.1.0",
+    "eslint-plugin-react-refresh": "^0.4.18",
+    "globals": "^15.14.0",
+    "vite": "^6.0.7"
+  }
+}
