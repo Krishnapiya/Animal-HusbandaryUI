@@ -66,6 +66,24 @@ export const PAYMENT_MODE_LIST_URL = "/admin/auth/master/payment-mode/";
 export const STORE_ITEM_API_URL = "/admin/auth/master/store-item/";
 export const STORE_ITEM_LIST_URL = "/admin/auth/master/store-item/";
 
+export const ROLE_MASTER_API_URL = "/admin/auth/master/role-master/";
+export const ROLE_MASTER_LIST_URL = "/admin/auth/master/role-master/";
+
+export const APPLICATION_STATUS_MASTER_API_URL = "/admin/auth/master/application-status-master/";
+export const APPLICATION_STATUS_MASTER_LIST_URL = "/admin/auth/master/application-status-master/";
+
+export const PAYMENT_STATUS_MASTER_API_URL =
+  "/admin/auth/master/payment-status-master/";
+
+export const PAYMENT_STATUS_MASTER_LIST_URL =
+  "/admin/auth/master/payment-status-master/";
+
+export const DISTRICT_API_URL = "/admin/auth/master/district/";
+export const DISTRICT_LIST_URL = "/admin/auth/master/district/";
+
+export const FEE_SCHEDULE_API_URL = "/admin/auth/master/fee-schedule/";
+export const FEE_SCHEDULE_LIST_URL = "/admin/auth/master/fee-schedule/";
+
 export const OFFICE_API_URL = "/admin/auth/master/office/";
 export const OFFICE_LIST_URL = "/admin/auth/master/office/";
 
