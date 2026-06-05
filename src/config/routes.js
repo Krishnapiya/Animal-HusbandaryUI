@@ -9,6 +9,12 @@ export const SAMPLE_DEPARTMENT_PATH = "sample-department";
 export const DESIGNATION_PATH = "designation";
 export const PAYMENT_MODE_PATH = "payment-mode";
 export const STORE_ITEM_PATH = "store-item";
+export const ROLE_MASTER_PATH = "role-master";
+export const APPLICATION_STATUS_MASTER_PATH = "application-status-master";
+export const PAYMENT_STATUS_MASTER_PATH =
+  "payment-status-master";
+export const DISTRICT_PATH = "district";
+export const FEE_SCHEDULE_PATH = "fee-schedule";
 export const OFFICE_PATH = "office";
 export const RBAC_ADMIN_PATH = "rbac-admin";
 
