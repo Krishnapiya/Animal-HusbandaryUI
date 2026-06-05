@@ -13,3 +13,4 @@ export const OFFICE_PATH = "office";
 export const RBAC_ADMIN_PATH = "rbac-admin";
 
 export const PAGE_NOT_FOUND_PATH = "*";
+export const DOCUMENT_TYPE_PATH = "document-type";
