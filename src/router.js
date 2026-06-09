@@ -17,8 +17,8 @@ import {
   DISTRICT_PATH,
   FEE_SCHEDULE_PATH,
   OFFICE_PATH,
-  TEST_PAGE_PATH
-
+  TEST_PAGE_PATH,
+  APPLICATION_DOCUMENT_PATH
 } from "./config/routes";
 import PageNotFound from "./pages/PageNotFound";
 import ForbiddenPage from "./pages/ForbiddenPage";
@@ -37,6 +37,8 @@ import FeeSchedulePage from "./pages/fee_schedule";
 import OfficePage from "./pages/office";
 import PermissionGate from "./components/PermissionGate";
 import ProtectedRoute from "./ProtectedRoute";
+import ApplicationDocumentPage from "./pages/application_document";
+
 
 const TestPageWithPermission = () =>
   createElement(
@@ -103,6 +105,12 @@ const OfficePageWithPermission = () =>
     PermissionGate,
     { menuKey: OFFICE_PATH, action: "list" },
     createElement(OfficePage),
+  );
+  const ApplicationDocumentPageWithPermission = () =>
+  createElement(
+    PermissionGate,
+    { menuKey: APPLICATION_DOCUMENT_PATH, action: "list" },
+    createElement(ApplicationDocumentPage),
   );
 export const router = createBrowserRouter([
   {
@@ -180,6 +188,10 @@ export const router = createBrowserRouter([
               {
                 path: PAGE_NOT_FOUND_PATH,
                 Component: PageNotFound
+              },
+              {
+                path: APPLICATION_DOCUMENT_PATH,
+                Component: ApplicationDocumentPageWithPermission
               }
             ]
           }

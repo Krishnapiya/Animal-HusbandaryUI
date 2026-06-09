@@ -99,3 +99,13 @@ export const DISTRICT_TALUK_VILLAGE_HIERARCHY_DROP_DOWN_URL =
   "/accounts/dropdown/district_taluk_village_hierarchy_list/";
 
 
+export const APPLICATION_DOCUMENT_API_URL ="/admin/auth/awb/application-document/";
+
+export const APPLICATION_DOCUMENT_LIST_URL ="/admin/auth/awb/application-document/";
+
+
+export const USER_DROPDOWN_URL =
+  "/admin/auth/master/users/list/all?dropDown=true";
+ export const DOCUMENT_TYPE_DROPDOWN_URL ="/admin/auth/master/document-type/list/all?dropDown=true";
+
+ export const REGISTRATION_APPLICATION_DROPDOWN_URL ="/admin/auth/registration-application/list/all?dropDown=true";
