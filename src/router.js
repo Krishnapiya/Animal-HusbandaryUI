@@ -19,6 +19,10 @@ import {
   OFFICE_PATH,
   TEST_PAGE_PATH,
   APPLICATION_DOCUMENT_PATH
+  REGISTRATION_APPLICATION_PATH,
+  DOCUMENT_TYPE_PATH,
+  TEST_PAGE_PATH
+
 } from "./config/routes";
 import PageNotFound from "./pages/PageNotFound";
 import ForbiddenPage from "./pages/ForbiddenPage";
@@ -38,6 +42,8 @@ import OfficePage from "./pages/office";
 import PermissionGate from "./components/PermissionGate";
 import ProtectedRoute from "./ProtectedRoute";
 import ApplicationDocumentPage from "./pages/application_document";
+import RegistrationApplicationPage from "./pages/registration_application";
+import DocumentTypePage from "./pages/document_type";
 
 
 const TestPageWithPermission = () =>
@@ -51,6 +57,12 @@ const SampleDepartmentPageWithPermission = () =>
     PermissionGate,
     { menuKey: SAMPLE_DEPARTMENT_PATH, action: "list" },
     createElement(SampleDepartmentPage),
+  );
+  const RegistrationApplicationPageWithPermission = () =>
+  createElement(
+    PermissionGate,
+    { menuKey: REGISTRATION_APPLICATION_PATH, action: "list" },
+    createElement(RegistrationApplicationPage),
   );
 const DesignationPageWithPermission = () =>
   createElement(
@@ -106,11 +118,19 @@ const OfficePageWithPermission = () =>
     { menuKey: OFFICE_PATH, action: "list" },
     createElement(OfficePage),
   );
+
   const ApplicationDocumentPageWithPermission = () =>
   createElement(
     PermissionGate,
     { menuKey: APPLICATION_DOCUMENT_PATH, action: "list" },
     createElement(ApplicationDocumentPage),
+
+  const DocumentTypePageWithPermission = () =>
+  createElement(
+    PermissionGate,
+    { menuKey: DOCUMENT_TYPE_PATH, action: "list" },
+    createElement(DocumentTypePage)
+
   );
 export const router = createBrowserRouter([
   {
@@ -170,9 +190,17 @@ export const router = createBrowserRouter([
                  Component: FeeSchedulePageWithPermission
               }, 
               {
+                path: REGISTRATION_APPLICATION_PATH,
+                Component: RegistrationApplicationPageWithPermission
+              },
+              {
                 path: OFFICE_PATH,
                 Component: OfficePageWithPermission
               },
+              {
+                   path: DOCUMENT_TYPE_PATH,
+                  Component: DocumentTypePageWithPermission
+            },
               {
                 path: RBAC_ADMIN_PATH,
                 Component: PermissionedRbacAdmin

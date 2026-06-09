@@ -98,6 +98,11 @@ export const CODE_VERIFIER_CHALLENGE_API_URL =
 export const DISTRICT_TALUK_VILLAGE_HIERARCHY_DROP_DOWN_URL =
   "/accounts/dropdown/district_taluk_village_hierarchy_list/";
 
+export const REGISTRATION_APPLICATION_API_URL =  "/admin/auth/registration-application/";
+export const REGISTRATION_APPLICATION_LIST_URL = "/admin/auth/registration-application/";
+export const DOCUMENT_TYPE_API_URL = "/admin/auth/master/document-type/";
+export const DOCUMENT_TYPE_LIST_URL =  "/admin/auth/master/document-type/";
+
 
 export const APPLICATION_DOCUMENT_API_URL ="/admin/auth/awb/application-document/";
 
