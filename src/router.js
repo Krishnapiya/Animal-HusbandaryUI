@@ -20,7 +20,7 @@ import {
   TEST_PAGE_PATH,
   REGISTRATION_APPLICATION_PATH,
   DOCUMENT_TYPE_PATH,
-  TEST_PAGE_PATH
+
 
 } from "./config/routes";
 import PageNotFound from "./pages/PageNotFound";
