@@ -18,7 +18,9 @@ import {
   FEE_SCHEDULE_PATH,
   OFFICE_PATH,
   TEST_PAGE_PATH,
-  REGISTRATION_APPLICATION_PATH
+  REGISTRATION_APPLICATION_PATH,
+  DOCUMENT_TYPE_PATH,
+  TEST_PAGE_PATH
 
 } from "./config/routes";
 import PageNotFound from "./pages/PageNotFound";
@@ -39,6 +41,8 @@ import OfficePage from "./pages/office";
 import PermissionGate from "./components/PermissionGate";
 import ProtectedRoute from "./ProtectedRoute";
 import RegistrationApplicationPage from "./pages/registration_application";
+import DocumentTypePage from "./pages/document_type";
+
 const TestPageWithPermission = () =>
   createElement(
     PermissionGate,
@@ -111,6 +115,12 @@ const OfficePageWithPermission = () =>
     { menuKey: OFFICE_PATH, action: "list" },
     createElement(OfficePage),
   );
+  const DocumentTypePageWithPermission = () =>
+  createElement(
+    PermissionGate,
+    { menuKey: DOCUMENT_TYPE_PATH, action: "list" },
+    createElement(DocumentTypePage)
+  );
 export const router = createBrowserRouter([
   {
     Component: App, // root layout route
@@ -176,6 +186,10 @@ export const router = createBrowserRouter([
                 path: OFFICE_PATH,
                 Component: OfficePageWithPermission
               },
+              {
+                   path: DOCUMENT_TYPE_PATH,
+                  Component: DocumentTypePageWithPermission
+            },
               {
                 path: RBAC_ADMIN_PATH,
                 Component: PermissionedRbacAdmin

@@ -100,3 +100,7 @@ export const DISTRICT_TALUK_VILLAGE_HIERARCHY_DROP_DOWN_URL =
 
 export const REGISTRATION_APPLICATION_API_URL =  "/admin/auth/registration-application/";
 export const REGISTRATION_APPLICATION_LIST_URL = "/admin/auth/registration-application/";
+export const DOCUMENT_TYPE_API_URL = "/admin/auth/master/document-type/";
+export const DOCUMENT_TYPE_LIST_URL =  "/admin/auth/master/document-type/";
+
+
