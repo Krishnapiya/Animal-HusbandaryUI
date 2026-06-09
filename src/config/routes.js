@@ -11,8 +11,8 @@ export const PAYMENT_MODE_PATH = "payment-mode";
 export const STORE_ITEM_PATH = "store-item";
 export const ROLE_MASTER_PATH = "role-master";
 export const APPLICATION_STATUS_MASTER_PATH = "application-status-master";
-export const PAYMENT_STATUS_MASTER_PATH =
-  "payment-status-master";
+export const PAYMENT_STATUS_MASTER_PATH = "payment-status-master";
+export const REGISTRATION_APPLICATION_PATH =  "registration-application";
 export const DISTRICT_PATH = "district";
 export const FEE_SCHEDULE_PATH = "fee-schedule";
 export const OFFICE_PATH = "office";
