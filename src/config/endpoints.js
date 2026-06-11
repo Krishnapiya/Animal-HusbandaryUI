@@ -104,3 +104,13 @@ export const DOCUMENT_TYPE_API_URL = "/admin/auth/master/document-type/";
 export const DOCUMENT_TYPE_LIST_URL =  "/admin/auth/master/document-type/";
 
 
+export const APPLICATION_DOCUMENT_API_URL ="/admin/auth/awb/application-document/";
+
+export const APPLICATION_DOCUMENT_LIST_URL ="/admin/auth/awb/application-document/";
+
+
+export const USER_DROPDOWN_URL =
+  "/admin/auth/master/users/list/all?dropDown=true";
+ export const DOCUMENT_TYPE_DROPDOWN_URL ="/admin/auth/master/document-type/list/all?dropDown=true";
+
+ export const REGISTRATION_APPLICATION_DROPDOWN_URL ="/admin/auth/registration-application/list/all?dropDown=true";
