@@ -23,3 +23,6 @@ export const DOCUMENT_TYPE_PATH = "document-type";
 
 export const PET_SHOP_DETAIL_PATH = "pet-shop-detail";
 export const APPLICATION_WORKFLOW_PATH = "application-workflow";
+export const PAYMENT_TRANSACTION_PATH = "payment-transaction";
+export const APPLICATION_DOCUMENT_PATH= "application-document";
+
