@@ -20,3 +20,6 @@ export const RBAC_ADMIN_PATH = "rbac-admin";
 
 export const PAGE_NOT_FOUND_PATH = "*";
 export const DOCUMENT_TYPE_PATH = "document-type";
+
+export const PET_SHOP_DETAIL_PATH = "pet-shop-detail";
+export const APPLICATION_WORKFLOW_PATH = "application-workflow";
