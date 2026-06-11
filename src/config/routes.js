@@ -19,5 +19,7 @@ export const OFFICE_PATH = "office";
 export const RBAC_ADMIN_PATH = "rbac-admin";
 
 export const PAGE_NOT_FOUND_PATH = "*";
-export const APPLICATION_DOCUMENT_PATH= "application-document";
 export const DOCUMENT_TYPE_PATH = "document-type";
+export const PAYMENT_TRANSACTION_PATH = "payment-transaction";
+export const APPLICATION_DOCUMENT_PATH= "application-document";
+

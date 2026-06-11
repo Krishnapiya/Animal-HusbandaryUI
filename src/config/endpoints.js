@@ -103,6 +103,9 @@ export const REGISTRATION_APPLICATION_LIST_URL = "/admin/auth/registration-appli
 export const DOCUMENT_TYPE_API_URL = "/admin/auth/master/document-type/";
 export const DOCUMENT_TYPE_LIST_URL =  "/admin/auth/master/document-type/";
 
+export const PAYMENT_TRANSACTION_API_URL = "/admin/auth/awb/payment-transaction/";
+export const PAYMENT_TRANSACTION_LIST_URL = "/admin/auth/awb/payment-transaction/";
+export const PAYMENT_STATUS_MASTER_DROPDOWN_URL = "/admin/auth/master/payment-status-master/list/all?dropDown=true";
 
 export const APPLICATION_DOCUMENT_API_URL ="/admin/auth/awb/application-document/";
 

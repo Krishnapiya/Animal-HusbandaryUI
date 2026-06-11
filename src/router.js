@@ -21,6 +21,7 @@ import {
   APPLICATION_DOCUMENT_PATH
   REGISTRATION_APPLICATION_PATH,
   DOCUMENT_TYPE_PATH,
+  PAYMENT_TRANSACTION_PATH
 
 
 } from "./config/routes";
@@ -44,6 +45,7 @@ import ProtectedRoute from "./ProtectedRoute";
 import ApplicationDocumentPage from "./pages/application_document";
 import RegistrationApplicationPage from "./pages/registration_application";
 import DocumentTypePage from "./pages/document_type";
+import PaymentTransactionPage from "./pages/payment_transaction";
 
 
 const TestPageWithPermission = () =>
@@ -132,6 +134,12 @@ const OfficePageWithPermission = () =>
     createElement(DocumentTypePage)
 
   );
+  const PaymentTransactionPageWithPermission = () =>
+  createElement(
+    PermissionGate,
+    { menuKey: PAYMENT_TRANSACTION_PATH, action: "list" },
+    createElement(PaymentTransactionPage)
+  );
 export const router = createBrowserRouter([
   {
     Component: App, // root layout route
@@ -201,6 +209,10 @@ export const router = createBrowserRouter([
                    path: DOCUMENT_TYPE_PATH,
                   Component: DocumentTypePageWithPermission
             },
+              {
+                path: PAYMENT_TRANSACTION_PATH,
+                Component: PaymentTransactionPageWithPermission
+              },
               {
                 path: RBAC_ADMIN_PATH,
                 Component: PermissionedRbacAdmin
