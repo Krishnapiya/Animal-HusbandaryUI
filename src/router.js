@@ -142,7 +142,7 @@ const OfficePageWithPermission = () =>
     PermissionGate,
     { menuKey: APPLICATION_DOCUMENT_PATH, action: "list" },
     createElement(ApplicationDocumentPage),
-
+);
   const DocumentTypePageWithPermission = () =>
   createElement(
     PermissionGate,
