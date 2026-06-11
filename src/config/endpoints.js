@@ -1,7 +1,7 @@
 export const USER_ROLE_DROPDOWN_API_URL =
   "accounts/dropdown/user_role_dropdown/";
 
-export const DISTRICT_DROPDOWN_URL = "/accounts/dropdown/district/";
+// export const DISTRICT_DROPDOWN_URL = "/accounts/dropdown/district/";
 
 export const DESIGNATION_DROPDOWN_URL = "/accounts/dropdown/designation/";
 
@@ -52,8 +52,8 @@ export const USER_ASSIGN_ROLES_URL = (userId) =>
   `/admin/auth/master/users/${userId}/assign-roles`;
 export const USER_ROLE_ASSIGNMENTS_URL = "/admin/auth/master/users/role-assignments";
 export const ROLES_DROPDOWN_URL = "/admin/auth/master/role-master/list/all?dropDown=true";
-export const OFFICE_DROPDOWN_URL =
-  "/admin/auth/master/office/list/all?dropDown=true&pageNo=0&pageSize=500";
+// export const OFFICE_DROPDOWN_URL =
+//   "/admin/auth/master/office/list/all?dropDown=true&pageNo=0&pageSize=500";
 
 export const SAMPLE_DEPARTMENT_API_URL = "/admin/auth/master/sample-department/";
 export const SAMPLE_DEPARTMENT_LIST_URL = "/admin/auth/master/sample-department/";
@@ -103,6 +103,25 @@ export const REGISTRATION_APPLICATION_LIST_URL = "/admin/auth/registration-appli
 export const DOCUMENT_TYPE_API_URL = "/admin/auth/master/document-type/";
 export const DOCUMENT_TYPE_LIST_URL =  "/admin/auth/master/document-type/";
 
+export const PET_SHOP_DETAIL_API_URL =
+  "/petshop/auth/master/pet-shop-detail/";
+
+export const PET_SHOP_DETAIL_LIST_URL =
+  "/petshop/auth/master/pet-shop-detail/";
+export const APPLICATION_STATUS_DROPDOWN_URL =
+  "/admin/auth/master/application-status-master/list/all?dropDown=true";
+
+export const DISTRICT_DROPDOWN_URL =
+  "/admin/auth/master/district/list/all?dropDown=true";
+
+export const OFFICE_DROPDOWN_URL =
+  "/admin/auth/master/office/list/all?dropDown=true&pageNo=0&pageSize=500";
+
+  export const APPLICATION_WORKFLOW_API_URL =
+  "/petshop/auth/application-workflow/";
+
+export const APPLICATION_WORKFLOW_LIST_URL =
+  "/petshop/auth/application-workflow/";
 export const PAYMENT_TRANSACTION_API_URL = "/admin/auth/awb/payment-transaction/";
 export const PAYMENT_TRANSACTION_LIST_URL = "/admin/auth/awb/payment-transaction/";
 export const PAYMENT_STATUS_MASTER_DROPDOWN_URL = "/admin/auth/master/payment-status-master/list/all?dropDown=true";

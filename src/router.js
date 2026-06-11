@@ -18,13 +18,17 @@ import {
   FEE_SCHEDULE_PATH,
   OFFICE_PATH,
   TEST_PAGE_PATH,
-  APPLICATION_DOCUMENT_PATH
+  APPLICATION_DOCUMENT_PATH,
   REGISTRATION_APPLICATION_PATH,
   DOCUMENT_TYPE_PATH,
+  PET_SHOP_DETAIL_PATH,
+  APPLICATION_WORKFLOW_PATH,
   PAYMENT_TRANSACTION_PATH
 
 
 } from "./config/routes";
+import ApplicationWorkflowPage from "./pages/application_workflow";
+import PetShopDetailPage from "./pages/pet_shop_detail";
 import PageNotFound from "./pages/PageNotFound";
 import ForbiddenPage from "./pages/ForbiddenPage";
 import LoginPage from "./pages/LoginPage";
@@ -45,6 +49,18 @@ import ProtectedRoute from "./ProtectedRoute";
 import ApplicationDocumentPage from "./pages/application_document";
 import RegistrationApplicationPage from "./pages/registration_application";
 import DocumentTypePage from "./pages/document_type";
+const ApplicationWorkflowPageWithPermission = () =>
+  createElement(
+    PermissionGate,
+    { menuKey: APPLICATION_WORKFLOW_PATH, action: "list" },
+    createElement(ApplicationWorkflowPage),
+  );
+const PetShopDetailPageWithPermission = () =>
+  createElement(
+    PermissionGate,
+    { menuKey: PET_SHOP_DETAIL_PATH, action: "list" },
+    createElement(PetShopDetailPage),
+  );
 import PaymentTransactionPage from "./pages/payment_transaction";
 
 
@@ -158,9 +174,17 @@ export const router = createBrowserRouter([
                 Component: TestPage
               },
               {
+  path: PET_SHOP_DETAIL_PATH,
+  Component: PetShopDetailPageWithPermission,
+},
+              {
                 path: TEST_PAGE_PATH,
                 Component: TestPageWithPermission
               },
+              {
+  path: APPLICATION_WORKFLOW_PATH,
+  Component: ApplicationWorkflowPageWithPermission
+},
               {
                 path: SAMPLE_DEPARTMENT_PATH,
                 Component: SampleDepartmentPageWithPermission

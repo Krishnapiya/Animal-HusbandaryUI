@@ -1,17 +1,19 @@
 import PropTypes from "prop-types";
 import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid2";
+
 import TextInput from "../../components/FormComponents/TextInput";
 import FormButtons from "../../components/FormComponents/FormButtons";
+
 import useForm from "../../hooks/useForm";
 
 const Form = (props) => {
   const formFields = {
     id: "",
-    statusCode: "",
-    statusName: "",
-    displayOrder: "",
-    active: true,
+    moduleName: "PET_SHOP",
+    applicationId: "",
+    actionBy: "",
+    remarks: "",
   };
 
   const {
@@ -37,7 +39,7 @@ const Form = (props) => {
 
     if (props.operationType === "insert") {
       await handleInsert(formValues);
-    } else if (props.operationType === "edit") {
+    } else {
       await handleUpdate(formValues);
     }
   };
@@ -48,41 +50,49 @@ const Form = (props) => {
         <Grid container spacing={1}>
           <Grid size={{ xs: 12 }}>
             <TextInput
-              label="Status Code"
-              name="statusCode"
-              value={formValues.statusCode}
+              label="Module Name"
+              name="moduleName"
+              value={formValues.moduleName}
               onChange={handleChangeFormValues}
               errors={errors}
-              required
             />
           </Grid>
 
           <Grid size={{ xs: 12 }}>
             <TextInput
-              label="Status Name"
-              name="statusName"
-              value={formValues.statusName}
+              label="Application ID"
+              name="applicationId"
+              value={formValues.applicationId}
               onChange={handleChangeFormValues}
               errors={errors}
-              required
             />
           </Grid>
 
           <Grid size={{ xs: 12 }}>
             <TextInput
-              label="Display Order"
-              name="displayOrder"
-              value={formValues.displayOrder}
+              label="Action By"
+              name="actionBy"
+              value={formValues.actionBy}
               onChange={handleChangeFormValues}
               errors={errors}
             />
           </Grid>
 
-          <Grid item size={{ xs: 12 }}>
+          <Grid size={{ xs: 12 }}>
+            <TextInput
+              label="Remarks"
+              name="remarks"
+              value={formValues.remarks}
+              onChange={handleChangeFormValues}
+              errors={errors}
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12 }}>
             <FormButtons
               operationType={props.operationType}
               onCancelClick={props.handleCloseFormModal}
-              disabled={isSubmitting || props.canSave === false}
+              disabled={isSubmitting}
               isAddAnotherRequired={false}
             />
           </Grid>
@@ -98,8 +108,10 @@ Form.propTypes = {
   handleCloseFormModal: PropTypes.func,
   handleRefreshTable: PropTypes.func,
   operationType: PropTypes.string,
-  rowID: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  canSave: PropTypes.bool,
+  rowID: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.number,
+  ]),
 };
 
 export default Form;
