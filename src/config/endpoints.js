@@ -139,3 +139,14 @@ export const USER_DROPDOWN_URL =
   export const DOG_BREEDER_DETAIL_DROPDOWN_URL = "/dogbreeder/auth/master/dog-breeder-detail/list/all?dropDown=true";
   export const DOG_BREEDER_BREED_API_URL = "/dogbreeder/auth/master/dog-breeder-breed/";
   export const DOG_BREEDER_BREED_LIST_URL = "/dogbreeder/auth/master/dog-breeder-breed/";
+export const DOG_BREEDER_DETAIL_API_URL =
+  "/dogbreeder/auth/master/dog-breeder-detail/";
+
+export const DOG_BREEDER_DETAIL_LIST_URL =
+  "/dogbreeder/auth/master/dog-breeder-detail/";
+
+  export const APPLICATION_CORRECTION_API_URL =
+  "/dogbreeder/auth/master/application-correction/";
+
+export const APPLICATION_CORRECTION_LIST_URL =
+  "/dogbreeder/auth/master/application-correction/";
