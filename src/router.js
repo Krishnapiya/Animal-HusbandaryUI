@@ -23,7 +23,8 @@ import {
   DOCUMENT_TYPE_PATH,
   PET_SHOP_DETAIL_PATH,
   APPLICATION_WORKFLOW_PATH,
-  PAYMENT_TRANSACTION_PATH
+  PAYMENT_TRANSACTION_PATH,
+  DOG_BREEDER_BREED_PATH,
 
 
 } from "./config/routes";
@@ -49,6 +50,7 @@ import ProtectedRoute from "./ProtectedRoute";
 import ApplicationDocumentPage from "./pages/application_document";
 import RegistrationApplicationPage from "./pages/registration_application";
 import DocumentTypePage from "./pages/document_type";
+import DogBreederBreedPage from "./pages/dog_breeder_breed";
 const ApplicationWorkflowPageWithPermission = () =>
   createElement(
     PermissionGate,
@@ -156,6 +158,12 @@ const OfficePageWithPermission = () =>
     { menuKey: PAYMENT_TRANSACTION_PATH, action: "list" },
     createElement(PaymentTransactionPage)
   );
+  const DogBreederBreedPageWithPermission = () =>
+  createElement(
+    PermissionGate,
+    { menuKey: DOG_BREEDER_BREED_PATH, action: "list" },
+    createElement(DogBreederBreedPage)
+  );
 export const router = createBrowserRouter([
   {
     Component: App, // root layout route
@@ -256,7 +264,11 @@ export const router = createBrowserRouter([
               {
                 path: APPLICATION_DOCUMENT_PATH,
                 Component: ApplicationDocumentPageWithPermission
-              }
+              },
+               {
+                path: DOG_BREEDER_BREED_PATH,
+                Component: DogBreederBreedPageWithPermission
+              },
             ]
           }
         ]

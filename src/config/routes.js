@@ -25,4 +25,5 @@ export const PET_SHOP_DETAIL_PATH = "pet-shop-detail";
 export const APPLICATION_WORKFLOW_PATH = "application-workflow";
 export const PAYMENT_TRANSACTION_PATH = "payment-transaction";
 export const APPLICATION_DOCUMENT_PATH= "application-document";
+export const DOG_BREEDER_BREED_PATH = "dog-breeder-breed";
 
