@@ -28,9 +28,19 @@ const ApplicationWorkflowPage = () => {
       header: "Remarks",
     },
     {
-      attr: "actionDate",
-      header: "Action Date",
-    },
+  attr: "actionDate",
+  header: "Action Date",
+  render: (row) => {
+    if (!row.actionDate) return "";
+
+    return new Date(row.actionDate).toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  },
+
+}
   ];
 
   return (
