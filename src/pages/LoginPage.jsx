@@ -10,12 +10,14 @@ import {
   Card,
   CardContent,
   CardHeader,
+  Link,
 } from "@mui/material";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import PersonAddAlt1Icon from "@mui/icons-material/PersonAddAlt1";
+import { Link as RouterLink, useNavigate, useSearchParams } from "react-router-dom";
 import { authenticateOfficer } from "../api-client/accounts";
 import { toast } from "material-react-toastify";
 import { encryptStorage } from "../utils";
-import { ROOT_PATH, } from "../config/routes";
+import { ROOT_PATH, PET_SHOP_OWNER_SIGNUP_PATH } from "../config/routes";
 import { useAuthz } from "../context/AuthzContext";
 // import logo from "../assets/logo.png";
 
@@ -156,7 +158,7 @@ const LoginPage = () => {
                 variant="contained"
                 sx={{
                   mt: 3,
-                  mb: 2,
+                  mb: 1,
                   textTransform: "none",
                   backgroundColor: "#2563eb",
                   color: "#fff",
@@ -169,9 +171,33 @@ const LoginPage = () => {
                 {isSubmitting ? "Signing In..." : "Sign In"}
               </Button>
 
+              <Button
+                component={RouterLink}
+                to={`/${PET_SHOP_OWNER_SIGNUP_PATH}`}
+                fullWidth
+                variant="outlined"
+                startIcon={<PersonAddAlt1Icon />}
+                sx={{
+                  mb: 2,
+                  textTransform: "none",
+                  borderColor: "#2563eb",
+                  color: "#2563eb",
+                }}
+              >
+                Register as Pet Shop Owner
+              </Button>
+
             </Box>
           </CardContent>
         </Card>
+
+        <Typography variant="body2" align="center" sx={{ mt: 2, color: "#6b7280" }}>
+          New pet shop applicant?{" "}
+          <Link component={RouterLink} to={`/${PET_SHOP_OWNER_SIGNUP_PATH}`}>
+            Create an owner account
+          </Link>{" "}
+          to apply online (FORM-1).
+        </Typography>
         <Copyright />
       </Container>
     </Box>

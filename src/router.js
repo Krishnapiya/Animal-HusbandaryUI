@@ -22,6 +22,8 @@ import {
   REGISTRATION_APPLICATION_PATH,
   DOCUMENT_TYPE_PATH,
   PET_SHOP_DETAIL_PATH,
+  PET_SHOP_REGISTER_PATH,
+  PET_SHOP_OWNER_SIGNUP_PATH,
   APPLICATION_WORKFLOW_PATH,
   PAYMENT_TRANSACTION_PATH,
   DOG_BREEDER_DETAIL_PATH,
@@ -36,6 +38,8 @@ import PetShopDetailPage from "./pages/pet_shop_detail";
 import PageNotFound from "./pages/PageNotFound";
 import ForbiddenPage from "./pages/ForbiddenPage";
 import LoginPage from "./pages/LoginPage";
+import PetShopOwnerRegisterPage from "./pages/PetShopOwnerRegisterPage";
+import PetShopRegisterPage from "./pages/pet_shop_register";
 import PermissionedRbacAdmin from "./pages/rbac_admin/PermissionedRbacAdmin";
 import TestPage from "./pages/test_page";
 import SampleDepartmentPage from "./pages/sample_department";
@@ -78,6 +82,12 @@ const ApplicationWorkflowPageWithPermission = () =>
     PermissionGate,
     { menuKey: APPLICATION_WORKFLOW_PATH, action: "list" },
     createElement(ApplicationWorkflowPage),
+  );
+const PetShopRegisterPageWithPermission = () =>
+  createElement(
+    PermissionGate,
+    { menuKey: "pet-shop-register", action: "save" },
+    createElement(PetShopRegisterPage),
   );
 const PetShopDetailPageWithPermission = () =>
   createElement(
@@ -198,6 +208,10 @@ export const router = createBrowserRouter([
                 Component: TestPage
               },
               {
+                path: PET_SHOP_REGISTER_PATH,
+                Component: PetShopRegisterPageWithPermission,
+              },
+              {
   path: PET_SHOP_DETAIL_PATH,
   Component: PetShopDetailPageWithPermission,
 },
@@ -293,7 +307,11 @@ export const router = createBrowserRouter([
           }
         ]
       },
-      { path: `/${LOGIN_PATH}`, Component: LoginPage }
+      { path: `/${LOGIN_PATH}`, Component: LoginPage },
+      {
+        path: `/${PET_SHOP_OWNER_SIGNUP_PATH}`,
+        Component: PetShopOwnerRegisterPage,
+      },
     ]
   }
 ]);

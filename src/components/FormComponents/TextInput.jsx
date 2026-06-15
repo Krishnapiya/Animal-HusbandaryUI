@@ -8,6 +8,7 @@ const TextInput = (props) => {
       name={props.name}
       value={props.value}
       disabled={props.disabled}
+      type={props.type || "text"}
       variant="outlined"
       onChange={props.onChange}
       fullWidth
@@ -26,6 +27,7 @@ TextInput.propTypes = {
   name: PropTypes.string,
   onChange: PropTypes.func,
   required: PropTypes.bool,
+  type: PropTypes.string,
   value: PropTypes.string,
 };
 

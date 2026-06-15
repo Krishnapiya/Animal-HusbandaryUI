@@ -112,7 +112,7 @@ export const APPLICATION_STATUS_DROPDOWN_URL =
   "/admin/auth/master/application-status-master/list/all?dropDown=true";
 
 export const DISTRICT_DROPDOWN_URL =
-  "/admin/auth/master/district/list/all?dropDown=true";
+  "/admin/auth/master/district/list/all";
 
 export const OFFICE_DROPDOWN_URL =
   "/admin/auth/master/office/list/all?dropDown=true&pageNo=0&pageSize=500";
@@ -147,3 +147,9 @@ export const DOG_BREEDER_DETAIL_LIST_URL =
 
 export const APPLICATION_CORRECTION_LIST_URL =
   "/dogbreeder/auth/master/application-correction/";
+
+export const PET_SHOP_REGISTRATION_STEP1_URL =
+  "/petshop/auth/awb/pet-shop/registration/step-1";
+
+export const PET_SHOP_REGISTRATION_DRAFT_URL =
+  "/petshop/auth/awb/pet-shop/registration/draft";

@@ -2,6 +2,9 @@ export const ROOT_PATH = "";
 
 export const LOGIN_PATH = "login";
 
+export const PET_SHOP_OWNER_SIGNUP_PATH = "register/pet-shop-owner";
+export const PET_SHOP_REGISTER_PATH = "pet-shop/register";
+
 export const REGISTRATION_PAGE_PATH = "registration-page";
 
 export const TEST_PAGE_PATH = "test-page";
