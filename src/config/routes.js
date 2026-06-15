@@ -26,3 +26,6 @@ export const APPLICATION_WORKFLOW_PATH = "application-workflow";
 export const PAYMENT_TRANSACTION_PATH = "payment-transaction";
 export const APPLICATION_DOCUMENT_PATH= "application-document";
 
+export const DOG_BREEDER_DETAIL_PATH = "dog-breeder-detail";
+export const APPLICATION_CORRECTION_PATH =
+  "application-correction";

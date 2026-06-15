@@ -136,3 +136,14 @@ export const USER_DROPDOWN_URL =
  export const DOCUMENT_TYPE_DROPDOWN_URL ="/admin/auth/master/document-type/list/all?dropDown=true";
 
  export const REGISTRATION_APPLICATION_DROPDOWN_URL ="/admin/auth/registration-application/list/all?dropDown=true";
+export const DOG_BREEDER_DETAIL_API_URL =
+  "/dogbreeder/auth/master/dog-breeder-detail/";
+
+export const DOG_BREEDER_DETAIL_LIST_URL =
+  "/dogbreeder/auth/master/dog-breeder-detail/";
+
+  export const APPLICATION_CORRECTION_API_URL =
+  "/dogbreeder/auth/master/application-correction/";
+
+export const APPLICATION_CORRECTION_LIST_URL =
+  "/dogbreeder/auth/master/application-correction/";
