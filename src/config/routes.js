@@ -33,3 +33,4 @@ export const DOG_BREEDER_BREED_PATH = "dog-breeder-breed";
 export const DOG_BREEDER_DETAIL_PATH = "dog-breeder-detail";
 export const APPLICATION_CORRECTION_PATH =
   "application-correction";
+  export const DOG_BREEDER_REGISTER_PATH = "dog-breeder/register";

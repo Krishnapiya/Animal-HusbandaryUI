@@ -156,3 +156,15 @@ export const PET_SHOP_REGISTRATION_STEP1_URL =
 
 export const PET_SHOP_REGISTRATION_DRAFT_URL =
   "/petshop/auth/awb/pet-shop/registration/draft";
+  
+export const DOG_BREEDER_REGISTRATION_DRAFT_URL =
+  "/dogbreeder/auth/awb/dog-breeder/registration/draft";
+
+export const DOG_BREEDER_REGISTRATION_STEP1_URL =
+  "/dogbreeder/auth/awb/dog-breeder/registration/step-1";
+
+  export const DOG_BREEDER_FACILITY_API_URL =
+  "/dogbreeder/auth/master/dog-breeder-facility/";
+
+export const DOG_BREEDER_DECLARATION_API_URL =
+  "/dogbreeder/auth/master/dog-breeder-declaration/";
