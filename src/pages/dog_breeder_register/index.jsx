@@ -1,4 +1,3 @@
-/* eslint-disable */
 import { useState } from "react";
 import {
   Alert,
@@ -10,6 +9,7 @@ import {
 } from "@mui/material";
 import SaveIcon from "@mui/icons-material/Save";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 import { toast } from "material-react-toastify";
 
 import WizardStepper from "./WizardStepper";
@@ -17,6 +17,7 @@ import Step1BreederDetails from "./Step1BreederDetails";
 import Step2FacilityInfrastructure from "./Step2FacilityInfrastructure";
 import Step3DogBreedDetails from "./Step3DogBreedDetails";
 import Step4Declaration from "./Step4Declaration";
+import Step6Preview from "./Step6Preview";
 
 import {
   getDogBreederRegistrationDraft,
@@ -191,6 +192,18 @@ const DogBreederRegisterPage = () => {
   const [declarationErrors, setDeclarationErrors] = useState({});
   const [isSavingDeclaration, setIsSavingDeclaration] = useState(false);
 
+  const [previewValues, setPreviewValues] = useState(null);
+
+  const handlePreviewClick = () => {
+    setPreviewValues({
+      breederDetails: formValues,
+      facilityDetails: facilityValues,
+      breedDetails: breedValues?.breedName ? [breedValues] : [],
+      declarationDetails: declarationValues,
+      documentDetails: [],
+    });
+  };
+
   const handleChange = (event) => {
     setFormValues((prev) => ({
       ...prev,
@@ -329,6 +342,7 @@ const DogBreederRegisterPage = () => {
       }));
 
       setDraftLoaded(true);
+      setPreviewValues(null);
 
       toast.success("Draft saved. Continue with the next sections.");
       setActiveStep(1);
@@ -395,7 +409,7 @@ const DogBreederRegisterPage = () => {
         const draftPayload = getResponsePayload(draftResponse);
 
         dogBreederDetailId = extractDogBreederDetailId(draftPayload);
-      } catch (error) {
+      } catch {
         toast.error("Could not load saved draft details.");
         return;
       }
@@ -465,6 +479,8 @@ const DogBreederRegisterPage = () => {
         ...prev,
         dogBreederDetailId,
       }));
+
+      setPreviewValues(null);
 
       toast.success("Facility details saved successfully");
       setActiveStep(2);
@@ -578,6 +594,8 @@ const DogBreederRegisterPage = () => {
         applicantName: prev.applicantName || formValues.breederName,
         signatureName: prev.signatureName || formValues.breederName,
       }));
+
+      setPreviewValues(null);
 
       toast.success("Dog breed details saved successfully");
       setActiveStep(3);
@@ -708,6 +726,8 @@ const DogBreederRegisterPage = () => {
         dogBreederDetailId,
       }));
 
+      setPreviewValues(null);
+
       toast.success("Declaration saved successfully");
       setActiveStep(4);
     } catch (error) {
@@ -789,10 +809,58 @@ const DogBreederRegisterPage = () => {
             />
           )}
 
-          {activeStep > 3 && (
-            <Typography variant="body1" color="text.secondary">
-              Steps 5–6 will be enabled in the next sprint.
-            </Typography>
+          {activeStep === 4 && (
+            <>
+              {!previewValues && (
+                <Box sx={{ textAlign: "center", py: 4 }}>
+                  <Typography variant="h6" sx={{ mb: 1 }}>
+                    Preview Application
+                  </Typography>
+
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mb: 2 }}
+                  >
+                    Click Preview to view FORM-I dog breeder application details.
+                  </Typography>
+
+                  <Button
+                    variant="contained"
+                    startIcon={<VisibilityIcon />}
+                    onClick={handlePreviewClick}
+                    sx={{
+                      textTransform: "none",
+                      backgroundColor: "#2563eb",
+                    }}
+                  >
+                    Preview
+                  </Button>
+                </Box>
+              )}
+
+              {previewValues && (
+                <Step6Preview
+                  breederDetails={previewValues.breederDetails}
+                  facilityDetails={previewValues.facilityDetails}
+                  breedDetails={previewValues.breedDetails}
+                  declarationDetails={previewValues.declarationDetails}
+                  documentDetails={previewValues.documentDetails}
+                />
+              )}
+            </>
+          )}
+
+          {activeStep === 5 && (
+            <Box sx={{ textAlign: "center", py: 4 }}>
+              <Typography variant="h6" sx={{ mb: 1 }}>
+                Payment & Submit
+              </Typography>
+
+              <Typography variant="body2" color="text.secondary">
+                Payment section will be enabled in the next sprint.
+              </Typography>
+            </Box>
           )}
 
           <Box
@@ -815,14 +883,42 @@ const DogBreederRegisterPage = () => {
               </Button>
             )}
 
-            {activeStep > 3 && activeStep < 5 && (
+            {activeStep === 4 && (
+              <>
+                <Button
+                  variant="outlined"
+                  onClick={() => {
+                    setPreviewValues(null);
+                    setActiveStep(3);
+                  }}
+                  sx={{ textTransform: "none" }}
+                >
+                  Back
+                </Button>
+
+                {previewValues && (
+                  <Button
+                    variant="contained"
+                    endIcon={<NavigateNextIcon />}
+                    onClick={() => setActiveStep(5)}
+                    sx={{
+                      textTransform: "none",
+                      backgroundColor: "#2563eb",
+                    }}
+                  >
+                    Proceed to Payment
+                  </Button>
+                )}
+              </>
+            )}
+
+            {activeStep === 5 && (
               <Button
                 variant="outlined"
-                endIcon={<NavigateNextIcon />}
-                onClick={() => setActiveStep((s) => Math.min(s + 1, 5))}
+                onClick={() => setActiveStep(4)}
                 sx={{ textTransform: "none" }}
               >
-                Next section
+                Back to Preview
               </Button>
             )}
           </Box>
