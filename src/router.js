@@ -28,10 +28,12 @@ import {
   PAYMENT_TRANSACTION_PATH,
   DOG_BREEDER_BREED_PATH,
   DOG_BREEDER_DETAIL_PATH,
-  APPLICATION_CORRECTION_PATH
+  APPLICATION_CORRECTION_PATH,
+  ANIMAL_SPECIES_PATH,
 
 
 } from "./config/routes";
+import AnimalSpeciesMasterPage from "./pages/animal_species";
 import ApplicationWorkflowPage from "./pages/application_workflow";
 import DogBreederDetailPage from "./pages/dog_breeder_detail";
 import ApplicationCorrectionPage from "./pages/application_correction";
@@ -59,7 +61,15 @@ import ApplicationDocumentPage from "./pages/application_document";
 import RegistrationApplicationPage from "./pages/registration_application";
 import DocumentTypePage from "./pages/document_type";
 import DogBreederBreedPage from "./pages/dog_breeder_breed";
-
+const AnimalSpeciesPageWithPermission = () =>
+  createElement(
+    PermissionGate,
+    {
+      menuKey: ANIMAL_SPECIES_PATH,
+      action: "list",
+    },
+    createElement(AnimalSpeciesMasterPage)
+  );
 const ApplicationCorrectionPageWithPermission = () =>
   createElement(
     PermissionGate,
@@ -215,6 +225,10 @@ export const router = createBrowserRouter([
                 path: ROOT_PATH,
                 Component: TestPage
               },
+              {
+  path: ANIMAL_SPECIES_PATH,
+  Component: AnimalSpeciesPageWithPermission
+},
               {
                 path: PET_SHOP_REGISTER_PATH,
                 Component: PetShopRegisterPageWithPermission,

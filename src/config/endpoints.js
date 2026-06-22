@@ -156,3 +156,13 @@ export const PET_SHOP_REGISTRATION_STEP1_URL =
 
 export const PET_SHOP_REGISTRATION_DRAFT_URL =
   "/petshop/auth/awb/pet-shop/registration/draft";
+
+  export const PET_SHOP_REGISTRATION_STEP2_URL =
+  "petshop/auth/master/pet-shop-facility/save";
+
+  
+export const ANIMAL_SPECIES_API_URL =
+  "/admin/auth/master/animal-species/";
+
+export const ANIMAL_SPECIES_LIST_URL =
+  "/admin/auth/master/animal-species/";
