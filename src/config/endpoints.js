@@ -168,3 +168,13 @@ export const DOG_BREEDER_REGISTRATION_STEP1_URL =
 
 export const DOG_BREEDER_DECLARATION_API_URL =
   "/dogbreeder/auth/master/dog-breeder-declaration/";
+
+  export const PET_SHOP_REGISTRATION_STEP2_URL =
+  "petshop/auth/master/pet-shop-facility/save";
+
+  
+export const ANIMAL_SPECIES_API_URL =
+  "/admin/auth/master/animal-species/";
+
+export const ANIMAL_SPECIES_LIST_URL =
+  "/admin/auth/master/animal-species/";
