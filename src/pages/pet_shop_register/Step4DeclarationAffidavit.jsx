@@ -13,6 +13,10 @@ const Step4DeclarationAffidavit = ({
   declaration,
   setDeclaration,
 }) => {
+  console.log(
+  "STEP4 DECLARATION DATA",
+  declaration
+);
   const handleChange = (field, value) => {
     setDeclaration((prev) => ({
       ...prev,
