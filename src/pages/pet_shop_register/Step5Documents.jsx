@@ -1,0 +1,557 @@
+/* eslint-disable react/prop-types */
+
+import { useEffect, useState } from "react";
+import { toast } from "material-react-toastify";
+import {
+  Button,
+  Typography,
+  Box,
+  Grid,
+  Paper,
+  TextField,
+  Chip,
+  IconButton,
+} from "@mui/material";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import UploadFileIcon from "@mui/icons-material/UploadFile";
+import PreviewIcon from "@mui/icons-material/Preview";
+import SaveIcon from "@mui/icons-material/Save";
+import Step5Preview from "./Step5Preview";
+import {
+  getApplicationDocuments,
+  uploadApplicationDocument,
+} from "../../api-client/petShopRegistration";
+const documentList = [
+  {
+    id: 1,
+    name: "Identity Proof",
+    mandatory: true,
+  },
+  {
+    id: 2,
+    name: "Address Proof",
+    mandatory: true,
+  },
+  {
+    id: 3,
+    name: "Shop Photograph",
+    mandatory: true,
+  },
+  {
+    id: 4,
+    name: "Infrastructure Photograph",
+    mandatory: true,
+  },
+  {
+    id: 5,
+    name: "Affidavit",
+    mandatory: true,
+  },
+];
+
+const getPayload = (response) =>
+  response?.data?.payLoad ??
+  response?.data?.payload ??
+  response?.data;
+
+const getDocumentRows = (payload) => {
+  if (Array.isArray(payload)) {
+    return payload;
+  }
+
+  if (Array.isArray(payload?.content)) {
+    return payload.content;
+  }
+
+  if (Array.isArray(payload?.data)) {
+    return payload.data;
+  }
+
+  return [];
+};
+
+const getDocumentTypeId = (document) =>
+  document?.documentTypeId ??
+  document?.documentType?.id ??
+  document?.documentTypeMaster?.id;
+
+const getApplicationId = (document) =>
+  document?.applicationId ??
+  document?.application?.id ??
+  document?.registrationApplication?.id;
+
+const isSavedDocument = (document) =>
+  Boolean(document?.id) && !document?.file;
+
+const Step5Documents = ({
+  formValues,
+  facilityForm,
+  animals,
+  declaration,
+  documents: documentsProp,
+  setDocuments: setDocumentsProp,
+  setActiveStep,
+}) => {
+  const [showPreview, setShowPreview] =
+    useState(false);
+
+  const [localDocuments, setLocalDocuments] =
+    useState({});
+  const documents =
+    documentsProp ?? localDocuments;
+  const setDocuments =
+    setDocumentsProp ?? setLocalDocuments;
+
+  const [isLoadingDocuments, setIsLoadingDocuments] =
+    useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    const applicationId =
+      formValues?.applicationId;
+
+    if (!applicationId) {
+      setDocuments({});
+      return undefined;
+    }
+
+    (async () => {
+      try {
+        setIsLoadingDocuments(true);
+
+        const response =
+          await getApplicationDocuments(
+            applicationId
+          );
+
+        if (cancelled) {
+          return;
+        }
+
+        if (response?.isSuccess) {
+          const rows = getDocumentRows(
+            getPayload(response)
+          ).filter((item) => {
+            const rowApplicationId =
+              getApplicationId(item);
+
+            return (
+              rowApplicationId == null ||
+              Number(rowApplicationId) ===
+                Number(applicationId)
+            );
+          });
+          console.log("DOCUMENT ROWS", rows);
+
+          const draftDocuments = rows.reduce(
+            (acc, item) => {
+              const documentTypeId =
+                getDocumentTypeId(item);
+
+              if (documentTypeId) {
+                acc[documentTypeId] = {
+                  ...item,
+                  name:
+                    item.fileName ||
+                    item.name ||
+                    "",
+                  isDraft: true,
+                };
+              }
+
+              return acc;
+            },
+            {}
+          );
+
+          if (
+            Object.keys(draftDocuments).length >
+            0
+          ) {
+            setDocuments((prev) => ({
+              ...draftDocuments,
+              ...prev,
+            }));
+          }
+        }
+      } catch (error) {
+        console.error(
+          "Failed to load documents",
+          error
+        );
+      } finally {
+        if (!cancelled) {
+          setIsLoadingDocuments(false);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [formValues?.applicationId, setDocuments]);
+
+ const handleFileChange = (
+  documentId,
+  event
+) => {
+  const file = event.target.files?.[0];
+
+  if (!file) {
+    return;
+  }
+
+  const maxSize = 6 * 1024 * 1024; // 6 MB
+
+  if (file.size > maxSize) {
+    alert(
+      "File size cannot exceed 6 MB"
+    );
+
+    event.target.value = "";
+
+    return;
+  }
+
+  setDocuments((prev) => ({
+    ...prev,
+    [documentId]: {
+      ...(prev[documentId] || {}),
+      file,
+      name: file.name,
+      fileName: file.name,
+      mimeType: file.type,
+      fileSizeBytes: file.size,
+      isDraft: false,
+    },
+  }));
+};
+
+const handleViewDocument = (
+  documentId
+) => {
+  const document =
+    documents[documentId];
+
+  if (!document) {
+    return;
+  }
+
+  if (document.file) {
+    const fileUrl =
+      URL.createObjectURL(
+        document.file
+      );
+
+    window.open(
+      fileUrl,
+      "_blank"
+    );
+    return;
+  }
+console.log("Document =", document);
+console.log("File Path =", document.filePath);
+  if (document.filePath) {
+  const backendUrl =
+  "http://localhost:8083/admin/auth/awb/application-document/view/";
+
+window.open(
+  backendUrl + document.filePath,
+  "_blank"
+);
+}
+
+  toast.info(
+    "Saved document preview is not available"
+  );
+};
+
+
+  const handleSaveDocuments = async () => {
+  try {
+    const applicationId =
+      formValues?.applicationId;
+    const selectedDocuments =
+      Object.entries(documents).filter(
+        ([, document]) => document?.file
+      );
+
+    if (!applicationId) {
+      toast.error(
+        "Please save shop details before uploading documents"
+      );
+      return false;
+    }
+
+    if (selectedDocuments.length === 0) {
+      toast.info(
+        "No new documents selected. Saved draft documents are already available."
+      );
+      return true;
+    }
+
+    for (const [
+      documentId,
+      document,
+    ] of selectedDocuments) {
+      const file = document.file;
+
+     const response =
+    await uploadApplicationDocument({
+        file,
+        applicationId,
+        documentTypeId: Number(documentId),
+        uploadedBy: 1,
+    });
+
+      if (!response?.isSuccess) {
+        toast.error(
+          `Failed to save ${
+            document.fileName ||
+            file.name
+          }`
+        );
+        return false;
+      }
+
+      const savedDocument = getPayload(response);
+
+      setDocuments((prev) => ({
+        ...prev,
+        [documentId]: {
+          ...document,
+          ...savedDocument,
+          id:
+            savedDocument.id ??
+            document.id,
+          file: null,
+          name:
+  savedDocument?.fileName || file.name,
+          fileName:
+  savedDocument?.fileName || file.name,
+          isDraft: true,
+        },
+      }));
+    }
+
+   toast.success(
+  "Documents saved successfully"
+);
+return true;
+  } catch (error) {
+    console.error(error);
+
+    toast.error(
+      "Failed to save documents"
+    );
+    return false;
+  }
+};
+const handleSaveAndContinue = async () => {
+  try {
+
+    const saved =
+      await handleSaveDocuments();
+
+    if (!saved) {
+      return;
+    }
+
+    // Move to Payment & Submit step
+    setActiveStep(5);
+
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+  return (
+    <>
+      <Typography
+        variant="h5"
+        sx={{
+          mb: 3,
+          fontWeight: 600,
+        }}
+      >
+        Documents Upload
+      </Typography>
+
+      {isLoadingDocuments && (
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{ mb: 2 }}
+        >
+          Loading saved draft documents...
+        </Typography>
+      )}
+
+      <Paper
+        elevation={2}
+        sx={{
+          p: 3,
+          borderRadius: 2,
+          mb: 3,
+        }}
+      >
+        <Grid container spacing={3}>
+          {documentList.map(
+            (document) => (
+              <Grid
+                item
+                xs={12}
+                key={document.id}
+              >
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 2,
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: "250px",
+                    }}
+                  >
+                    <Typography
+                      fontWeight={500}
+                    >
+                      {document.name}
+                    </Typography>
+
+                    {document.mandatory && (
+                      <Chip
+                        size="small"
+                        color="error"
+                        label="Mandatory"
+                        sx={{ mt: 0.5 }}
+                      />
+                    )}
+
+                    {isSavedDocument(
+                      documents[document.id]
+                    ) && (
+                      <Chip
+                        size="small"
+                        color="info"
+                        label="Saved draft"
+                        sx={{ mt: 0.5, ml: 1 }}
+                      />
+                    )}
+                  </Box>
+
+                  <TextField
+                    size="small"
+                    fullWidth
+                    value={
+                      documents[
+                        document.id
+                      ]?.name ||
+                      documents[
+                        document.id
+                      ]?.fileName ||
+                      ""
+                    }
+                    placeholder="No file selected"
+                    InputProps={{
+                      readOnly: true,
+                    }}
+                  />
+
+                  <Button
+                    variant="outlined"
+                    component="label"
+                    startIcon={
+                      <UploadFileIcon />
+                    }
+                  >
+                    Upload
+
+                    <input
+                      hidden
+                      type="file"
+                      onChange={(e) =>
+                        handleFileChange(
+                          document.id,
+                          e
+                        )
+                      }
+                    />
+                  </Button>
+                  {documents[document.id] && (
+  <IconButton
+    color="primary"
+    onClick={() =>
+      handleViewDocument(
+        document.id
+      )
+    }
+  >
+    <VisibilityIcon />
+  </IconButton>
+)}
+                </Box>
+              </Grid>
+            )
+          )}
+        </Grid>
+
+        <Box
+          sx={{
+            mt: 4,
+            display: "flex",
+            justifyContent:
+              "flex-end",
+            gap: 2,
+          }}
+        >
+          <Button
+  variant="contained"
+  color="success"
+  startIcon={<SaveIcon />}
+  onClick={handleSaveAndContinue}
+>
+  Save & Continue
+</Button>
+
+          <Button
+            variant="contained"
+            startIcon={
+              <PreviewIcon />
+            }
+            onClick={() =>
+              setShowPreview(
+                !showPreview
+              )
+            }
+          >
+            {showPreview
+              ? "Hide Preview"
+              : "Preview Application"}
+          </Button>
+        </Box>
+      </Paper>
+
+      {showPreview && (
+        <Box sx={{ mt: 3 }}>
+          <Step5Preview
+            formValues={
+              formValues
+            }
+            facilityForm={
+              facilityForm
+            }
+            animals={animals}
+            declaration={
+              declaration
+            }
+          />
+        </Box>
+      )}
+    </>
+  );
+};
+
+export default Step5Documents;

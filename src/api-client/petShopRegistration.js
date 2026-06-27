@@ -1,6 +1,8 @@
-import { PET_SHOP_REGISTRATION_DRAFT_URL, PET_SHOP_REGISTRATION_STEP1_URL, PET_SHOP_REGISTRATION_STEP2_URL, } from "../config/endpoints";
+import { PET_SHOP_REGISTRATION_DRAFT_URL, PET_SHOP_REGISTRATION_STEP1_URL, PET_SHOP_REGISTRATION_STEP2_URL,DOCUMENT_TYPE_LIST_URL } from "../config/endpoints";
 import { addItem, getItemList,editSingleItem, } from "./apiCall";
-
+import { BASE_API_URL } from "./apiCall";
+import { callApi } from "./client";
+import { getHeader } from "../utils";
 export const getPetShopRegistrationDraft = async () => {
   return getItemList(PET_SHOP_REGISTRATION_DRAFT_URL);
 };
@@ -27,3 +29,53 @@ export const getPetShopProposedAnimals = async (applicationId) => {
   return getItemList( `/petshop/auth/awb/pet-shop-proposed-animal/draft/${applicationId}` );};
 export const updatePetShopProposedAnimal = async ( payload) => {
   return editSingleItem( "/petshop/auth/awb/pet-shop-proposed-animal/save", {   payLoad: payload, } );};
+
+export const getDocumentTypes = () =>
+  getItemList(DOCUMENT_TYPE_LIST_URL, { pageNo: 0, pageSize: 100 });
+
+export const saveApplicationDocument = (payload) =>
+  addItem("/admin/auth/awb/application-document/save", { payLoad: payload });
+
+export const getApplicationDocuments = (applicationId) =>
+  getItemList(`/admin/auth/awb/application-document/draft/${applicationId}`);
+
+export const updateApplicationDocument = (payload) =>
+  editSingleItem("/admin/auth/awb/application-document/save", {
+    payLoad: payload,
+  });
+
+export const saveApplicationDeclaration = (payload) =>
+  addItem("/petshop/auth/master/application-declaration/save", {
+    payLoad: payload,
+  });
+
+export const getApplicationDeclaration = (applicationId) =>
+  getItemList(
+    `/petshop/auth/master/application-declaration/draft/${applicationId}`
+  );
+
+export const updateApplicationDeclaration = (payload) =>
+  editSingleItem("/petshop/auth/master/application-declaration/save", {
+    payLoad: payload,
+  });
+
+export const uploadApplicationDocument = ({
+  file,
+  applicationId,
+  documentTypeId,
+  uploadedBy,
+}) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("applicationId", applicationId);
+  formData.append("documentTypeId", documentTypeId);
+  formData.append("uploadedBy", uploadedBy);
+
+  return callApi({
+    method: "POST",
+    baseURL: BASE_API_URL,
+    url: "/admin/auth/awb/application-document/upload",
+    data: formData,
+    headers: getHeader(),
+  });
+};

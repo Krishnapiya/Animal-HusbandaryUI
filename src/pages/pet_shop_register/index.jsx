@@ -13,8 +13,10 @@ import SaveIcon from "@mui/icons-material/Save";
 import { toast } from "material-react-toastify";
 import WizardStepper from "./WizardStepper";
 import Step1ShopOwner from "./Step1ShopOwner";
+import Step5Documents from "./Step5Documents";
 import Step2FacilityInfrastructure from "./Step2FacilityInfrastructure";
 import Step4DeclarationAffidavit from "./Step4DeclarationAffidavit.jsx";
+import Step6PaymentSubmit from "./Step6PaymentSubmit";
 import {
   getPetShopFacility,
   getPetShopRegistrationDraft,
@@ -24,6 +26,10 @@ import {
    savePetShopProposedAnimal,
    getPetShopProposedAnimals,
     updatePetShopProposedAnimal,
+    saveApplicationDeclaration,
+    updateApplicationDeclaration,
+    getApplicationDeclaration,
+    
 } from "../../api-client/petShopRegistration";
 import { getUserAttributes } from "../../utils";
 
@@ -114,6 +120,7 @@ const PetShopRegisterPage = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingDraft, setIsLoadingDraft] = useState(true);
   const [draftLoaded, setDraftLoaded] = useState(false);
+  const [documents, setDocuments] = useState({});
 
   useEffect(() => {
     let cancelled = false;
@@ -144,6 +151,24 @@ console.log("DETAIL", draft.detail);
   await getPetShopProposedAnimals(
     draft.applicationId
   );
+const declarationResponse =
+  await getApplicationDeclaration(
+    draft.applicationId
+  );
+  console.log(
+  "DECLARATION RESPONSE FULL",
+  JSON.stringify(
+    declarationResponse,
+    null,
+    2
+  )
+);
+  
+
+console.log(
+  "DECLARATION RESPONSE",
+  declarationResponse
+);
 
 console.log(
   "ANIMAL DRAFT",
@@ -252,6 +277,112 @@ if (facilityResponse?.isSuccess) {
     veterinarySupportArrangement:
       facility.veterinarySupportArrangement || "",
   });
+  if (declarationResponse?.isSuccess) {
+
+  const declarationDraft =
+    declarationResponse.data?.payLoad ??
+    declarationResponse.data?.payload ??
+    declarationResponse.data;
+    console.log(
+  "DECLARATION DRAFT FROM API",
+  declarationDraft
+);
+
+console.log(
+  "DECLARATION ID FROM API",
+  declarationDraft?.id
+);
+console.log(
+  "DECLARATION RESPONSE FULL",
+  declarationResponse
+);
+
+console.log(
+  "DECLARATION DRAFT",
+  declarationDraft
+);
+
+console.log(
+  "DECLARATION DRAFT ID",
+  declarationDraft?.id
+);
+  console.log(
+    "DECLARATION DRAFT",
+    declarationDraft
+  );
+
+  if (declarationDraft) {
+
+    setDeclaration({
+       id:
+    declarationDraft?.id
+      ? String(declarationDraft.id)
+      : "",
+
+      declarationPlace:
+        declarationDraft.declarationPlace || "",
+
+      declarationDate:
+        declarationDraft.declarationDate || "",
+
+      informationAccurate:
+        declarationDraft.informationAccurate || false,
+
+      affidavitRule2018Ack:
+        declarationDraft.affidavitRule2018Ack || false,
+
+      affidavitAwbiRulesAck:
+        declarationDraft.affidavitAwbiRulesAck || false,
+
+      affidavitConditionsAck:
+        declarationDraft.affidavitConditionsAck || false,
+
+      affidavitCancellationAck:
+        declarationDraft.affidavitCancellationAck || false,
+
+      affidavitTruthAck:
+        declarationDraft.affidavitTruthAck || false,
+
+      affidavitDeponentName:
+        declarationDraft.affidavitDeponentName || "",
+    });
+  }
+}
+console.log(
+  "DECLARATION VALUES FROM DRAFT",
+  {
+    declarationPlace:
+      draft.declarationPlace,
+
+    declarationDate:
+      draft.declarationDate,
+
+    informationAccurate:
+      draft.informationAccurate,
+
+    affidavitRule2018Ack:
+      draft.affidavitRule2018Ack,
+
+    affidavitAwbiRulesAck:
+      draft.affidavitAwbiRulesAck,
+
+    affidavitConditionsAck:
+      draft.affidavitConditionsAck,
+
+    affidavitCancellationAck:
+      draft.affidavitCancellationAck,
+
+    affidavitTruthAck:
+      draft.affidavitTruthAck,
+
+    affidavitDeponentName:
+      draft.affidavitDeponentName,
+  }
+);
+console.log(
+  "DECLARATION FROM DRAFT",
+  draft
+);
   console.log("LOADED FACILITY ID", facility.id);
 }
 
@@ -357,6 +488,7 @@ const [animals, setAnimals] = useState([
 ]);
 
 const [declaration, setDeclaration] = useState({
+  id: "",
   declarationPlace: "",
   declarationDate: "",
 
@@ -479,21 +611,85 @@ console.log("STEP3 RESPONSE", response);
 };
 const handleSaveStep4 = async () => {
   try {
-    console.log("STEP4 DATA", declaration);
+    console.log(
+  "DECLARATION STATE BEFORE SAVE",
+  declaration
+);
 
-    toast.success(
-      "Declaration submitted successfully"
+console.log(
+  "DECLARATION ID BEFORE SAVE",
+  declaration.id
+);
+
+    const payload = {
+      applicationId: formValues.applicationId,
+      ...declaration,
+    };
+console.log(
+  "FORM APPLICATION ID",
+  formValues.applicationId
+);
+
+console.log(
+  "FORM APPLICATION ID TYPE",
+  typeof formValues.applicationId
+);
+
+console.log(
+  "DECLARATION OBJECT",
+  declaration
+);
+
+console.log(
+  "PAYLOAD APPLICATION ID",
+  payload.applicationId
+);
+
+console.log(
+  "PAYLOAD APPLICATION ID TYPE",
+  typeof payload.applicationId
+);
+    console.log(
+      "DECLARATION PAYLOAD",
+      payload
     );
 
-    setActiveStep(4);
-  } catch (error) {
-    console.error(
-      "Step4 save error",
-      error
-    );
+    let response;
 
-    toast.error(
-      "Failed to submit declaration"
+    if (declaration.id) {
+
+      response =
+        await updateApplicationDeclaration(
+          payload
+        );
+
+    } else {
+
+      response =
+        await saveApplicationDeclaration(
+          payload
+        );
+    }
+
+    if (response?.isSuccess) {
+
+      const savedData =
+        response.data?.payLoad ??
+        response.data?.payload ??
+        response.data;
+
+      setDeclaration((prev) => ({
+        ...prev,
+        id: savedData?.id,
+      }));
+
+      toast.success(
+        "Declaration saved successfully"
+      );
+
+      setActiveStep(4);}  } catch (error) {console.error(error);
+toast.error(
+      "Failed to save declaration"
     );
   }
 };
@@ -656,6 +852,22 @@ const handleSaveStep4 = async () => {
     setDeclaration={setDeclaration}
   />
 )}
+{activeStep === 4 && (
+  <Step5Documents
+  formValues={formValues}
+  facilityForm={facilityForm}
+  animals={animals}
+  declaration={declaration}
+  documents={documents}
+  setDocuments={setDocuments}
+  setActiveStep={setActiveStep}
+/>
+)}
+{activeStep === 5 && (
+  <Step6PaymentSubmit
+  applicationId={formValues?.applicationId}
+/>
+)}
 
           <Box
   sx={{
@@ -723,7 +935,7 @@ const handleSaveStep4 = async () => {
     startIcon={<SaveIcon />}
     onClick={handleSaveStep4}
   >
-    Submit
+    Save & Continue
   </Button>
 )}
   </Box>
