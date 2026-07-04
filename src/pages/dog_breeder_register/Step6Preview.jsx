@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
   Box,
@@ -6,6 +7,10 @@ import {
   Divider,
   Typography,
 } from "@mui/material";
+
+import { viewApplicationDocument } from "../../api-client/applicationDocument";
+
+const SIGNATURE_DOCUMENT_TYPE_ID = "8"; // Applicant Signature document_type id
 
 const getValue = (value) => {
   if (value === null || value === undefined || value === "") {
@@ -21,6 +26,76 @@ const getShortValue = (value) => {
   }
 
   return value;
+};
+
+const getSavedDocumentId = (file) => {
+  return (
+    file?.id ||
+    file?.documentId ||
+    file?.applicationDocumentId ||
+    file?.payLoad?.id ||
+    file?.payload?.id ||
+    ""
+  );
+};
+
+const normalizeDocuments = (documents) => {
+  if (Array.isArray(documents)) {
+    return documents;
+  }
+
+  return Object.entries(documents || {}).map(([key, value]) => {
+    if (value instanceof File) {
+      return {
+        documentTypeId: key,
+        file: value,
+        fileName: value.name,
+        name: value.name,
+        mimeType: value.type,
+        fileSizeBytes: value.size,
+      };
+    }
+
+    return {
+      ...(value || {}),
+      documentTypeId: value?.documentTypeId || key,
+    };
+  });
+};
+
+const getSignatureDocument = (documents) => {
+  const documentList = normalizeDocuments(documents);
+
+  return documentList.find((document) => {
+    const documentTypeId = String(
+      document?.documentTypeId ||
+        document?.document_type_id ||
+        document?.documentType?.id ||
+        ""
+    );
+
+    const documentTypeCode = String(
+      document?.documentTypeCode ||
+        document?.code ||
+        document?.documentType?.code ||
+        ""
+    ).toUpperCase();
+
+    const documentName = String(
+      document?.documentName ||
+        document?.documentTypeName ||
+        document?.documentType?.name ||
+        document?.name ||
+        document?.fileName ||
+        ""
+    ).toLowerCase();
+
+    return (
+      documentTypeId === SIGNATURE_DOCUMENT_TYPE_ID ||
+      documentTypeCode === "APPLICANT_SIGNATURE" ||
+      documentName.includes("signature")
+    );
+  });
 };
 
 const FieldLine = ({ number, label, value }) => (
@@ -50,7 +125,99 @@ const Step6Preview = ({
   facilityDetails = {},
   breedDetails = [],
   declarationDetails = {},
+  documents = {},
+  documentValues = {},
 }) => {
+  const [signaturePreviewUrl, setSignaturePreviewUrl] = useState("");
+
+  const previewDocuments =
+    documents && Object.keys(documents || {}).length > 0
+      ? documents
+      : documentValues;
+
+  useEffect(() => {
+    let objectUrl = "";
+    let cancelled = false;
+
+    const loadSignaturePreview = async () => {
+      const signatureDocument = getSignatureDocument(previewDocuments);
+
+      console.log("STEP 6 DOCUMENTS:", previewDocuments);
+      console.log("SIGNATURE DOCUMENT:", signatureDocument);
+
+      if (!signatureDocument) {
+        setSignaturePreviewUrl("");
+        return;
+      }
+
+      const selectedFile =
+        signatureDocument?.file instanceof File
+          ? signatureDocument.file
+          : signatureDocument instanceof File
+          ? signatureDocument
+          : null;
+
+      if (selectedFile) {
+        objectUrl = URL.createObjectURL(selectedFile);
+
+        if (!cancelled) {
+          setSignaturePreviewUrl(objectUrl);
+        }
+
+        return;
+      }
+
+      const savedDocumentId = getSavedDocumentId(signatureDocument);
+
+      if (!savedDocumentId) {
+        setSignaturePreviewUrl("");
+        return;
+      }
+
+      try {
+        const response = await viewApplicationDocument(savedDocumentId);
+
+        if (!response?.data || response.data.size === 0) {
+          setSignaturePreviewUrl("");
+          return;
+        }
+
+        const contentType =
+          response.headers?.["content-type"] ||
+          signatureDocument.mimeType ||
+          signatureDocument.type ||
+          "image/png";
+
+        const blob =
+          response.data instanceof Blob
+            ? response.data
+            : new Blob([response.data], { type: contentType });
+
+        objectUrl = URL.createObjectURL(blob);
+
+        if (!cancelled) {
+          setSignaturePreviewUrl(objectUrl);
+        }
+      } catch (error) {
+        console.error("SIGNATURE PREVIEW ERROR:", error);
+
+        if (!cancelled) {
+          setSignaturePreviewUrl("");
+        }
+      }
+    };
+
+    loadSignaturePreview();
+
+    return () => {
+      cancelled = true;
+
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
+  }, [previewDocuments]);
+
   const normalizedBreedDetails = Array.isArray(breedDetails)
     ? breedDetails
     : breedDetails?.breedName
@@ -305,6 +472,7 @@ const Step6Preview = ({
           sx={{
             display: "flex",
             justifyContent: "space-between",
+            alignItems: "flex-start",
             flexWrap: "wrap",
             mt: 4,
             gap: 2,
@@ -317,12 +485,30 @@ const Step6Preview = ({
             </Box>
           </Typography>
 
-          <Typography sx={{ fontSize: 15 }}>
-            Signature of Applicant:{" "}
-            <Box component="span" sx={{ fontWeight: 600 }}>
-              {getShortValue(declarationDetails.signatureName)}
-            </Box>
-          </Typography>
+          <Box sx={{ textAlign: "center", minWidth: 220 }}>
+            <Typography sx={{ fontSize: 15 }}>
+              Signature of Applicant:
+            </Typography>
+
+            {signaturePreviewUrl ? (
+              <Box
+                component="img"
+                src={signaturePreviewUrl}
+                alt="Applicant Signature"
+                sx={{
+                  width: 160,
+                  height: 60,
+                  objectFit: "contain",
+                  mt: 0.5,
+                  borderBottom: "1px solid #111827",
+                }}
+              />
+            ) : (
+              <Typography sx={{ fontSize: 15, fontWeight: 600 }}>
+                {getShortValue(declarationDetails.signatureName)}
+              </Typography>
+            )}
+          </Box>
 
           <Typography sx={{ fontSize: 15 }}>
             Date:{" "}
@@ -375,6 +561,8 @@ Step6Preview.propTypes = {
   facilityDetails: PropTypes.object,
   breedDetails: PropTypes.oneOfType([PropTypes.array, PropTypes.object]),
   declarationDetails: PropTypes.object,
+  documents: PropTypes.oneOfType([PropTypes.object, PropTypes.array]),
+  documentValues: PropTypes.oneOfType([PropTypes.object, PropTypes.array]),
 };
 
 export default Step6Preview;

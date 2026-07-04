@@ -168,3 +168,33 @@ export const getItemWithoutAuth = async (api_url) => {
 
   return await callApi(config);
 };
+export const addFormDataItem = async (api_url, formData, includeToken = true) => {
+  const headers = includeToken ? getHeader() || {} : {};
+
+  // Important: remove JSON content type for file upload
+  delete headers["Content-Type"];
+  delete headers["content-type"];
+
+  const config = {
+    method: "POST",
+    baseURL: BASE_API_URL,
+    url: api_url,
+    data: formData,
+    headers,
+  };
+
+  return await callApi(config);
+};
+
+export const getBlobItem = async (api_url, params) => {
+  const config = {
+    method: "GET",
+    baseURL: BASE_API_URL,
+    url: api_url,
+    params: params,
+    responseType: "blob",
+    headers: getHeader(),
+  };
+
+  return await callApi(config);
+};
