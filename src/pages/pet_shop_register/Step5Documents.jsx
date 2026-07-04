@@ -47,6 +47,11 @@ const documentList = [
     name: "Affidavit",
     mandatory: true,
   },
+  {
+  id: 9,
+  name: "Applicant Signature",
+  mandatory: true,
+},
 ];
 
 const getPayload = (response) =>
@@ -197,6 +202,19 @@ const Step5Documents = ({
 ) => {
   const file = event.target.files?.[0];
 
+  if (
+  documentId === 6 &&
+  !file.type.startsWith("image/")
+) {
+  toast.error(
+    "Please upload a JPG or PNG signature."
+  );
+
+  event.target.value = "";
+
+  return;
+}
+
   if (!file) {
     return;
   }
@@ -253,7 +271,7 @@ console.log("Document =", document);
 console.log("File Path =", document.filePath);
   if (document.filePath) {
   const backendUrl =
-  "http://localhost:8083/admin/auth/awb/application-document/view/";
+  "http://localhost:8083/petshop/auth/application-document/view/";
 
 window.open(
   backendUrl + document.filePath,
@@ -470,15 +488,20 @@ const handleSaveAndContinue = async () => {
                     Upload
 
                     <input
-                      hidden
-                      type="file"
-                      onChange={(e) =>
-                        handleFileChange(
-                          document.id,
-                          e
-                        )
-                      }
-                    />
+  hidden
+  type="file"
+  accept={
+    document.id === 6
+      ? "image/png,image/jpeg,image/jpg"
+      : ".pdf,.jpg,.jpeg,.png"
+  }
+  onChange={(e) =>
+    handleFileChange(
+      document.id,
+      e
+    )
+  }
+/>
                   </Button>
                   {documents[document.id] && (
   <IconButton
@@ -534,22 +557,17 @@ const handleSaveAndContinue = async () => {
         </Box>
       </Paper>
 
-      {showPreview && (
-        <Box sx={{ mt: 3 }}>
-          <Step5Preview
-            formValues={
-              formValues
-            }
-            facilityForm={
-              facilityForm
-            }
-            animals={animals}
-            declaration={
-              declaration
-            }
-          />
-        </Box>
-      )}
+    {showPreview && (
+  <Box sx={{ mt: 3 }}>
+    <Step5Preview
+      formValues={formValues}
+      facilityForm={facilityForm}
+      animals={animals}
+      declaration={declaration}
+      supportingDocuments={Object.values(documents)}
+    />
+  </Box>
+)}
     </>
   );
 };

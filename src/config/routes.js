@@ -35,3 +35,6 @@ export const APPLICATION_CORRECTION_PATH =
   "application-correction";
 
   export const ANIMAL_SPECIES_PATH = "animal-species";
+
+  export const PET_SHOP_APPLICATION_PATH =
+    "pet-shop-application";
