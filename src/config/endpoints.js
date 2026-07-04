@@ -193,3 +193,12 @@ export const DOG_BREEDER_APPLICATION_DOWNLOAD_URL =
 
 export const DOG_BREEDER_DOCUMENT_DOWNLOAD_URL =
   "/dogbreeder/auth/awb/application-document/download/";
+  export const PET_SHOP_REGISTRATION_STEP2_URL =
+  "petshop/auth/master/pet-shop-facility/save";
+
+  
+export const ANIMAL_SPECIES_API_URL =
+  "/admin/auth/master/animal-species/";
+
+export const ANIMAL_SPECIES_LIST_URL =
+  "/admin/auth/master/animal-species/";
