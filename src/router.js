@@ -29,12 +29,18 @@ import {
   DOG_BREEDER_BREED_PATH,
   DOG_BREEDER_DETAIL_PATH,
   APPLICATION_CORRECTION_PATH,
-  ANIMAL_SPECIES_PATH,
-  PET_SHOP_APPLICATION_PATH,
-
-
+DOG_BREEDER_DETAIL_PATH,
+APPLICATION_CORRECTION_PATH,
+DOG_BREEDER_REGISTER_PATH,
+DOG_BREEDER_APPLICATION_PATH,
+ANIMAL_SPECIES_PATH,
+PET_SHOP_APPLICATION_PATH,
 } from "./config/routes";
+
 import PetShopApplicationPage from "./pages/pet_shop_application";
+import AnimalSpeciesMasterPage from "./pages/animal_species";
+import DogBreederRegisterPage from "./pages/dog_breeder_register";
+import DogBreederApplicationPage from "./pages/dog_breeder_application";
 import AnimalSpeciesMasterPage from "./pages/animal_species";
 import ApplicationWorkflowPage from "./pages/application_workflow";
 import DogBreederDetailPage from "./pages/dog_breeder_detail";
@@ -63,6 +69,10 @@ import ApplicationDocumentPage from "./pages/application_document";
 import RegistrationApplicationPage from "./pages/registration_application";
 import DocumentTypePage from "./pages/document_type";
 import DogBreederBreedPage from "./pages/dog_breeder_breed";
+import DogBreederRegisterPage from "./pages/dog_breeder_register";
+import DogBreederApplicationPage from "./pages/dog_breeder_application";
+import PaymentTransactionPage from "./pages/payment_transaction";
+
 const PetShopApplicationPageWithPermission = () =>
   createElement(
     PermissionGate,
@@ -100,133 +110,160 @@ const DogBreederDetailPageWithPermission = () =>
     },
     createElement(DogBreederDetailPage)
   );
+
 const ApplicationWorkflowPageWithPermission = () =>
   createElement(
     PermissionGate,
     { menuKey: APPLICATION_WORKFLOW_PATH, action: "list" },
-    createElement(ApplicationWorkflowPage),
+    createElement(ApplicationWorkflowPage)
   );
+
 const PetShopRegisterPageWithPermission = () =>
   createElement(
     PermissionGate,
     { menuKey: "pet-shop-register", action: "save" },
-    createElement(PetShopRegisterPage),
+    createElement(PetShopRegisterPage)
   );
+
 const PetShopDetailPageWithPermission = () =>
   createElement(
     PermissionGate,
     { menuKey: PET_SHOP_DETAIL_PATH, action: "list" },
-    createElement(PetShopDetailPage),
+    createElement(PetShopDetailPage)
   );
-import PaymentTransactionPage from "./pages/payment_transaction";
-
 
 const TestPageWithPermission = () =>
   createElement(
     PermissionGate,
     { menuKey: TEST_PAGE_PATH, action: "list" },
-    createElement(TestPage),
+    createElement(TestPage)
   );
+
 const SampleDepartmentPageWithPermission = () =>
   createElement(
     PermissionGate,
     { menuKey: SAMPLE_DEPARTMENT_PATH, action: "list" },
-    createElement(SampleDepartmentPage),
+    createElement(SampleDepartmentPage)
   );
-  const RegistrationApplicationPageWithPermission = () =>
+
+const RegistrationApplicationPageWithPermission = () =>
   createElement(
     PermissionGate,
     { menuKey: REGISTRATION_APPLICATION_PATH, action: "list" },
-    createElement(RegistrationApplicationPage),
+    createElement(RegistrationApplicationPage)
   );
+
 const DesignationPageWithPermission = () =>
   createElement(
     PermissionGate,
     { menuKey: DESIGNATION_PATH, action: "list" },
-    createElement(DesignationPage),
+    createElement(DesignationPage)
   );
+
 const PaymentModePageWithPermission = () =>
   createElement(
     PermissionGate,
     { menuKey: PAYMENT_MODE_PATH, action: "list" },
-    createElement(PaymentModePage),
+    createElement(PaymentModePage)
   );
+
 const StoreItemPageWithPermission = () =>
   createElement(
     PermissionGate,
     { menuKey: STORE_ITEM_PATH, action: "list" },
-    createElement(StoreItemPage),
+    createElement(StoreItemPage)
   );
+
 const RoleMasterPageWithPermission = () =>
   createElement(
     PermissionGate,
     { menuKey: ROLE_MASTER_PATH, action: "list" },
-    createElement(RoleMasterPage),
+    createElement(RoleMasterPage)
   );
-  const ApplicationStatusMasterPageWithPermission = () =>
+
+const ApplicationStatusMasterPageWithPermission = () =>
   createElement(
     PermissionGate,
     { menuKey: APPLICATION_STATUS_MASTER_PATH, action: "list" },
-    createElement(ApplicationStatusMasterPage),
+    createElement(ApplicationStatusMasterPage)
   );
-  const PaymentStatusMasterPageWithPermission = () =>
+
+const PaymentStatusMasterPageWithPermission = () =>
   createElement(
     PermissionGate,
     { menuKey: PAYMENT_STATUS_MASTER_PATH, action: "list" },
-    createElement(PaymentStatusMasterPage),
+    createElement(PaymentStatusMasterPage)
   );
-  const DistrictMasterPageWithPermission = () =>
+
+const DistrictMasterPageWithPermission = () =>
   createElement(
     PermissionGate,
     { menuKey: DISTRICT_PATH, action: "list" },
-    createElement(DistrictMasterPage),
+    createElement(DistrictMasterPage)
   );
-  const FeeSchedulePageWithPermission = () =>
+
+const FeeSchedulePageWithPermission = () =>
   createElement(
     PermissionGate,
     { menuKey: FEE_SCHEDULE_PATH, action: "list" },
-    createElement(FeeSchedulePage),
+    createElement(FeeSchedulePage)
   );
+
 const OfficePageWithPermission = () =>
   createElement(
     PermissionGate,
     { menuKey: OFFICE_PATH, action: "list" },
-    createElement(OfficePage),
+    createElement(OfficePage)
   );
 
-  const ApplicationDocumentPageWithPermission = () =>
+const ApplicationDocumentPageWithPermission = () =>
   createElement(
     PermissionGate,
     { menuKey: APPLICATION_DOCUMENT_PATH, action: "list" },
-    createElement(ApplicationDocumentPage),
-);
-  const DocumentTypePageWithPermission = () =>
+    createElement(ApplicationDocumentPage)
+  );
+
+const DocumentTypePageWithPermission = () =>
   createElement(
     PermissionGate,
     { menuKey: DOCUMENT_TYPE_PATH, action: "list" },
     createElement(DocumentTypePage)
-
   );
-  const PaymentTransactionPageWithPermission = () =>
+
+const PaymentTransactionPageWithPermission = () =>
   createElement(
     PermissionGate,
     { menuKey: PAYMENT_TRANSACTION_PATH, action: "list" },
     createElement(PaymentTransactionPage)
   );
-  const DogBreederBreedPageWithPermission = () =>
+
+const DogBreederBreedPageWithPermission = () =>
   createElement(
     PermissionGate,
     { menuKey: DOG_BREEDER_BREED_PATH, action: "list" },
     createElement(DogBreederBreedPage)
   );
+
+const DogBreederRegisterPageWithPermission = () =>
+  createElement(DogBreederRegisterPage);
+
+const DogBreederApplicationPageWithPermission = () =>
+  createElement(
+    PermissionGate,
+    {
+      menuKey: DOG_BREEDER_APPLICATION_PATH,
+      action: "list",
+    },
+    createElement(DogBreederApplicationPage)
+  );
+
 export const router = createBrowserRouter([
   {
-    Component: App, // root layout route
+    Component: App,
     children: [
       {
         path: "/",
         Component: ProtectedRoute,
-
         children: [
           {
             path: "/",
@@ -234,7 +271,7 @@ export const router = createBrowserRouter([
             children: [
               {
                 path: ROOT_PATH,
-                Component: TestPage
+                Component: TestPage,
               },
               {
   path: ANIMAL_SPECIES_PATH,
@@ -245,24 +282,25 @@ export const router = createBrowserRouter([
                 Component: PetShopRegisterPageWithPermission,
               },
               {
-  path: PET_SHOP_DETAIL_PATH,
-  Component: PetShopDetailPageWithPermission,
-},
-{
-  path: APPLICATION_CORRECTION_PATH,
-  Component: ApplicationCorrectionPageWithPermission,
-},
-{
-  path: DOG_BREEDER_DETAIL_PATH,
-  Component: DogBreederDetailPageWithPermission,
-},
-              {
-                path: TEST_PAGE_PATH,
-                Component: TestPageWithPermission
+                path: PET_SHOP_DETAIL_PATH,
+                Component: PetShopDetailPageWithPermission,
               },
               {
+                path: APPLICATION_CORRECTION_PATH,
+                Component: ApplicationCorrectionPageWithPermission,
+              },
+              {
+                path: DOG_BREEDER_DETAIL_PATH,
+                Component: DogBreederDetailPageWithPermission,
+              },
+              {
+                path: TEST_PAGE_PATH,
+                Component: TestPageWithPermission,
+              },
+              {
+{
   path: APPLICATION_WORKFLOW_PATH,
-  Component: ApplicationWorkflowPageWithPermission
+  Component: ApplicationWorkflowPageWithPermission,
 },
 {
   path: PET_SHOP_APPLICATION_PATH,
@@ -270,89 +308,101 @@ export const router = createBrowserRouter([
 },
               {
                 path: SAMPLE_DEPARTMENT_PATH,
-                Component: SampleDepartmentPageWithPermission
+                Component: SampleDepartmentPageWithPermission,
               },
               {
                 path: DESIGNATION_PATH,
-                Component: DesignationPageWithPermission
+                Component: DesignationPageWithPermission,
               },
               {
                 path: PAYMENT_MODE_PATH,
-                Component: PaymentModePageWithPermission
+                Component: PaymentModePageWithPermission,
               },
               {
                 path: STORE_ITEM_PATH,
-                Component: StoreItemPageWithPermission
+                Component: StoreItemPageWithPermission,
               },
               {
                 path: ROLE_MASTER_PATH,
-                Component: RoleMasterPageWithPermission
+                Component: RoleMasterPageWithPermission,
               },
               {
                 path: APPLICATION_STATUS_MASTER_PATH,
-                Component: ApplicationStatusMasterPageWithPermission
+                Component: ApplicationStatusMasterPageWithPermission,
               },
               {
-               path: PAYMENT_STATUS_MASTER_PATH,
-                Component: PaymentStatusMasterPageWithPermission
+                path: PAYMENT_STATUS_MASTER_PATH,
+                Component: PaymentStatusMasterPageWithPermission,
               },
               {
                 path: DISTRICT_PATH,
-                Component: DistrictMasterPageWithPermission
-              }, 
+                Component: DistrictMasterPageWithPermission,
+              },
               {
                 path: FEE_SCHEDULE_PATH,
-                 Component: FeeSchedulePageWithPermission
-              }, 
+                Component: FeeSchedulePageWithPermission,
+              },
               {
                 path: REGISTRATION_APPLICATION_PATH,
-                Component: RegistrationApplicationPageWithPermission
+                Component: RegistrationApplicationPageWithPermission,
               },
               {
                 path: OFFICE_PATH,
-                Component: OfficePageWithPermission
+                Component: OfficePageWithPermission,
               },
               {
-                   path: DOCUMENT_TYPE_PATH,
-                  Component: DocumentTypePageWithPermission
-            },
+                path: DOCUMENT_TYPE_PATH,
+                Component: DocumentTypePageWithPermission,
+              },
               {
                 path: PAYMENT_TRANSACTION_PATH,
-                Component: PaymentTransactionPageWithPermission
+                Component: PaymentTransactionPageWithPermission,
               },
               {
                 path: RBAC_ADMIN_PATH,
-                Component: PermissionedRbacAdmin
+                Component: PermissionedRbacAdmin,
               },
               {
-                path: "forbidden",
-                Component: ForbiddenPage
-              },
-              {
-                path: ":menuSlug",
-                Component: PageNotFound
-              },
-              {
-                path: PAGE_NOT_FOUND_PATH,
-                Component: PageNotFound
+                path: DOG_BREEDER_REGISTER_PATH,
+                Component: DogBreederRegisterPageWithPermission,
               },
               {
                 path: APPLICATION_DOCUMENT_PATH,
-                Component: ApplicationDocumentPageWithPermission
+                Component: ApplicationDocumentPageWithPermission,
               },
-               {
+              {
                 path: DOG_BREEDER_BREED_PATH,
-                Component: DogBreederBreedPageWithPermission
+                Component: DogBreederBreedPageWithPermission,
               },
-            ]
-          }
-        ]
+              {
+                path: DOG_BREEDER_APPLICATION_PATH,
+                Component: DogBreederApplicationPageWithPermission,
+              },
+             
+              {
+                path: "forbidden",
+                Component: ForbiddenPage,
+              },
+              {
+                path: ":menuSlug",
+                Component: PageNotFound,
+              },
+              {
+                path: PAGE_NOT_FOUND_PATH,
+                Component: PageNotFound,
+              },
+            ],
+          },
+        ],
       },
-      { path: `/${LOGIN_PATH}`, Component: LoginPage },
+      {
+        path: `/${LOGIN_PATH}`,
+        Component: LoginPage,
+      },
       {
         path: `/${PET_SHOP_OWNER_SIGNUP_PATH}`,
         Component: PetShopOwnerRegisterPage,
       },
-    ]
-  }
+    ],
+  },
 ]);
