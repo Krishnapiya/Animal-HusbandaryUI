@@ -29,12 +29,18 @@ import {
   DOG_BREEDER_BREED_PATH,
   DOG_BREEDER_DETAIL_PATH,
   APPLICATION_CORRECTION_PATH,
+DOG_BREEDER_DETAIL_PATH,
+APPLICATION_CORRECTION_PATH,
 DOG_BREEDER_REGISTER_PATH,
 DOG_BREEDER_APPLICATION_PATH,
-  ANIMAL_SPECIES_PATH
+ANIMAL_SPECIES_PATH,
+PET_SHOP_APPLICATION_PATH,
 } from "./config/routes";
 
-
+import PetShopApplicationPage from "./pages/pet_shop_application";
+import AnimalSpeciesMasterPage from "./pages/animal_species";
+import DogBreederRegisterPage from "./pages/dog_breeder_register";
+import DogBreederApplicationPage from "./pages/dog_breeder_application";
 import AnimalSpeciesMasterPage from "./pages/animal_species";
 import ApplicationWorkflowPage from "./pages/application_workflow";
 import DogBreederDetailPage from "./pages/dog_breeder_detail";
@@ -67,7 +73,15 @@ import DogBreederRegisterPage from "./pages/dog_breeder_register";
 import DogBreederApplicationPage from "./pages/dog_breeder_application";
 import PaymentTransactionPage from "./pages/payment_transaction";
 
-
+const PetShopApplicationPageWithPermission = () =>
+  createElement(
+    PermissionGate,
+    {
+      menuKey: PET_SHOP_APPLICATION_PATH,
+      action: "list",
+    },
+    createElement(PetShopApplicationPage)
+  );
 const AnimalSpeciesPageWithPermission = () =>
   createElement(
     PermissionGate,
@@ -284,9 +298,14 @@ export const router = createBrowserRouter([
                 Component: TestPageWithPermission,
               },
               {
-                path: APPLICATION_WORKFLOW_PATH,
-                Component: ApplicationWorkflowPageWithPermission,
-              },
+{
+  path: APPLICATION_WORKFLOW_PATH,
+  Component: ApplicationWorkflowPageWithPermission,
+},
+{
+  path: PET_SHOP_APPLICATION_PATH,
+  Component: PetShopApplicationPageWithPermission,
+},
               {
                 path: SAMPLE_DEPARTMENT_PATH,
                 Component: SampleDepartmentPageWithPermission,

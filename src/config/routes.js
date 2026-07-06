@@ -36,3 +36,6 @@ export const DOG_BREEDER_REGISTER_PATH = "dog-breeder/register";
 export const DOG_BREEDER_APPLICATION_PATH = "dog-breeder/application";
 
   export const ANIMAL_SPECIES_PATH = "animal-species";
+
+  export const PET_SHOP_APPLICATION_PATH =
+    "pet-shop-application";

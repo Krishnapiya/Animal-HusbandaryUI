@@ -34,13 +34,15 @@ export const getDocumentTypes = () =>
   getItemList(DOCUMENT_TYPE_LIST_URL, { pageNo: 0, pageSize: 100 });
 
 export const saveApplicationDocument = (payload) =>
-  addItem("/admin/auth/awb/application-document/save", { payLoad: payload });
+  addItem("/petshop/auth/application-document/save", { payLoad: payload });
 
 export const getApplicationDocuments = (applicationId) =>
-  getItemList(`/admin/auth/awb/application-document/draft/${applicationId}`);
+  getItemList(
+  `/petshop/auth/application-document/draft/${applicationId}`
+);
 
 export const updateApplicationDocument = (payload) =>
-  editSingleItem("/admin/auth/awb/application-document/save", {
+  editSingleItem("/petshop/auth/application-document/save", {
     payLoad: payload,
   });
 
@@ -74,7 +76,7 @@ export const uploadApplicationDocument = ({
   return callApi({
     method: "POST",
     baseURL: BASE_API_URL,
-    url: "/admin/auth/awb/application-document/upload",
+    url: "/petshop/auth/application-document/upload",
     data: formData,
     headers: getHeader(),
   });
