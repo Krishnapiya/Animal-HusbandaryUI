@@ -169,6 +169,30 @@ export const DOG_BREEDER_REGISTRATION_STEP1_URL =
 export const DOG_BREEDER_DECLARATION_API_URL =
   "/dogbreeder/auth/master/dog-breeder-declaration/";
 
+export const APPLICATION_DOCUMENT_UPLOAD_URL =
+  "/dogbreeder/auth/awb/application-document/upload";
+
+export const APPLICATION_DOCUMENT_BY_APPLICATION_URL =
+  "/dogbreeder/auth/awb/application-document/list/by-application/";
+
+export const APPLICATION_DOCUMENT_VIEW_URL =
+  "/dogbreeder/auth/awb/application-document/view/";
+export const DOG_BREEDER_APPLICATION_API_URL =
+  "/dogbreeder/auth/registration-application/";
+
+export const DOG_BREEDER_APPLICATION_LIST_URL =
+  "/dogbreeder/auth/registration-application/list/all?entityType=DOG_BREEDER";
+  export const APPLICATION_DOCUMENT_DOWNLOAD_URL = "/dogbreeder/auth/awb/application-document/download/";
+  export const DOG_BREEDER_APPLICATION_PREVIEW_URL =
+  "/dogbreeder/auth/registration-application/preview/";
+
+export const DOG_BREEDER_APPLICATION_DOWNLOAD_URL =
+  "/dogbreeder/auth/registration-application/download/";
+  export const DOG_BREEDER_DOCUMENT_VIEW_URL =
+  "/dogbreeder/auth/awb/application-document/view/";
+
+export const DOG_BREEDER_DOCUMENT_DOWNLOAD_URL =
+  "/dogbreeder/auth/awb/application-document/download/";
   export const PET_SHOP_REGISTRATION_STEP2_URL =
   "petshop/auth/master/pet-shop-facility/save";
 

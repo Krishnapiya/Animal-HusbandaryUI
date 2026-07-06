@@ -1,6 +1,6 @@
 /* eslint-disable */
 import PropTypes from "prop-types";
-import { Box, Button, Grid2 as Grid, Typography } from "@mui/material";
+import { Box, Button, Grid2 as Grid, Typography, Alert } from "@mui/material";
 import SaveIcon from "@mui/icons-material/Save";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
@@ -11,10 +11,13 @@ const Step2FacilityInfrastructure = ({
   formValues,
   errors,
   isSaving,
+  dogBreederDetailId,
   onChange,
   onBack,
   onSave,
 }) => {
+  const values = formValues || {};
+
   return (
     <Box>
       <Typography variant="h6" sx={{ mb: 2, fontFamily: "Arial" }}>
@@ -27,12 +30,18 @@ const Step2FacilityInfrastructure = ({
         facilities.
       </Typography>
 
+      {!dogBreederDetailId && (
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          Please save breeder details first.
+        </Alert>
+      )}
+
       <Grid container spacing={2}>
         <Grid size={{ xs: 12 }}>
           <TextInput
             label="1. Accommodation infrastructure"
             name="accommodationInfrastructure"
-            value={formValues.accommodationInfrastructure}
+            value={values.accommodationInfrastructure || ""}
             onChange={onChange}
             errors={errors}
             multiline
@@ -45,7 +54,7 @@ const Step2FacilityInfrastructure = ({
           <TextInput
             label="2. Working hours"
             name="workingHours"
-            value={formValues.workingHours}
+            value={values.workingHours || ""}
             onChange={onChange}
             errors={errors}
             required
@@ -56,7 +65,7 @@ const Step2FacilityInfrastructure = ({
           <TextInput
             label="3. Rest day"
             name="restDay"
-            value={formValues.restDay}
+            value={values.restDay || ""}
             onChange={onChange}
             errors={errors}
             required
@@ -67,7 +76,7 @@ const Step2FacilityInfrastructure = ({
           <TextInput
             label="4. Ventilation arrangement"
             name="ventilationArrangement"
-            value={formValues.ventilationArrangement}
+            value={values.ventilationArrangement || ""}
             onChange={onChange}
             errors={errors}
             multiline
@@ -79,7 +88,7 @@ const Step2FacilityInfrastructure = ({
           <TextInput
             label="5. Lighting arrangement"
             name="lightingArrangement"
-            value={formValues.lightingArrangement}
+            value={values.lightingArrangement || ""}
             onChange={onChange}
             errors={errors}
             multiline
@@ -91,7 +100,7 @@ const Step2FacilityInfrastructure = ({
           <TextInput
             label="6. Heating / cooling arrangement"
             name="heatingCoolingArrangement"
-            value={formValues.heatingCoolingArrangement}
+            value={values.heatingCoolingArrangement || ""}
             onChange={onChange}
             errors={errors}
             multiline
@@ -103,7 +112,7 @@ const Step2FacilityInfrastructure = ({
           <TextInput
             label="7. Food storage arrangement"
             name="foodStorageArrangement"
-            value={formValues.foodStorageArrangement}
+            value={values.foodStorageArrangement || ""}
             onChange={onChange}
             errors={errors}
             multiline
@@ -115,7 +124,7 @@ const Step2FacilityInfrastructure = ({
           <TextInput
             label="8. Cleanliness / waste arrangement"
             name="cleanlinessWasteArrangement"
-            value={formValues.cleanlinessWasteArrangement}
+            value={values.cleanlinessWasteArrangement || ""}
             onChange={onChange}
             errors={errors}
             multiline
@@ -127,7 +136,7 @@ const Step2FacilityInfrastructure = ({
           <TextInput
             label="9. Dead animal disposal arrangement"
             name="deadAnimalDisposalArrangement"
-            value={formValues.deadAnimalDisposalArrangement}
+            value={values.deadAnimalDisposalArrangement || ""}
             onChange={onChange}
             errors={errors}
             multiline
@@ -139,7 +148,7 @@ const Step2FacilityInfrastructure = ({
           <TextInput
             label="10. Veterinary support arrangement"
             name="veterinarySupportArrangement"
-            value={formValues.veterinarySupportArrangement}
+            value={values.veterinarySupportArrangement || ""}
             onChange={onChange}
             errors={errors}
             multiline
@@ -151,7 +160,7 @@ const Step2FacilityInfrastructure = ({
           <TextInput
             label="11. Cage / enclosure details"
             name="cageEnclosureDetails"
-            value={formValues.cageEnclosureDetails}
+            value={values.cageEnclosureDetails || ""}
             onChange={onChange}
             errors={errors}
             multiline
@@ -182,7 +191,7 @@ const Step2FacilityInfrastructure = ({
           startIcon={<SaveIcon />}
           endIcon={<NavigateNextIcon />}
           onClick={onSave}
-          disabled={isSaving}
+          disabled={isSaving || !dogBreederDetailId}
           sx={{ textTransform: "none", backgroundColor: "#2563eb" }}
         >
           {isSaving ? "Saving..." : "Save & Continue"}
@@ -196,6 +205,10 @@ Step2FacilityInfrastructure.propTypes = {
   formValues: PropTypes.object.isRequired,
   errors: PropTypes.object.isRequired,
   isSaving: PropTypes.bool.isRequired,
+  dogBreederDetailId: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.number,
+  ]),
   onChange: PropTypes.func.isRequired,
   onBack: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,
