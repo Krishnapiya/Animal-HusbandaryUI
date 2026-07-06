@@ -27,10 +27,8 @@ import {
   APPLICATION_WORKFLOW_PATH,
   PAYMENT_TRANSACTION_PATH,
   DOG_BREEDER_BREED_PATH,
-  DOG_BREEDER_DETAIL_PATH,
   APPLICATION_CORRECTION_PATH,
 DOG_BREEDER_DETAIL_PATH,
-APPLICATION_CORRECTION_PATH,
 DOG_BREEDER_REGISTER_PATH,
 DOG_BREEDER_APPLICATION_PATH,
 ANIMAL_SPECIES_PATH,
@@ -38,7 +36,6 @@ PET_SHOP_APPLICATION_PATH,
 } from "./config/routes";
 
 import PetShopApplicationPage from "./pages/pet_shop_application";
-import AnimalSpeciesMasterPage from "./pages/animal_species";
 import DogBreederRegisterPage from "./pages/dog_breeder_register";
 import DogBreederApplicationPage from "./pages/dog_breeder_application";
 import AnimalSpeciesMasterPage from "./pages/animal_species";
@@ -69,8 +66,6 @@ import ApplicationDocumentPage from "./pages/application_document";
 import RegistrationApplicationPage from "./pages/registration_application";
 import DocumentTypePage from "./pages/document_type";
 import DogBreederBreedPage from "./pages/dog_breeder_breed";
-import DogBreederRegisterPage from "./pages/dog_breeder_register";
-import DogBreederApplicationPage from "./pages/dog_breeder_application";
 import PaymentTransactionPage from "./pages/payment_transaction";
 
 const PetShopApplicationPageWithPermission = () =>
@@ -298,7 +293,7 @@ export const router = createBrowserRouter([
                 Component: TestPageWithPermission,
               },
               {
-{
+
   path: APPLICATION_WORKFLOW_PATH,
   Component: ApplicationWorkflowPageWithPermission,
 },
