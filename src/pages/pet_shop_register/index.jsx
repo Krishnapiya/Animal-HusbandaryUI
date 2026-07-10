@@ -44,6 +44,8 @@ const initialStep1 = {
   shopPincode: "",
   ownerName: "",
   ownerResidentialAddress: "",
+  fatherOrHusbandName: "",
+  age: "",
   ownerAddressLine1: "",
   ownerAddressLine2: "",
   ownerCity: "",
@@ -95,6 +97,11 @@ const mapDraftToFormValues = (draft, baseValues) => {
     shopCity: draft.shopCity || "",
     shopPincode: draft.shopPincode || "",
     ownerName: draft.ownerName || baseValues.ownerName,
+    fatherOrHusbandName:
+  draft.fatherOrHusbandName || "",
+
+age:
+  draft.age || "",
     ownerResidentialAddress: draft.ownerResidentialAddress || "",
     ownerAddressLine1: draft.ownerAddressLine1 || "",
     ownerAddressLine2: draft.ownerAddressLine2 || "",
@@ -439,6 +446,13 @@ console.log(
     districtId: formValues.district?.id ?? null,
     shopName: formValues.shopName,
     ownerName: formValues.ownerName,
+    fatherOrHusbandName:
+  formValues.fatherOrHusbandName,
+
+age:
+  formValues.age
+    ? Number(formValues.age)
+    : null,
     shopAddressLine1: formValues.shopAddressLine1,
     shopAddressLine2: formValues.shopAddressLine2,
     shopCity: formValues.shopCity,
@@ -610,7 +624,50 @@ console.log("STEP3 RESPONSE", response);
   }
 };
 const handleSaveStep4 = async () => {
-  try {
+  try {if (!declaration.declarationPlace.trim()) {
+  toast.error("Please enter the declaration place.");
+  return;
+}
+
+if (!declaration.declarationDate) {
+  toast.error("Please select the declaration date.");
+  return;
+}
+
+if (!declaration.informationAccurate) {
+  toast.error("Please accept the declaration.");
+  return;
+}
+
+if (!declaration.affidavitRule2018Ack) {
+  toast.error("Please acknowledge the Pet Shop Rules, 2018.");
+  return;
+}
+
+if (!declaration.affidavitAwbiRulesAck) {
+  toast.error("Please acknowledge the AWBI rules and regulations.");
+  return;
+}
+
+if (!declaration.affidavitConditionsAck) {
+  toast.error("Please accept the Board conditions.");
+  return;
+}
+
+if (!declaration.affidavitCancellationAck) {
+  toast.error("Please acknowledge the cancellation conditions.");
+  return;
+}
+
+if (!declaration.affidavitTruthAck) {
+  toast.error("Please confirm the affidavit statement.");
+  return;
+}
+
+if (!declaration.affidavitDeponentName.trim()) {
+  toast.error("Please enter the name of the deponent.");
+  return;
+}
     console.log(
   "DECLARATION STATE BEFORE SAVE",
   declaration
@@ -865,8 +922,13 @@ toast.error(
 )}
 {activeStep === 5 && (
   <Step6PaymentSubmit
-  applicationId={formValues?.applicationId}
-/>
+    applicationId={formValues?.applicationId}
+    formValues={formValues}
+    facilityForm={facilityForm}
+    animals={animals}
+    declaration={declaration}
+    documents={documents}
+  />
 )}
 
           <Box

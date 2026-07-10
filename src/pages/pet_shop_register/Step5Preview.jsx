@@ -704,32 +704,17 @@ const Step5Preview = ({
           <Typography sx={{ lineHeight: 2, mb: 2 }}>
             I{" "}
             <strong>
-              {getFormattedValue(declaration.affidavitDeponentName) ||
-                "________________"}
+              {getValue(declaration.affidavitDeponentName)}
             </strong>
-            , S/o., W/o{" "}
-            <Box
-              component="span"
-              sx={{
-                borderBottom: "1px solid #000",
-                display: "inline-block",
-                minWidth: "180px",
-              }}
-            >
-              &nbsp;
-            </Box>
-            , aged{" "}
-            <Box
-              component="span"
-              sx={{
-                borderBottom: "1px solid #000",
-                display: "inline-block",
-                minWidth: "120px",
-              }}
-            >
-              &nbsp;
-            </Box>
-          </Typography>
+              , S/o., W/o{" "}
+              <strong>
+              {getValue(formValues.fatherOrHusbandName)}
+              </strong>
+              , aged{" "}
+                 <strong>
+              {getValue(formValues.age)}
+              </strong>
+            </Typography>
 
           <Typography sx={{ lineHeight: 2, mb: 3 }}>
             residing at{" "}

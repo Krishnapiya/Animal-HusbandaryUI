@@ -124,6 +124,28 @@ const Step1ShopOwner = ({
             required
           />
         </Grid>
+        <Grid size={{ xs: 12, md: 6 }}>
+  <TextInput
+    label="Father/Husband Name"
+    name="fatherOrHusbandName"
+    value={formValues.fatherOrHusbandName}
+    onChange={onChange}
+    errors={errors}
+    required
+  />
+</Grid>
+
+<Grid size={{ xs: 12, md: 6 }}>
+  <TextInput
+    label="Age"
+    name="age"
+    type="number"
+    value={formValues.age}
+    onChange={onChange}
+    errors={errors}
+    required
+  />
+</Grid>
         <Grid size={{ xs: 12 }}>
           <TextInput
             label="Residential address (r/o)"

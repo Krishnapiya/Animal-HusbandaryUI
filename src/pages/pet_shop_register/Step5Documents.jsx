@@ -14,9 +14,7 @@ import {
 } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
-import PreviewIcon from "@mui/icons-material/Preview";
 import SaveIcon from "@mui/icons-material/Save";
-import Step5Preview from "./Step5Preview";
 import {
   getApplicationDocuments,
   uploadApplicationDocument,
@@ -90,15 +88,10 @@ const isSavedDocument = (document) =>
 
 const Step5Documents = ({
   formValues,
-  facilityForm,
-  animals,
-  declaration,
   documents: documentsProp,
   setDocuments: setDocumentsProp,
   setActiveStep,
 }) => {
-  const [showPreview, setShowPreview] =
-    useState(false);
 
   const [localDocuments, setLocalDocuments] =
     useState({});
@@ -386,14 +379,23 @@ const handleSaveAndContinue = async () => {
   return (
     <>
       <Typography
-        variant="h5"
-        sx={{
-          mb: 3,
-          fontWeight: 600,
-        }}
-      >
-        Documents Upload
-      </Typography>
+  variant="h5"
+  sx={{
+    fontWeight: 600,
+    mb: 1,
+  }}
+>
+  Documents Upload
+</Typography>
+
+<Typography
+  variant="body2"
+  color="text.secondary"
+  sx={{ mb: 3 }}
+>
+  Supported file types: <strong>PDF, JPG, JPEG, PNG</strong> &nbsp;|&nbsp;
+  Maximum file size: <strong>6 MB</strong> per file
+</Typography>
 
       {isLoadingDocuments && (
         <Typography
@@ -539,35 +541,11 @@ const handleSaveAndContinue = async () => {
   Save & Continue
 </Button>
 
-          <Button
-            variant="contained"
-            startIcon={
-              <PreviewIcon />
-            }
-            onClick={() =>
-              setShowPreview(
-                !showPreview
-              )
-            }
-          >
-            {showPreview
-              ? "Hide Preview"
-              : "Preview Application"}
-          </Button>
+         
         </Box>
       </Paper>
 
-    {showPreview && (
-  <Box sx={{ mt: 3 }}>
-    <Step5Preview
-      formValues={formValues}
-      facilityForm={facilityForm}
-      animals={animals}
-      declaration={declaration}
-      supportingDocuments={Object.values(documents)}
-    />
-  </Box>
-)}
+    
     </>
   );
 };

@@ -217,3 +217,12 @@ export const PET_SHOP_REGISTRATION_APPLICATION_LIST_URL =
 
   export const PET_SHOP_REGISTRATION_APPLICATION_DOWNLOAD_URL =
   "petshop/auth/registration-application/download";
+
+export const PET_SHOP_FORWARDED_APPLICATION_LIST_URL =
+  "/petshop/auth/registration-application/list/all?forwardedOnly=true";
+
+  export const PET_SHOP_MY_APPLICATION_API_URL =
+  "/petshop/auth/registration-application/";
+
+export const PET_SHOP_MY_APPLICATION_LIST_URL =
+  "/petshop/auth/registration-application/my-applications";

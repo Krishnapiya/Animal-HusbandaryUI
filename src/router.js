@@ -28,13 +28,17 @@ import {
   PAYMENT_TRANSACTION_PATH,
   DOG_BREEDER_BREED_PATH,
   APPLICATION_CORRECTION_PATH,
-DOG_BREEDER_DETAIL_PATH,
-DOG_BREEDER_REGISTER_PATH,
-DOG_BREEDER_APPLICATION_PATH,
-ANIMAL_SPECIES_PATH,
-PET_SHOP_APPLICATION_PATH,
+  DOG_BREEDER_DETAIL_PATH,
+  DOG_BREEDER_REGISTER_PATH,
+  DOG_BREEDER_APPLICATION_PATH,
+  ANIMAL_SPECIES_PATH,
+  PET_SHOP_APPLICATION_PATH,
+   PET_SHOP_FORWARDED_APPLICATION_PATH,
+   PET_SHOP_MY_APPLICATION_PATH,
 } from "./config/routes";
 
+import PetShopMyApplicationPage from "./pages/pet_shop_my_applications";
+import PetShopForwardedApplicationPage from "./pages/pet_shop_forwarded_application";
 import PetShopApplicationPage from "./pages/pet_shop_application";
 import DogBreederRegisterPage from "./pages/dog_breeder_register";
 import DogBreederApplicationPage from "./pages/dog_breeder_application";
@@ -68,6 +72,24 @@ import DocumentTypePage from "./pages/document_type";
 import DogBreederBreedPage from "./pages/dog_breeder_breed";
 import PaymentTransactionPage from "./pages/payment_transaction";
 
+const PetShopMyApplicationPageWithPermission = () =>
+  createElement(
+    PermissionGate,
+    {
+      menuKey: PET_SHOP_MY_APPLICATION_PATH,
+      action: "list",
+    },
+    createElement(PetShopMyApplicationPage)
+  );
+const PetShopForwardedApplicationPageWithPermission = () =>
+  createElement(
+    PermissionGate,
+    {
+      menuKey: PET_SHOP_FORWARDED_APPLICATION_PATH,
+      action: "list",
+    },
+    createElement(PetShopForwardedApplicationPage)
+  );
 const PetShopApplicationPageWithPermission = () =>
   createElement(
     PermissionGate,
@@ -269,9 +291,13 @@ export const router = createBrowserRouter([
                 Component: TestPage,
               },
               {
-  path: ANIMAL_SPECIES_PATH,
-  Component: AnimalSpeciesPageWithPermission
-},
+                path: ANIMAL_SPECIES_PATH,
+                Component: AnimalSpeciesPageWithPermission
+              },
+              {
+                path: PET_SHOP_MY_APPLICATION_PATH,
+                Component: PetShopMyApplicationPageWithPermission,
+              },
               {
                 path: PET_SHOP_REGISTER_PATH,
                 Component: PetShopRegisterPageWithPermission,
@@ -293,14 +319,18 @@ export const router = createBrowserRouter([
                 Component: TestPageWithPermission,
               },
               {
+                path: PET_SHOP_FORWARDED_APPLICATION_PATH,
+                Component: PetShopForwardedApplicationPageWithPermission,
+              },
+              {
 
-  path: APPLICATION_WORKFLOW_PATH,
-  Component: ApplicationWorkflowPageWithPermission,
-},
-{
-  path: PET_SHOP_APPLICATION_PATH,
-  Component: PetShopApplicationPageWithPermission,
-},
+              path: APPLICATION_WORKFLOW_PATH,
+              Component: ApplicationWorkflowPageWithPermission,
+              },
+              {
+              path: PET_SHOP_APPLICATION_PATH,
+              Component: PetShopApplicationPageWithPermission,
+              },
               {
                 path: SAMPLE_DEPARTMENT_PATH,
                 Component: SampleDepartmentPageWithPermission,
