@@ -89,7 +89,17 @@ const useFetchTable = (apiURL) => {
       if (fetchParams.sortOrder) params.sortOrder = fetchParams.sortOrder;
       if (fetchParams.search) params.search = fetchParams.search;
   
-      const url = `${BASE_API_URL.replace(/\/$/, "")}/${apiURL.replace(/^\/+/, "")}list/all`;
+      const cleanBase = BASE_API_URL.replace(/\/$/, "");
+      const cleanApi = apiURL.replace(/^\/+/, "");
+
+        const shouldAppendListAll =
+          !cleanApi.includes("list/all") &&
+          !cleanApi.includes("my-applications") &&
+          !cleanApi.includes("my-forwarded");
+
+        const url = shouldAppendListAll
+          ? `${cleanBase}/${cleanApi}list/all`
+          : `${cleanBase}/${cleanApi}`;
   
       const response = await axios.get(url, {
         headers: getHeader(),
@@ -105,12 +115,27 @@ const useFetchTable = (apiURL) => {
       });
   
       const payload = response.data.payLoad;
-      setRows(payload.content || []);
-      setRowsInCurrentPage(payload.content?.length || 0);
-      setTotalRows(payload.totalRecords || 0);
-      setPageCount(payload.totalPages || 0);
-  
-      if (!payload || payload.totalRecords === 0) toast.info("No Data Found !!!");
+
+      // Handle both paginated responses and plain array responses
+      if (Array.isArray(payload)) {
+        setRows(payload);
+        setRowsInCurrentPage(payload.length);
+        setTotalRows(payload.length);
+        setPageCount(1);
+
+        if (payload.length === 0) {
+        toast.info("No Data Found !!!");
+        }
+        } else {
+  setRows(payload.content || []);
+  setRowsInCurrentPage(payload.content?.length || 0);
+  setTotalRows(payload.totalRecords || 0);
+  setPageCount(payload.totalPages || 0);
+
+  if (!payload || payload.totalRecords === 0) {
+    toast.info("No Data Found !!!");
+    }
+    }
     } catch (error) {
       toast.error(error?.response?.data?.detail || "Something Went Wrong !!");
       setRows([]);

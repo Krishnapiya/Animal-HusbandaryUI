@@ -1,0 +1,85 @@
+import PropTypes from "prop-types";
+
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import TableSortLabel from "@mui/material/TableSortLabel";
+
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import IconButton from "@mui/material/IconButton";
+import Tooltip from "@mui/material/Tooltip";
+
+const List = (props) => {
+
+  return (
+    <Table stickyHeader sx={{ minWidth: 650 }}>
+      <TableHead>
+        <TableRow>
+
+          {props.tableColumns.map((col, index) => (
+            <TableCell key={index}>
+              <TableSortLabel
+                onClick={props.handleSortClick(col.attr)}
+                active={col.attr === props.sortAttributeDirection.attr}
+                direction={
+                  col.attr === props.sortAttributeDirection.attr
+                    ? props.sortAttributeDirection.direction
+                    : "asc"
+                }
+              >
+                {col.header}
+              </TableSortLabel>
+            </TableCell>
+          ))}
+
+          <TableCell align="center">
+            View
+          </TableCell>
+
+        </TableRow>
+      </TableHead>
+
+      <TableBody>
+
+        {props.rows.map((row, index) => (
+
+          <TableRow key={index}>
+
+            {props.tableColumns.map((col, colIndex) => (
+              <TableCell key={colIndex}>
+                {typeof col.render === "function"
+                  ? col.render(row)
+                  : String(row[col.attr] || "-")}
+              </TableCell>
+            ))}
+
+            <TableCell align="center">
+              <Tooltip title="View">
+                <IconButton
+                  onClick={() => props.handleEditClick(row.id)}
+                >
+                  <VisibilityIcon />
+                </IconButton>
+              </Tooltip>
+            </TableCell>
+
+          </TableRow>
+
+        ))}
+
+      </TableBody>
+    </Table>
+  );
+};
+
+List.propTypes = {
+  rows: PropTypes.array,
+  tableColumns: PropTypes.array,
+  handleEditClick: PropTypes.func,
+  handleSortClick: PropTypes.func,
+  sortAttributeDirection: PropTypes.object,
+};
+
+export default List;

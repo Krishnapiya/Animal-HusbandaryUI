@@ -12,9 +12,7 @@ import {
   Chip,
 } from "@mui/material";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
-import PreviewIcon from "@mui/icons-material/Preview";
 import SaveIcon from "@mui/icons-material/Save";
-import Step5Preview from "./Step5Preview";
 import DocumentPreview from "./DocumentPreview";
 import {
   getApplicationDocuments,
@@ -48,6 +46,11 @@ const documentList = [
     name: "Affidavit",
     mandatory: true,
   },
+  {
+  id: 9,
+  name: "Applicant Signature",
+  mandatory: true,
+},
 ];
 
 const getPayload = (response) =>
@@ -86,14 +89,12 @@ const isSavedDocument = (document) =>
 
 const Step5Documents = ({
   formValues,
-  facilityForm,
-  animals,
-  declaration,
   documents: documentsProp,
   setDocuments: setDocumentsProp,
   setActiveStep,
 }) => {
-  const [showPreview, setShowPreview] = useState(false);
+  const [showPreview, setShowPreview] =
+    useState(false);
 
   const [localDocuments, setLocalDocuments] = useState({});
   const documents = documentsProp ?? localDocuments;
@@ -175,8 +176,24 @@ const Step5Documents = ({
     };
   }, [formValues?.applicationId, setDocuments]);
 
-  const handleFileChange = (documentId, event) => {
-    const file = event.target.files?.[0];
+ const handleFileChange = (
+  documentId,
+  event
+) => {
+  const file = event.target.files?.[0];
+
+  if (
+  documentId === 6 &&
+  !file.type.startsWith("image/")
+) {
+  toast.error(
+    "Please upload a JPG or PNG signature."
+  );
+
+  event.target.value = "";
+
+  return;
+}
 
     if (!file) {
       return;
@@ -190,19 +207,59 @@ const Step5Documents = ({
       return;
     }
 
-    setDocuments((prev) => ({
-      ...prev,
-      [documentId]: {
-        ...(prev[documentId] || {}),
-        file,
-        name: file.name,
-        fileName: file.name,
-        mimeType: file.type,
-        fileSizeBytes: file.size,
-        isDraft: false,
-      },
-    }));
-  };
+  setDocuments((prev) => ({
+    ...prev,
+    [documentId]: {
+      ...(prev[documentId] || {}),
+      file,
+      name: file.name,
+      fileName: file.name,
+      mimeType: file.type,
+      fileSizeBytes: file.size,
+      isDraft: false,
+    },
+  }));
+};
+
+const handleViewDocument = (
+  documentId
+) => {
+  const document =
+    documents[documentId];
+
+  if (!document) {
+    return;
+  }
+
+  if (document.file) {
+    const fileUrl =
+      URL.createObjectURL(
+        document.file
+      );
+
+    window.open(
+      fileUrl,
+      "_blank"
+    );
+    return;
+  }
+console.log("Document =", document);
+console.log("File Path =", document.filePath);
+  if (document.filePath) {
+  const backendUrl =
+  "http://localhost:8083/petshop/auth/application-document/view/";
+
+window.open(
+  backendUrl + document.filePath,
+  "_blank"
+);
+}
+
+  toast.info(
+    "Saved document preview is not available"
+  );
+};
+
 
   const handleSaveDocuments = async () => {
     try {
@@ -285,14 +342,23 @@ const Step5Documents = ({
   return (
     <>
       <Typography
-        variant="h5"
-        sx={{
-          mb: 3,
-          fontWeight: 600,
-        }}
-      >
-        Documents Upload
-      </Typography>
+  variant="h5"
+  sx={{
+    fontWeight: 600,
+    mb: 1,
+  }}
+>
+  Documents Upload
+</Typography>
+
+<Typography
+  variant="body2"
+  color="text.secondary"
+  sx={{ mb: 3 }}
+>
+  Supported file types: <strong>PDF, JPG, JPEG, PNG</strong> &nbsp;|&nbsp;
+  Maximum file size: <strong>6 MB</strong> per file
+</Typography>
 
       {isLoadingDocuments && (
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -362,11 +428,20 @@ const Step5Documents = ({
                   >
                     Upload
                     <input
-                      hidden
-                      type="file"
-                      accept="image/*,.pdf"
-                      onChange={(e) => handleFileChange(document.id, e)}
-                    />
+  hidden
+  type="file"
+  accept={
+    document.id === 6
+      ? "image/png,image/jpeg,image/jpg"
+      : ".pdf,.jpg,.jpeg,.png"
+  }
+  onChange={(e) =>
+    handleFileChange(
+      document.id,
+      e
+    )
+  }
+/>
                   </Button>
                 </Box>
 
@@ -398,26 +473,11 @@ const Step5Documents = ({
             Save & Continue
           </Button>
 
-          <Button
-            variant="contained"
-            startIcon={<PreviewIcon />}
-            onClick={() => setShowPreview(!showPreview)}
-          >
-            {showPreview ? "Hide Preview" : "Preview Application"}
-          </Button>
+         
         </Box>
       </Paper>
 
-      {showPreview && (
-        <Box sx={{ mt: 3 }}>
-          <Step5Preview
-            formValues={formValues}
-            facilityForm={facilityForm}
-            animals={animals}
-            declaration={declaration}
-          />
-        </Box>
-      )}
+    
     </>
   );
 };
