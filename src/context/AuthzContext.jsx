@@ -58,6 +58,9 @@ const toToolpadNav = (items) =>
 
 const moduleKey = (m) => String(m?.segment ?? m?.slug ?? m?.title ?? "");
 
+const menuPermissionKey = (item) =>
+  String(item?.slug || item?.segment || "").toLowerCase();
+
 const parseJwtPayload = (token) => {
   if (!token || typeof token !== "string") {
     return null;
@@ -103,6 +106,64 @@ const hasAdminRole = (user) => {
   }
 };
 
+/**
+ * Sidebar menus require explicit list permission when configured in the matrix.
+ * Admin users still see menus that have no matrix entry yet.
+ */
+const canShowMenuInNav = (item, permissionMap, user) => {
+  const key = menuPermissionKey(item);
+  if (!key) {
+    return false;
+  }
+
+  const menuPerms = permissionMap?.[key];
+  if (menuPerms && Object.prototype.hasOwnProperty.call(menuPerms, "list")) {
+    return menuPerms.list === true;
+  }
+
+  return hasAdminRole(user);
+};
+
+const filterNavTreeByListPermission = (items, permissionMap, user) =>
+  (items || [])
+    .map((item) => {
+      const children = filterNavTreeByListPermission(
+        item.children,
+        permissionMap,
+        user
+      );
+
+      if (!canShowMenuInNav(item, permissionMap, user)) {
+        return null;
+      }
+
+      return {
+        ...item,
+        ...(children.length ? { children } : {}),
+      };
+    })
+    .filter(Boolean);
+
+const filterModulesByListPermission = (modules, permissionMap, user) =>
+  (modules || [])
+    .map((mod) => {
+      const children = filterNavTreeByListPermission(
+        mod.children,
+        permissionMap,
+        user
+      );
+
+      if (!children.length) {
+        return null;
+      }
+
+      return {
+        ...mod,
+        children,
+      };
+    })
+    .filter(Boolean);
+
 /** Sidebar nav: Dashboard + menus for active module + optional RBAC admin item. */
 const buildSidebarNavigation = (modules, activeKey, includeAccessControl) => {
   const dash = { title: "Dashboard", icon: <DashboardIcon /> };
@@ -113,6 +174,7 @@ const buildSidebarNavigation = (modules, activeKey, includeAccessControl) => {
   if (!modules.length) {
     return [dash, ...accessControlItem];
   }
+
   const key =
     activeKey != null && activeKey !== ""
       ? activeKey
@@ -132,12 +194,38 @@ export const AuthzProvider = ({ children }) => {
   const [permissionMap, setPermissionMap] = useState({});
   const [isAuthzLoading, setIsAuthzLoading] = useState(false);
 
+  const visibleNavModules = useMemo(() => {
+    const user = getUserAttributes();
+    return filterModulesByListPermission(apiNavModules, permissionMap, user);
+  }, [apiNavModules, permissionMap]);
+
   useEffect(() => {
     const user = getUserAttributes();
     const includeAccessControl =
       Boolean(permissionMap?.[RBAC_ADMIN_PATH]?.list) || hasAdminRole(user);
-    setNavigation(buildSidebarNavigation(apiNavModules, activeModuleSegment, includeAccessControl));
-  }, [apiNavModules, activeModuleSegment, permissionMap]);
+
+    let resolvedActiveKey = activeModuleSegment;
+    if (
+      resolvedActiveKey &&
+      !visibleNavModules.some((mod) => moduleKey(mod) === resolvedActiveKey)
+    ) {
+      resolvedActiveKey = visibleNavModules.length
+        ? moduleKey(visibleNavModules[0])
+        : null;
+    }
+
+    if (resolvedActiveKey !== activeModuleSegment) {
+      setActiveModuleSegment(resolvedActiveKey);
+    }
+
+    setNavigation(
+      buildSidebarNavigation(
+        visibleNavModules,
+        resolvedActiveKey,
+        includeAccessControl
+      )
+    );
+  }, [visibleNavModules, activeModuleSegment, permissionMap]);
 
   const refreshAuthz = async () => {
     const user = getUserAttributes();
@@ -157,14 +245,7 @@ export const AuthzProvider = ({ children }) => {
       ]);
 
       const navItems = normalizeList(navResponse);
-      if (navItems.length > 0) {
-        setApiNavModules(navItems);
-        setActiveModuleSegment(moduleKey(navItems[0]) || null);
-      } else {
-        setApiNavModules([]);
-        setActiveModuleSegment(null);
-        setNavigation(defaultNavigation);
-      }
+      let nextPermissionMap = {};
 
       if (permissionResponse?.isSuccess) {
         const data =
@@ -172,9 +253,26 @@ export const AuthzProvider = ({ children }) => {
           permissionResponse.data?.payload ??
           permissionResponse.data ??
           {};
-        setPermissionMap(normalizePermissionMap(data));
+        nextPermissionMap = normalizePermissionMap(data);
+        setPermissionMap(nextPermissionMap);
       } else {
         setPermissionMap({});
+      }
+
+      if (navItems.length > 0) {
+        const filteredModules = filterModulesByListPermission(
+          navItems,
+          nextPermissionMap,
+          user
+        );
+        setApiNavModules(navItems);
+        setActiveModuleSegment(
+          filteredModules.length ? moduleKey(filteredModules[0]) : null
+        );
+      } else {
+        setApiNavModules([]);
+        setActiveModuleSegment(null);
+        setNavigation(defaultNavigation);
       }
     } catch (error) {
       console.error("Failed to load authz metadata", error);
@@ -206,7 +304,7 @@ export const AuthzProvider = ({ children }) => {
   const value = useMemo(
     () => ({
       navigation,
-      apiNavModules,
+      apiNavModules: visibleNavModules,
       activeModuleSegment,
       setActiveModuleSegment,
       permissionMap,
@@ -216,7 +314,7 @@ export const AuthzProvider = ({ children }) => {
     }),
     [
       navigation,
-      apiNavModules,
+      visibleNavModules,
       activeModuleSegment,
       permissionMap,
       isAuthzLoading,

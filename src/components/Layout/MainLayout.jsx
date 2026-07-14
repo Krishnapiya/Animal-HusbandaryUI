@@ -3,24 +3,27 @@ import { PageContainer } from "@toolpad/core/PageContainer";
 import { Outlet } from "react-router-dom";
 import SideBarFooter from "./SideBarFooter";
 import ToolBarActions from "./ToolBarActions";
+import { BRAND_GRADIENTS } from "../../config/branding";
+
 export default function MainLayout() {
   return (
     <DashboardLayout
       slots={{
         toolbarActions: ToolBarActions,
-        sidebarFooter: SideBarFooter
+        sidebarFooter: SideBarFooter,
       }}
-      sidebarExpandedWidth={220}
+      sidebarExpandedWidth={240}
       sx={{
+        fontFamily: "Arial, sans-serif",
         header: (theme) => ({
           background:
             theme.palette.mode === "dark"
-              ? "linear-gradient(90eg, #333333, #555555)" // Dark mode gradient
-              : "linear-gradient(90deg, #3b0a79, #2575fc)", // Light mode gradientlinear-gradient(135deg, #6a11cb 0%, #2575fc 100%)
+              ? "linear-gradient(90deg, #111827, #1f2937)"
+              : BRAND_GRADIENTS.header,
           ".MuiIconButton-root": {
-            color: theme.palette.mode === "dark" ? "grey.300" : "#fff"
-          }
-        })
+            color: theme.palette.mode === "dark" ? "grey.300" : "#fff",
+          },
+        }),
       }}
     >
       <PageContainer breadcrumbs={[]} maxWidth title="">

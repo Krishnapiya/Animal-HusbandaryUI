@@ -1,3 +1,4 @@
+import { useState } from "react";
 import PropTypes from "prop-types";
 import {
   Box,
@@ -8,14 +9,49 @@ import {
   Divider,
 } from "@mui/material";
 import PaymentIcon from "@mui/icons-material/Payment";
+import DownloadIcon from "@mui/icons-material/Download";
+import { toast } from "material-react-toastify";
+import { downloadPetShopRegistrationApplication } from "../../api-client/petShopRegistration";
 
 const Step6PaymentSubmit = ({
   applicationId,
 }) => {
+  const [isDownloading, setIsDownloading] =
+    useState(false);
 
   const handlePayment = () => {
     alert(
       "Payment Gateway Integration Pending"
+    );
+  };
+
+  const handleDownloadApplication = async () => {
+    if (!applicationId) {
+      toast.error(
+        "Please save your application before downloading"
+      );
+      return;
+    }
+
+    setIsDownloading(true);
+
+    const response =
+      await downloadPetShopRegistrationApplication(
+        applicationId
+      );
+
+    setIsDownloading(false);
+
+    if (response.isSuccess) {
+      toast.success(
+        "Application PDF downloaded"
+      );
+      return;
+    }
+
+    toast.error(
+      response.message ||
+        "Failed to download application"
     );
   };
 
@@ -38,7 +74,7 @@ const Step6PaymentSubmit = ({
         <Typography sx={{ mb: 2 }}>
           <b>Application ID :</b>
           {" "}
-          {applicationId}
+          {applicationId || "-"}
         </Typography>
 
         <Typography sx={{ mb: 2 }}>
@@ -68,8 +104,13 @@ const Step6PaymentSubmit = ({
 
           <Button
             variant="outlined"
+            startIcon={<DownloadIcon />}
+            onClick={handleDownloadApplication}
+            disabled={!applicationId || isDownloading}
           >
-            Download Application
+            {isDownloading
+              ? "Downloading..."
+              : "Download Application"}
           </Button>
         </Box>
 
@@ -79,7 +120,10 @@ const Step6PaymentSubmit = ({
 };
 
 Step6PaymentSubmit.propTypes = {
-  applicationId: PropTypes.any,
+  applicationId: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.number,
+  ]),
 };
 
 export default Step6PaymentSubmit;

@@ -126,9 +126,11 @@ export const PAYMENT_TRANSACTION_API_URL = "/admin/auth/awb/payment-transaction/
 export const PAYMENT_TRANSACTION_LIST_URL = "/admin/auth/awb/payment-transaction/";
 export const PAYMENT_STATUS_MASTER_DROPDOWN_URL = "/admin/auth/master/payment-status-master/list/all?dropDown=true";
 
-export const APPLICATION_DOCUMENT_API_URL ="/admin/auth/awb/application-document/";
+export const APPLICATION_DOCUMENT_API_URL =
+  "/petshop/auth/application-document/";
 
-export const APPLICATION_DOCUMENT_LIST_URL ="/admin/auth/awb/application-document/";
+export const APPLICATION_DOCUMENT_LIST_URL =
+  "/petshop/auth/application-document/";
 
 
 export const USER_DROPDOWN_URL =

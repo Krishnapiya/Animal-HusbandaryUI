@@ -45,6 +45,7 @@ import {
   updateMenu,
   updateModule,
 } from "../../api-client/rbac";
+import { useAuthz } from "../../context/AuthzContext";
 
 const STANDARD_ACTIONS = ["list", "save", "edit", "delete", "export"];
 
@@ -503,6 +504,7 @@ StructurePanel.propTypes = {
 };
 
 const RbacAdminPage = () => {
+  const { refreshAuthz } = useAuthz();
   const [pageTab, setPageTab] = useState(0);
   const [modules, setModules] = useState([]);
   const [menus, setMenus] = useState([]);
@@ -821,6 +823,7 @@ const RbacAdminPage = () => {
       }
       toast.success("Permissions saved");
       setDirtyRoleIds(new Set());
+      await refreshAuthz();
     } finally {
       setSaving(false);
     }

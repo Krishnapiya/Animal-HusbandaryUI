@@ -29,6 +29,7 @@ import {
     saveApplicationDeclaration,
     updateApplicationDeclaration,
     getApplicationDeclaration,
+    getApplicationDocuments,
     
 } from "../../api-client/petShopRegistration";
 import { getUserAttributes } from "../../utils";
@@ -112,6 +113,41 @@ const mapDraftToFormValues = (draft, baseValues) => {
   return mapped;
 };
 
+const resolveMaxAccessibleStep = ({
+  applicationId,
+  facilityId,
+  animals,
+  declarationId,
+  documentCount,
+}) => {
+  let maxStep = 0;
+
+  if (applicationId) {
+    maxStep = 1;
+  }
+  if (facilityId) {
+    maxStep = 2;
+  }
+  if (
+    animals?.some(
+      (animal) =>
+        animal?.id ||
+        animal?.species?.id ||
+        animal?.species
+    )
+  ) {
+    maxStep = 3;
+  }
+  if (declarationId) {
+    maxStep = 4;
+  }
+  if (documentCount > 0) {
+    maxStep = 5;
+  }
+
+  return maxStep;
+};
+
 const PetShopRegisterPage = () => {
   const user = getUserAttributes();
   const [activeStep, setActiveStep] = useState(0);
@@ -121,6 +157,49 @@ const PetShopRegisterPage = () => {
   const [isLoadingDraft, setIsLoadingDraft] = useState(true);
   const [draftLoaded, setDraftLoaded] = useState(false);
   const [documents, setDocuments] = useState({});
+  const [documentCount, setDocumentCount] = useState(0);
+  const [initialStepResolved, setInitialStepResolved] =
+    useState(false);
+  const [maxAccessibleStep, setMaxAccessibleStep] = useState(0);
+  const [facilityForm, setFacilityForm] = useState({
+    id: "",
+    accommodationInfrastructure: "",
+    openingTime: "",
+    closingTime: "",
+    restDay: [],
+    ventilationArrangement: "",
+    lightingArrangement: "",
+    fireSafetyArrangement: "",
+    heatingCoolingArrangement: "",
+    powerBackupArrangement: "",
+    foodStorageArrangement: "",
+    cleanlinessWasteArrangement: "",
+    deadAnimalDisposalArrangement: "",
+    veterinarySupportArrangement: "",
+  });
+  const [animals, setAnimals] = useState([
+    {
+      id: "",
+      species: "",
+      breed: "",
+      quantity: "",
+      ageDescription: "",
+      priceOffered: "",
+      description: "",
+    },
+  ]);
+  const [declaration, setDeclaration] = useState({
+    id: "",
+    declarationPlace: "",
+    declarationDate: "",
+    informationAccurate: false,
+    affidavitRule2018Ack: false,
+    affidavitAwbiRulesAck: false,
+    affidavitConditionsAck: false,
+    affidavitCancellationAck: false,
+    affidavitTruthAck: false,
+    affidavitDeponentName: "",
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -153,6 +232,10 @@ console.log("DETAIL", draft.detail);
   );
 const declarationResponse =
   await getApplicationDeclaration(
+    draft.applicationId
+  );
+const documentsResponse =
+  await getApplicationDocuments(
     draft.applicationId
   );
   console.log(
@@ -386,6 +469,18 @@ console.log(
   console.log("LOADED FACILITY ID", facility.id);
 }
 
+if (documentsResponse?.isSuccess) {
+  const documentPayload =
+    documentsResponse.data?.payLoad ??
+    documentsResponse.data?.payload ??
+    documentsResponse.data;
+  const documentRows = Array.isArray(documentPayload)
+    ? documentPayload
+    : documentPayload?.content || [];
+
+  setDocumentCount(documentRows.length);
+}
+
           setDraftLoaded(true);
         }
       }
@@ -400,6 +495,57 @@ console.log(
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    const max = resolveMaxAccessibleStep({
+      applicationId: formValues.applicationId,
+      facilityId: facilityForm.id,
+      animals,
+      declarationId: declaration.id,
+      documentCount,
+    });
+    setMaxAccessibleStep(max);
+  }, [
+    formValues.applicationId,
+    facilityForm.id,
+    animals,
+    declaration.id,
+    documentCount,
+  ]);
+
+  useEffect(() => {
+    if (!draftLoaded || initialStepResolved) {
+      return;
+    }
+
+    const max = resolveMaxAccessibleStep({
+      applicationId: formValues.applicationId,
+      facilityId: facilityForm.id,
+      animals,
+      declarationId: declaration.id,
+      documentCount,
+    });
+
+    if (max > 0) {
+      setActiveStep(max);
+    }
+
+    setInitialStepResolved(true);
+  }, [
+    draftLoaded,
+    initialStepResolved,
+    formValues.applicationId,
+    facilityForm.id,
+    animals,
+    declaration.id,
+    documentCount,
+  ]);
+
+  const handleStepClick = (step) => {
+    if (step <= maxAccessibleStep) {
+      setActiveStep(step);
+    }
+  };
 
   const handleChange = (event) => {
     setFormValues({
@@ -455,53 +601,6 @@ console.log(
     latitude: formValues.latitude ? Number(formValues.latitude) : null,
     longitude: formValues.longitude ? Number(formValues.longitude) : null,
   });
- const [facilityForm, setFacilityForm] = useState({
-  id: "",
-  accommodationInfrastructure: "",
-
-  openingTime: "",
-  closingTime: "",
-
-  restDay: [],
-
-  ventilationArrangement: "",
-  lightingArrangement: "",
-  fireSafetyArrangement: "",
-  heatingCoolingArrangement: "",
-  powerBackupArrangement: "",
-  foodStorageArrangement: "",
-  cleanlinessWasteArrangement: "",
-  deadAnimalDisposalArrangement: "",
-  veterinarySupportArrangement: "",
-});
-
-const [animals, setAnimals] = useState([
-  {
-    id: "",
-    species: "",
-    breed: "",
-    quantity: "",
-    ageDescription: "",
-    priceOffered: "",
-    description: "",
-  },
-]);
-
-const [declaration, setDeclaration] = useState({
-  id: "",
-  declarationPlace: "",
-  declarationDate: "",
-
-  informationAccurate: false,
-
-  affidavitRule2018Ack: false,
-  affidavitAwbiRulesAck: false,
-  affidavitConditionsAck: false,
-  affidavitCancellationAck: false,
-  affidavitTruthAck: false,
-
-  affidavitDeponentName: "",
-});
 
   const handleSaveStep1 = async () => {
     if (isSaving) return;
@@ -767,6 +866,18 @@ toast.error(
     }
 
     if (response?.isSuccess) {
+      const savedPayload =
+        response.data?.payLoad ??
+        response.data?.payload ??
+        response.data;
+
+      if (savedPayload?.id) {
+        setFacilityForm((prev) => ({
+          ...prev,
+          id: savedPayload.id,
+        }));
+      }
+
       toast.success(
         "Facility details saved"
       );
@@ -810,6 +921,9 @@ toast.error(
       <Typography variant="h5" sx={{ mb: 1, fontWeight: 700, color: "#1e3a8a" }}>
         Pet Shop Registration (FORM-1)
       </Typography>
+      <Typography variant="body2" sx={{ mb: 2, color: "#6b7280" }}>
+        Kerala State Animal Welfare Board — Department of Animal Husbandry
+      </Typography>
 
       {draftLoaded && formValues.applicationId && (
         <Alert severity="info" sx={{ mb: 2 }}>
@@ -817,7 +931,11 @@ toast.error(
         </Alert>
       )}
 
-      <WizardStepper activeStep={activeStep} />
+      <WizardStepper
+        activeStep={activeStep}
+        maxAccessibleStep={maxAccessibleStep}
+        onStepClick={handleStepClick}
+      />
 
       <Card sx={{ border: "1px solid #e5e7eb" }}>
         <CardContent>

@@ -6,7 +6,6 @@ import {
   Card,
   CardContent,
   CardHeader,
-  Container,
   CssBaseline,
   Grid2 as Grid,
   Link,
@@ -25,6 +24,12 @@ import {
   DOG_BREEDER_REGISTER_PATH
 } from "../config/routes";
 import { useAuthz } from "../context/AuthzContext";
+import AppBrandHeader from "../components/branding/AppBrandHeader";
+import AuthSplitLayout from "../components/branding/AuthSplitLayout";
+import {
+  BRAND_COLORS,
+  BRAND_TEXT,
+} from "../config/branding";
 
 const initialForm = {
   fname: "",
@@ -106,32 +111,33 @@ const PetShopOwnerRegisterPage = () => {
   };
 
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        p: 2,
-        background: "linear-gradient(180deg, #f5f7fb 0%, #eef2f7 100%)",
-        fontFamily: "Arial, sans-serif",
-      }}
-    >
-      <Container component="main" maxWidth="sm">
-        <CssBaseline />
-       <Box sx={{ textAlign: "center", mb: 3 }}>
-  <Typography variant="h4" sx={{ fontWeight: 700, color: "#1f2937" }}>
-    {isDogBreeder ? "Register as Dog Breeder" : "Register as Pet Shop Owner"}
-  </Typography>
+    <AuthSplitLayout>
+      <CssBaseline />
 
-  <Typography variant="body2" sx={{ color: "#6b7280", mt: 1 }}>
-    {isDogBreeder
-      ? "Create your login, then complete dog breeder registration."
-      : "Create your login, then complete FORM-1 pet shop registration."}
-  </Typography>
-</Box>
+      <Box sx={{ display: { xs: "block", md: "none" }, mb: 2 }}>
+        <AppBrandHeader
+          compact
+          title={
+            isDogBreeder
+              ? "Dog Breeder Registration"
+              : "Pet Shop Owner Registration"
+          }
+          subtitle={
+            isDogBreeder
+              ? "Create your login, then complete dog breeder registration."
+              : "Create your login, then complete FORM-1 pet shop registration."
+          }
+        />
+      </Box>
 
-        <Card sx={{ borderRadius: 2, border: "1px solid #e5e7eb" }}>
+      <Card
+        sx={{
+          borderRadius: 2,
+          backgroundColor: BRAND_COLORS.white,
+          border: `1px solid ${BRAND_COLORS.border}`,
+          boxShadow: "0 10px 30px rgba(15, 23, 42, 0.08)",
+        }}
+      >
           <CardHeader
             title="Account details"
             subheader="Basic information to create your login"
@@ -223,7 +229,10 @@ const PetShopOwnerRegisterPage = () => {
                   mt: 3,
                   mb: 1,
                   textTransform: "none",
-                  backgroundColor: "#2563eb",
+                  backgroundColor: BRAND_COLORS.primary,
+                  "&:hover": {
+                    backgroundColor: BRAND_COLORS.primaryDark,
+                  },
                 }}
               >
                 {isSubmitting ? "Creating account..." : "Create account & continue"}
@@ -243,14 +252,13 @@ const PetShopOwnerRegisterPage = () => {
           </CardContent>
         </Card>
 
-        <Typography variant="body2" align="center" sx={{ mt: 2 }}>
+        <Typography variant="body2" align="center" sx={{ mt: 2, color: BRAND_COLORS.grey }}>
           Already have an account?{" "}
           <Link component={RouterLink} to={`/${LOGIN_PATH}`}>
             Sign in
           </Link>
         </Typography>
-      </Container>
-    </Box>
+    </AuthSplitLayout>
   );
 };
 
