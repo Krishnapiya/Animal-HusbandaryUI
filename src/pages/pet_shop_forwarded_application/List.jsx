@@ -5,8 +5,7 @@ import TableCell from "@mui/material/TableCell";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TableSortLabel from "@mui/material/TableSortLabel";
-
-import Button from "@mui/material/Button";
+// import Button from "@mui/material/Button";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
@@ -35,7 +34,7 @@ const List = (props) => {
             ))}
 
            <TableCell align="center">View</TableCell>
-<TableCell align="center">Actions</TableCell>
+{/* <TableCell align="center">Actions</TableCell> */}
           </TableRow>
         </TableHead>
 
@@ -61,7 +60,7 @@ const List = (props) => {
     </Tooltip>
 </TableCell>
 
-{/* Actions */}
+{/* Actions
 <TableCell align="center">
     <Button
         variant="contained"
@@ -71,7 +70,7 @@ const List = (props) => {
     >
         FORWARD
     </Button>
-</TableCell>
+</TableCell> */}
             </TableRow>
           ))}
         </TableBody>

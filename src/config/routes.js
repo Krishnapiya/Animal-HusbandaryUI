@@ -34,8 +34,7 @@ export const DOG_BREEDER_DETAIL_PATH = "dog-breeder-detail";
 export const APPLICATION_CORRECTION_PATH = "application-correction";
 export const DOG_BREEDER_REGISTER_PATH = "dog-breeder/register";
 export const DOG_BREEDER_APPLICATION_PATH = "dog-breeder/application";
-
-  export const ANIMAL_SPECIES_PATH = "animal-species";
-
-  export const PET_SHOP_APPLICATION_PATH =
-    "pet-shop-application";
+export const ANIMAL_SPECIES_PATH = "animal-species";
+export const PET_SHOP_APPLICATION_PATH ="pet-shop-application";
+export const PET_SHOP_FORWARDED_APPLICATION_PATH = "pet-shop-forwarded-application";
+ export const PET_SHOP_MY_APPLICATION_PATH = "pet-shop-my-applications";
