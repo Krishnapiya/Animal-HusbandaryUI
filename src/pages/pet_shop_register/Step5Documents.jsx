@@ -93,9 +93,6 @@ const Step5Documents = ({
   setDocuments: setDocumentsProp,
   setActiveStep,
 }) => {
-  const [showPreview, setShowPreview] =
-    useState(false);
-
   const [localDocuments, setLocalDocuments] = useState({});
   const documents = documentsProp ?? localDocuments;
   const setDocuments = setDocumentsProp ?? setLocalDocuments;
@@ -182,30 +179,30 @@ const Step5Documents = ({
 ) => {
   const file = event.target.files?.[0];
 
+  if (!file) {
+    return;
+  }
+
   if (
-  documentId === 6 &&
-  !file.type.startsWith("image/")
-) {
-  toast.error(
-    "Please upload a JPG or PNG signature."
-  );
+    documentId === 9 &&
+    !file.type.startsWith("image/")
+  ) {
+    toast.error(
+      "Please upload a JPG or PNG signature."
+    );
 
-  event.target.value = "";
+    event.target.value = "";
 
-  return;
-}
+    return;
+  }
 
-    if (!file) {
-      return;
-    }
+  const maxSize = 6 * 1024 * 1024;
 
-    const maxSize = 6 * 1024 * 1024;
-
-    if (file.size > maxSize) {
-      alert("File size cannot exceed 6 MB");
-      event.target.value = "";
-      return;
-    }
+  if (file.size > maxSize) {
+    alert("File size cannot exceed 6 MB");
+    event.target.value = "";
+    return;
+  }
 
   setDocuments((prev) => ({
     ...prev,
@@ -220,46 +217,6 @@ const Step5Documents = ({
     },
   }));
 };
-
-const handleViewDocument = (
-  documentId
-) => {
-  const document =
-    documents[documentId];
-
-  if (!document) {
-    return;
-  }
-
-  if (document.file) {
-    const fileUrl =
-      URL.createObjectURL(
-        document.file
-      );
-
-    window.open(
-      fileUrl,
-      "_blank"
-    );
-    return;
-  }
-console.log("Document =", document);
-console.log("File Path =", document.filePath);
-  if (document.filePath) {
-  const backendUrl =
-  "http://localhost:8083/petshop/auth/application-document/view/";
-
-window.open(
-  backendUrl + document.filePath,
-  "_blank"
-);
-}
-
-  toast.info(
-    "Saved document preview is not available"
-  );
-};
-
 
   const handleSaveDocuments = async () => {
     try {
@@ -431,7 +388,7 @@ window.open(
   hidden
   type="file"
   accept={
-    document.id === 6
+    document.id === 9
       ? "image/png,image/jpeg,image/jpg"
       : ".pdf,.jpg,.jpeg,.png"
   }

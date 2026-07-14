@@ -36,7 +36,6 @@ export const getDocumentTypes = () =>
 
 export const saveApplicationDocument = (payload) =>
   addItem("/petshop/auth/application-document/save", { payLoad: payload });
-  addItem("/petshop/auth/application-document/save", { payLoad: payload });
 
 export const getApplicationDocuments = (applicationId) =>
   getItemList(
