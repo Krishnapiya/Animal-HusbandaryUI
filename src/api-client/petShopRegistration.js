@@ -3,6 +3,7 @@ import { addItem, getItemList,editSingleItem, } from "./apiCall";
 import { BASE_API_URL } from "./apiCall";
 import { callApi } from "./client";
 import { getHeader } from "../utils";
+import axios from "axios";
 export const getPetShopRegistrationDraft = async () => {
   return getItemList(PET_SHOP_REGISTRATION_DRAFT_URL);
 };
@@ -80,4 +81,84 @@ export const uploadApplicationDocument = ({
     data: formData,
     headers: getHeader(),
   });
+};
+
+const encodeDocumentFilePath = (filePath) =>
+  filePath
+    .split("/")
+    .map((segment) => encodeURIComponent(segment))
+    .join("/");
+
+export const fetchApplicationDocumentBlob = async (filePath) => {
+  const response = await axios({
+    method: "GET",
+    baseURL: BASE_API_URL,
+    url: `/petshop/auth/application-document/view/${encodeDocumentFilePath(filePath)}`,
+    headers: getHeader() || {},
+    responseType: "blob",
+  });
+
+  const blob = response.data;
+
+  if (blob?.type?.includes("application/json")) {
+    const errorText = await blob.text();
+    throw new Error(errorText || "Failed to load document");
+  }
+
+  return blob;
+};
+
+export const downloadPetShopRegistrationApplication = async (
+  applicationId
+) => {
+  if (!applicationId) {
+    return {
+      isSuccess: false,
+      message: "Application ID is required",
+    };
+  }
+
+  try {
+    const response = await axios({
+      method: "GET",
+      baseURL: BASE_API_URL,
+      url: `/petshop/auth/registration-application/download/${applicationId}`,
+      headers: getHeader(),
+      responseType: "blob",
+    });
+
+    const blob = response.data;
+    const contentDisposition =
+      response.headers["content-disposition"];
+    let fileName = `PetShopApplication-${applicationId}.zip`;
+
+    if (contentDisposition) {
+      const match = contentDisposition.match(
+        /filename="?([^"]+)"?/i
+      );
+      if (match?.[1]) {
+        fileName = match[1];
+      }
+    }
+
+    const href = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = href;
+    link.setAttribute("download", fileName);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(href);
+
+    return { isSuccess: true };
+  } catch (error) {
+    return {
+      isSuccess: false,
+      status: error.response?.status,
+      message:
+        error.response?.status === 404
+          ? "Application not found"
+          : "Failed to download application package",
+    };
+  }
 };

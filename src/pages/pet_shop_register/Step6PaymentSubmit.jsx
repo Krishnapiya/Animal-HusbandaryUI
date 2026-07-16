@@ -1,7 +1,5 @@
-import PropTypes from "prop-types";
 import { useState } from "react";
-import PreviewIcon from "@mui/icons-material/Preview";
-import Step5Preview from "./Step5Preview";
+import PropTypes from "prop-types";
 import { toast } from "material-react-toastify";
 import {
   Box,
@@ -13,13 +11,27 @@ import {
 } from "@mui/material";
 import PaymentIcon from "@mui/icons-material/Payment";
 import DownloadIcon from "@mui/icons-material/Download";
+import PreviewIcon from "@mui/icons-material/Preview";
 import axios from "axios";
 import { getHeader } from "../../utils";
-import {
-  PET_SHOP_REGISTRATION_APPLICATION_DOWNLOAD_URL,
-} from "../../config/endpoints";
+import { downloadPetShopRegistrationApplication } from "../../api-client/petShopRegistration";
+import Step5Preview from "./Step5Preview";
+
 const BASE_API_URL =
   import.meta.env.VITE_APP_BASE_API_URL;
+
+/**
+ * Step 6: payment, submit, preview, and download application package.
+ *
+ * @param {object} props component props
+ * @param {string|number} [props.applicationId] saved application id
+ * @param {object} [props.formValues] shop details
+ * @param {object} [props.facilityForm] facility details
+ * @param {array} [props.animals] proposed animals
+ * @param {object} [props.declaration] declaration details
+ * @param {object} [props.documents] uploaded documents map
+ * @returns {JSX.Element}
+ */
 const Step6PaymentSubmit = ({
   applicationId,
   formValues,
@@ -41,7 +53,64 @@ const handleSubmit = async () => {
       {
         headers: getHeader(),
       }
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+
+  const handlePayment = () => {
+    alert("Payment Gateway Integration Pending");
+  };
+
+  const handleSubmit = async () => {
+    if (!applicationId) {
+      toast.error("Please save your application before submitting");
+      return;
+    }
+
+    try {
+      await axios.patch(
+        `${String(BASE_API_URL || "").replace(/\/$/, "")}/petshop/auth/registration-application/submit/${applicationId}`,
+        {},
+        {
+          headers: getHeader(),
+        }
+      );
+
+      toast.success("Application submitted successfully.");
+    } catch (error) {
+      console.error(error);
+      toast.error("Submission failed.");
+    }
+  };
+
+  const handleDownloadApplication = async () => {
+    if (!applicationId) {
+      toast.error(
+        "Please save your application before downloading"
+      );
+      return;
+    }
+
+    setIsDownloading(true);
+
+    const response =
+      await downloadPetShopRegistrationApplication(
+        applicationId
+      );
+
+    setIsDownloading(false);
+
+    if (response.isSuccess) {
+      toast.success(
+        "Application package downloaded"
+      );
+      return;
+    }
+
+    toast.error(
+      response.message ||
+        "Failed to download application"
     );
+  };
 
     toast.success("Application submitted successfully.");
     setSubmitted(true);
@@ -98,10 +167,10 @@ const handleDownloadPdf = async () => {
     console.error("Download failed", err);
   }
 };
+
   return (
     <Card>
       <CardContent>
-
         <Typography
           variant="h5"
           sx={{
@@ -117,7 +186,7 @@ const handleDownloadPdf = async () => {
         <Typography sx={{ mb: 2 }}>
           <b>Application ID :</b>
           {" "}
-          {applicationId}
+          {applicationId || "-"}
         </Typography>
 
         <Typography sx={{ mb: 2 }}>
@@ -134,6 +203,7 @@ const handleDownloadPdf = async () => {
           sx={{
             display: "flex",
             gap: 2,
+            flexWrap: "wrap",
           }}
         >
           <Button
@@ -144,7 +214,17 @@ const handleDownloadPdf = async () => {
           >
             Pay Now
           </Button>
+
           <Button
+            variant="contained"
+            color="primary"
+            onClick={handleSubmit}
+          >
+            Submit Application
+          </Button>
+
+          <Button
+
   variant="contained"
   color={submitted ? "success" : "primary"}
   disabled={submitted}
@@ -153,52 +233,68 @@ const handleDownloadPdf = async () => {
   {submitted ? "APPLICATION SUBMITTED" : "SUBMIT APPLICATION"}
 </Button>
 
-          <Button
-  variant="outlined"
-  startIcon={<PreviewIcon />}
-  onClick={() =>
-    setShowPreview(!showPreview)
-  }
->
-  {showPreview
-    ? "Hide Preview"
-    : "Preview Application"}
-</Button>
-        </Box>
-{showPreview && (
-  <Box sx={{ mt: 4 }}>
-    <Step5Preview
-      formValues={formValues}
-      facilityForm={facilityForm}
-      animals={animals}
-      declaration={declaration}
-      supportingDocuments={Object.values(documents)}
-    />
+            variant="outlined"
+            startIcon={<DownloadIcon />}
+            onClick={handleDownloadApplication}
+            disabled={!applicationId || isDownloading}
+          >
+            {isDownloading
+              ? "Downloading..."
+              : "Download Application"}
+          </Button>
 
-    <Box
-      sx={{
-        display: "flex",
-        justifyContent: "flex-end",
-        mt: 2,
-      }}
-    >
-      <Button
-        variant="contained"
-        startIcon={<DownloadIcon />}
-        onClick={handleDownloadPdf}
-      >
-        Download PDF
-      </Button>
-    </Box>
-  </Box>
-)}
+
+          <Button
+            variant="outlined"
+            startIcon={<PreviewIcon />}
+            onClick={() => setShowPreview(!showPreview)}
+          >
+            {showPreview
+              ? "Hide Preview"
+              : "Preview Application"}
+          </Button>
+        </Box>
+
+        {showPreview && (
+          <Box sx={{ mt: 4 }}>
+            <Step5Preview
+              formValues={formValues}
+              facilityForm={facilityForm}
+              animals={animals}
+              declaration={declaration}
+              supportingDocuments={Object.values(documents || {})}
+            />
+
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "flex-end",
+                mt: 2,
+              }}
+            >
+              <Button
+                variant="contained"
+                startIcon={<DownloadIcon />}
+                onClick={handleDownloadApplication}
+                disabled={!applicationId || isDownloading}
+              >
+                {isDownloading
+                  ? "Downloading..."
+                  : "Download Package"}
+              </Button>
+            </Box>
+          </Box>
+        )}
       </CardContent>
     </Card>
   );
 };
 
 Step6PaymentSubmit.propTypes = {
-  applicationId: PropTypes.any,
+  applicationId: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.number,
+  ]),
   formValues: PropTypes.object,
   facilityForm: PropTypes.object,
   animals: PropTypes.array,

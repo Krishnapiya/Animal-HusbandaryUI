@@ -10,15 +10,16 @@ import {
   Paper,
   TextField,
   Chip,
-  IconButton,
 } from "@mui/material";
-import VisibilityIcon from "@mui/icons-material/Visibility";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import SaveIcon from "@mui/icons-material/Save";
+import DocumentPreview from "./DocumentPreview";
 import {
   getApplicationDocuments,
   uploadApplicationDocument,
 } from "../../api-client/petShopRegistration";
+import { getUserAttributes } from "../../utils";
+
 const documentList = [
   {
     id: 1,
@@ -92,21 +93,15 @@ const Step5Documents = ({
   setDocuments: setDocumentsProp,
   setActiveStep,
 }) => {
+  const [localDocuments, setLocalDocuments] = useState({});
+  const documents = documentsProp ?? localDocuments;
+  const setDocuments = setDocumentsProp ?? setLocalDocuments;
 
-  const [localDocuments, setLocalDocuments] =
-    useState({});
-  const documents =
-    documentsProp ?? localDocuments;
-  const setDocuments =
-    setDocumentsProp ?? setLocalDocuments;
-
-  const [isLoadingDocuments, setIsLoadingDocuments] =
-    useState(false);
+  const [isLoadingDocuments, setIsLoadingDocuments] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    const applicationId =
-      formValues?.applicationId;
+    const applicationId = formValues?.applicationId;
 
     if (!applicationId) {
       setDocuments({});
@@ -117,55 +112,47 @@ const Step5Documents = ({
       try {
         setIsLoadingDocuments(true);
 
-        const response =
-          await getApplicationDocuments(
-            applicationId
-          );
+        const response = await getApplicationDocuments(applicationId);
 
         if (cancelled) {
           return;
         }
 
         if (response?.isSuccess) {
-          const rows = getDocumentRows(
-            getPayload(response)
-          ).filter((item) => {
-            const rowApplicationId =
-              getApplicationId(item);
+          const rows = getDocumentRows(getPayload(response)).filter(
+            (item) => {
+              const rowApplicationId = getApplicationId(item);
 
-            return (
-              rowApplicationId == null ||
-              Number(rowApplicationId) ===
-                Number(applicationId)
-            );
-          });
-          console.log("DOCUMENT ROWS", rows);
-
-          const draftDocuments = rows.reduce(
-            (acc, item) => {
-              const documentTypeId =
-                getDocumentTypeId(item);
-
-              if (documentTypeId) {
-                acc[documentTypeId] = {
-                  ...item,
-                  name:
-                    item.fileName ||
-                    item.name ||
-                    "",
-                  isDraft: true,
-                };
-              }
-
-              return acc;
-            },
-            {}
+              return (
+                rowApplicationId == null ||
+                Number(rowApplicationId) === Number(applicationId)
+              );
+            }
           );
 
-          if (
-            Object.keys(draftDocuments).length >
-            0
-          ) {
+          const draftDocuments = rows.reduce((acc, item) => {
+            const documentTypeId = getDocumentTypeId(item);
+
+            if (!documentTypeId) {
+              return acc;
+            }
+
+            const existing = acc[documentTypeId];
+            const existingId = Number(existing?.id ?? 0);
+            const currentId = Number(item?.id ?? 0);
+
+            if (!existing || currentId >= existingId) {
+              acc[documentTypeId] = {
+                ...item,
+                name: item.fileName || item.name || "",
+                isDraft: true,
+              };
+            }
+
+            return acc;
+          }, {});
+
+          if (Object.keys(draftDocuments).length > 0) {
             setDocuments((prev) => ({
               ...draftDocuments,
               ...prev,
@@ -173,10 +160,7 @@ const Step5Documents = ({
           }
         }
       } catch (error) {
-        console.error(
-          "Failed to load documents",
-          error
-        );
+        console.error("Failed to load documents", error);
       } finally {
         if (!cancelled) {
           setIsLoadingDocuments(false);
@@ -195,32 +179,28 @@ const Step5Documents = ({
 ) => {
   const file = event.target.files?.[0];
 
-  if (
-  documentId === 6 &&
-  !file.type.startsWith("image/")
-) {
-  toast.error(
-    "Please upload a JPG or PNG signature."
-  );
-
-  event.target.value = "";
-
-  return;
-}
-
   if (!file) {
     return;
   }
 
-  const maxSize = 6 * 1024 * 1024; // 6 MB
-
-  if (file.size > maxSize) {
-    alert(
-      "File size cannot exceed 6 MB"
+  if (
+    documentId === 9 &&
+    !file.type.startsWith("image/")
+  ) {
+    toast.error(
+      "Please upload a JPG or PNG signature."
     );
 
     event.target.value = "";
 
+    return;
+  }
+
+  const maxSize = 6 * 1024 * 1024;
+
+  if (file.size > maxSize) {
+    alert("File size cannot exceed 6 MB");
+    event.target.value = "";
     return;
   }
 
@@ -238,143 +218,83 @@ const Step5Documents = ({
   }));
 };
 
-const handleViewDocument = (
-  documentId
-) => {
-  const document =
-    documents[documentId];
-
-  if (!document) {
-    return;
-  }
-
-  if (document.file) {
-    const fileUrl =
-      URL.createObjectURL(
-        document.file
-      );
-
-    window.open(
-      fileUrl,
-      "_blank"
-    );
-    return;
-  }
-console.log("Document =", document);
-console.log("File Path =", document.filePath);
-  if (document.filePath) {
-  const backendUrl =
-  "http://localhost:8083/petshop/auth/application-document/view/";
-
-window.open(
-  backendUrl + document.filePath,
-  "_blank"
-);
-}
-
-  toast.info(
-    "Saved document preview is not available"
-  );
-};
-
-
   const handleSaveDocuments = async () => {
-  try {
-    const applicationId =
-      formValues?.applicationId;
-    const selectedDocuments =
-      Object.entries(documents).filter(
+    try {
+      const applicationId = formValues?.applicationId;
+      const selectedDocuments = Object.entries(documents).filter(
         ([, document]) => document?.file
       );
 
-    if (!applicationId) {
-      toast.error(
-        "Please save shop details before uploading documents"
-      );
-      return false;
-    }
-
-    if (selectedDocuments.length === 0) {
-      toast.info(
-        "No new documents selected. Saved draft documents are already available."
-      );
-      return true;
-    }
-
-    for (const [
-      documentId,
-      document,
-    ] of selectedDocuments) {
-      const file = document.file;
-
-     const response =
-    await uploadApplicationDocument({
-        file,
-        applicationId,
-        documentTypeId: Number(documentId),
-        uploadedBy: 1,
-    });
-
-      if (!response?.isSuccess) {
+      if (!applicationId) {
         toast.error(
-          `Failed to save ${
-            document.fileName ||
-            file.name
-          }`
+          "Please save shop details before uploading documents"
         );
         return false;
       }
 
-      const savedDocument = getPayload(response);
+      if (selectedDocuments.length === 0) {
+        toast.info(
+          "No new documents selected. Saved draft documents are already available."
+        );
+        return true;
+      }
 
-      setDocuments((prev) => ({
-        ...prev,
-        [documentId]: {
-          ...document,
-          ...savedDocument,
-          id:
-            savedDocument.id ??
-            document.id,
-          file: null,
-          name:
-  savedDocument?.fileName || file.name,
-          fileName:
-  savedDocument?.fileName || file.name,
-          isDraft: true,
-        },
-      }));
+      for (const [documentId, document] of selectedDocuments) {
+        const file = document.file;
+
+        const response = await uploadApplicationDocument({
+          file,
+          applicationId,
+          documentTypeId: Number(documentId),
+          uploadedBy: getUserAttributes()?.id ?? 1,
+        });
+
+        if (!response?.isSuccess) {
+          toast.error(
+            `Failed to save ${document.fileName || file.name}`
+          );
+          return false;
+        }
+
+        const savedDocument = getPayload(response);
+
+        setDocuments((prev) => ({
+          ...prev,
+          [documentId]: {
+            ...document,
+            ...savedDocument,
+            id: savedDocument.id ?? document.id,
+            file: null,
+            name: savedDocument?.fileName || file.name,
+            fileName: savedDocument?.fileName || file.name,
+            mimeType: savedDocument?.mimeType || file.type,
+            isDraft: true,
+          },
+        }));
+      }
+
+      toast.success("Documents saved successfully");
+      return true;
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to save documents");
+      return false;
     }
+  };
 
-   toast.success(
-  "Documents saved successfully"
-);
-return true;
-  } catch (error) {
-    console.error(error);
+  const handleSaveAndContinue = async () => {
+    try {
+      const saved = await handleSaveDocuments();
 
-    toast.error(
-      "Failed to save documents"
-    );
-    return false;
-  }
-};
-const handleSaveAndContinue = async () => {
-  try {
+      if (!saved) {
+        return;
+      }
 
-    const saved =
-      await handleSaveDocuments();
-
-    if (!saved) {
-      return;
+      setActiveStep(5);
+    } catch (error) {
+      console.error(error);
     }
-
-    // Move to Payment & Submit step
-    setActiveStep(5);
-
-  } catch (error) {
-    console.error(error);
-  }
-};
+  };
 
   return (
     <>
@@ -398,11 +318,7 @@ const handleSaveAndContinue = async () => {
 </Typography>
 
       {isLoadingDocuments && (
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          sx={{ mb: 2 }}
-        >
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           Loading saved draft documents...
         </Typography>
       )}
@@ -416,62 +332,43 @@ const handleSaveAndContinue = async () => {
         }}
       >
         <Grid container spacing={3}>
-          {documentList.map(
-            (document) => (
-              <Grid
-                item
-                xs={12}
-                key={document.id}
+          {documentList.map((document) => (
+            <Grid item xs={12} key={document.id}>
+              <Paper
+                variant="outlined"
+                sx={{
+                  p: 2,
+                  borderRadius: 2,
+                }}
               >
                 <Box
                   sx={{
                     display: "flex",
-                    alignItems: "center",
+                    alignItems: { xs: "flex-start", md: "center" },
+                    flexDirection: { xs: "column", md: "row" },
                     gap: 2,
                   }}
                 >
-                  <Box
-                    sx={{
-                      width: "250px",
-                    }}
-                  >
-                    <Typography
-                      fontWeight={500}
-                    >
-                      {document.name}
-                    </Typography>
+                  <Box sx={{ width: { xs: "100%", md: "250px" } }}>
+                    <Typography fontWeight={500}>{document.name}</Typography>
 
-                    {document.mandatory && (
-                      <Chip
-                        size="small"
-                        color="error"
-                        label="Mandatory"
-                        sx={{ mt: 0.5 }}
-                      />
-                    )}
+                    <Box sx={{ mt: 0.5, display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                      {document.mandatory && (
+                        <Chip size="small" color="error" label="Mandatory" />
+                      )}
 
-                    {isSavedDocument(
-                      documents[document.id]
-                    ) && (
-                      <Chip
-                        size="small"
-                        color="info"
-                        label="Saved draft"
-                        sx={{ mt: 0.5, ml: 1 }}
-                      />
-                    )}
+                      {isSavedDocument(documents[document.id]) && (
+                        <Chip size="small" color="info" label="Saved draft" />
+                      )}
+                    </Box>
                   </Box>
 
                   <TextField
                     size="small"
                     fullWidth
                     value={
-                      documents[
-                        document.id
-                      ]?.name ||
-                      documents[
-                        document.id
-                      ]?.fileName ||
+                      documents[document.id]?.name ||
+                      documents[document.id]?.fileName ||
                       ""
                     }
                     placeholder="No file selected"
@@ -483,17 +380,15 @@ const handleSaveAndContinue = async () => {
                   <Button
                     variant="outlined"
                     component="label"
-                    startIcon={
-                      <UploadFileIcon />
-                    }
+                    startIcon={<UploadFileIcon />}
+                    sx={{ flexShrink: 0 }}
                   >
                     Upload
-
                     <input
   hidden
   type="file"
   accept={
-    document.id === 6
+    document.id === 9
       ? "image/png,image/jpeg,image/jpg"
       : ".pdf,.jpg,.jpeg,.png"
   }
@@ -505,41 +400,35 @@ const handleSaveAndContinue = async () => {
   }
 />
                   </Button>
-                  {documents[document.id] && (
-  <IconButton
-    color="primary"
-    onClick={() =>
-      handleViewDocument(
-        document.id
-      )
-    }
-  >
-    <VisibilityIcon />
-  </IconButton>
-)}
                 </Box>
-              </Grid>
-            )
-          )}
+
+                <DocumentPreview
+                  document={documents[document.id]}
+                  label={document.name}
+                  compact
+                />
+              </Paper>
+            </Grid>
+          ))}
         </Grid>
 
         <Box
           sx={{
             mt: 4,
             display: "flex",
-            justifyContent:
-              "flex-end",
+            justifyContent: "flex-end",
             gap: 2,
+            flexWrap: "wrap",
           }}
         >
           <Button
-  variant="contained"
-  color="success"
-  startIcon={<SaveIcon />}
-  onClick={handleSaveAndContinue}
->
-  Save & Continue
-</Button>
+            variant="contained"
+            color="success"
+            startIcon={<SaveIcon />}
+            onClick={handleSaveAndContinue}
+          >
+            Save & Continue
+          </Button>
 
          
         </Box>
