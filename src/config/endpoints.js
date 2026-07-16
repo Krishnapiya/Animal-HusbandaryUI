@@ -226,3 +226,17 @@ export const PET_SHOP_FORWARDED_APPLICATION_LIST_URL =
 
 export const PET_SHOP_MY_APPLICATION_LIST_URL =
   "/petshop/auth/registration-application/my-applications";
+
+  export const DOG_BREEDER_APPLICATION_FORWARD_URL =
+  "/dogbreeder/auth/registration-application/";
+
+  export const DOG_BREEDER_CVO_APPLICATION_LIST_URL =
+  "/dogbreeder/auth/registration-application/cvo/list/all";
+
+export const DOG_BREEDER_APPLICATION_CVO_API_URL =
+  "/dogbreeder/auth/registration-application/cvo/";
+
+export const DOG_BREEDER_APPLICATION_CVO_LIST_URL =
+  "/dogbreeder/auth/registration-application/cvo/list/all";
+
+   export const OFFICEE_DROPDOWN_URL ="/admin/auth/master/office/list/all?dropDown=true";

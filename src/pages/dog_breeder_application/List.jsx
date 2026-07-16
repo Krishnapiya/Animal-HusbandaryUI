@@ -25,13 +25,19 @@ import DownloadIcon from "@mui/icons-material/Download";
 
 import { toast } from "material-react-toastify";
 
+import { getUserAttributes } from "../../utils";
+
 import {
-    getAdminDogBreederApplicationPreview,
+  getAdminDogBreederApplicationPreview,
   downloadDogBreederApplication,
   viewDogBreederDocument,
   downloadDogBreederDocument,
+  forwardDogBreederApplication,
 } from "../../api-client/adminDogBreederApplication";
 
+/*
+ * Get application ID safely from different response formats.
+ */
 const getApplicationId = (row) =>
   row?.id ||
   row?.applicationId ||
@@ -40,6 +46,9 @@ const getApplicationId = (row) =>
   row?.registrationDetails?.id ||
   row?.registrationDetails?.applicationId;
 
+/*
+ * Extract API response payload.
+ */
 const getPayload = (response) =>
   response?.data?.payLoad ||
   response?.data?.payload ||
@@ -49,6 +58,9 @@ const getPayload = (response) =>
   response ||
   {};
 
+/*
+ * Display fallback value.
+ */
 const getValue = (value) => {
   if (value === null || value === undefined || value === "") {
     return "-";
@@ -61,13 +73,121 @@ const getArray = (value) => {
   return Array.isArray(value) ? value : [];
 };
 
+/*
+ * Convert:
+ *
+ * Forwarded to CVO
+ * forwarded-to-cvo
+ * FORWARDED_TO_CVO
+ *
+ * into:
+ *
+ * FORWARDED_TO_CVO
+ */
+const normalizeStatus = (value) =>
+  String(value ?? "")
+    .trim()
+    .toUpperCase()
+    .replace(/[\s-]+/g, "_");
+
+/*
+ * Check whether an application is already forwarded.
+ */
+const isForwardedToCvo = (row) => {
+  const statusId =
+    row?.status?.id ??
+    row?.statusId ??
+    row?.applicationStatusId ??
+    row?.registrationStatusId;
+
+  const statusValues = [
+    row?.status,
+    row?.status?.name,
+    row?.status?.statusName,
+    row?.status?.code,
+    row?.status?.statusCode,
+    row?.status?.label,
+    row?.statusName,
+    row?.statusCode,
+    row?.applicationStatusName,
+    row?.applicationStatusCode,
+  ];
+
+  if (Number(statusId) === 5) {
+    return true;
+  }
+
+  return statusValues
+    .map(normalizeStatus)
+    .some((status) => status === "FORWARDED_TO_CVO");
+};
+
+/*
+ * Normalize ROLE_ADMIN / ADMIN to ADMIN.
+ */
+const normalizeRole = (role) =>
+  String(role ?? "")
+    .trim()
+    .toUpperCase()
+    .replace(/^ROLE_/, "");
+
+/*
+ * Extract role values from logged-in user.
+ */
+const getLoggedInRoles = () => {
+  const user = getUserAttributes();
+
+  if (!user) {
+    return [];
+  }
+
+  const roleValues = [
+    user?.role,
+    user?.roleName,
+    user?.role?.name,
+    user?.role?.roleName,
+    user?.role?.authority,
+    user?.authority,
+  ];
+
+  if (Array.isArray(user?.roles)) {
+    roleValues.push(...user.roles);
+  }
+
+  if (Array.isArray(user?.authorities)) {
+    roleValues.push(...user.authorities);
+  }
+
+  return roleValues
+    .flatMap((role) => {
+      if (typeof role === "string") {
+        return [role];
+      }
+
+      return [
+        role?.name,
+        role?.roleName,
+        role?.authority,
+        role?.code,
+      ];
+    })
+    .filter(Boolean)
+    .map(normalizeRole);
+};
+
 const PreviewRow = ({ label, value }) => (
   <Grid size={{ xs: 12, md: 6 }}>
     <Typography variant="caption" color="text.secondary">
       {label}
     </Typography>
 
-    <Typography sx={{ fontWeight: 600, mb: 1, whiteSpace: "pre-wrap" }}>
+    <Typography
+      sx={{
+        fontWeight: 600,
+        mb: 1,
+        whiteSpace: "pre-wrap",
+      }}
+    >
       {getValue(value)}
     </Typography>
   </Grid>
@@ -83,6 +203,7 @@ const SectionTitle = ({ children }) => (
     <Typography variant="h6" sx={{ mt: 3, mb: 1 }}>
       {children}
     </Typography>
+
     <Divider sx={{ mb: 2 }} />
   </>
 );
@@ -95,6 +216,29 @@ const List = (props) => {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewData, setPreviewData] = useState(null);
+  const [forwardingId, setForwardingId] = useState(null);
+
+  /*
+   * Used so the button immediately becomes disabled after forwarding,
+   * even if DataTable refresh is delayed.
+   */
+  const [locallyForwardedIds, setLocallyForwardedIds] = useState(
+    new Set()
+  );
+
+  const loggedInRoles = getLoggedInRoles();
+
+  const isAdmin = loggedInRoles.includes("ADMIN");
+  const isCvo = loggedInRoles.includes("CVO");
+
+  /*
+   * Parent can optionally pass showForwardAction.
+   * Otherwise role is detected from logged-in user.
+   */
+  const showForwardAction =
+    typeof props.showForwardAction === "boolean"
+      ? props.showForwardAction
+      : isAdmin && !isCvo;
 
   const handlePreviewClick = async (row) => {
     const applicationId = getApplicationId(row);
@@ -110,11 +254,10 @@ const List = (props) => {
     try {
       setPreviewLoading(true);
 
-      const response = await getAdminDogBreederApplicationPreview(applicationId);
-      const payload = getPayload(response);
+      const response =
+        await getAdminDogBreederApplicationPreview(applicationId);
 
-      console.log("DOG BREEDER PREVIEW RESPONSE:", response);
-      console.log("DOG BREEDER PREVIEW PAYLOAD:", payload);
+      const payload = getPayload(response);
 
       setPreviewData({
         ...row,
@@ -122,7 +265,10 @@ const List = (props) => {
       });
     } catch (error) {
       console.error("Dog breeder preview error:", error);
-      toast.error("Preview API failed. Showing list data.");
+
+      toast.error(
+        "Preview API failed. Showing available list data."
+      );
     } finally {
       setPreviewLoading(false);
     }
@@ -142,18 +288,23 @@ const List = (props) => {
     }
 
     try {
-      const response = await downloadDogBreederApplication(applicationId);
+      const response =
+        await downloadDogBreederApplication(applicationId);
 
       const blob = new Blob([response.data], {
-        type: response.headers?.["content-type"] || "application/pdf",
+        type:
+          response.headers?.["content-type"] ||
+          "application/pdf",
       });
 
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
 
       link.href = url;
+
       link.download = `${
-        row.applicationNumber || `dog-breeder-application-${applicationId}`
+        row.applicationNumber ||
+        `dog-breeder-application-${applicationId}`
       }.pdf`;
 
       document.body.appendChild(link);
@@ -162,162 +313,317 @@ const List = (props) => {
 
       setTimeout(() => URL.revokeObjectURL(url), 60000);
     } catch (error) {
-      console.error("Dog breeder application download error:", error);
+      console.error(
+        "Dog breeder application download error:",
+        error
+      );
+
       toast.error("Failed to download application");
     }
   };
-const openBlob = (
-  response,
-  fileName,
-  isDownload = false,
-  mimeType = "application/octet-stream"
-) => {
-  const blob = new Blob([response.data], {
-    type: mimeType || response.headers?.["content-type"] || "application/octet-stream",
-  });
 
-  const url = URL.createObjectURL(blob);
+  const handleForwardClick = async (row) => {
+    const applicationId = getApplicationId(row);
 
-  if (isDownload) {
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = fileName || "document";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  } else {
-    window.open(url, "_blank");
-  }
+    if (!applicationId) {
+      toast.error("Application ID missing");
+      return;
+    }
 
-  setTimeout(() => URL.revokeObjectURL(url), 60000);
-};
+    /*
+     * Prevent forwarding an already-forwarded row.
+     */
+    if (
+      isForwardedToCvo(row) ||
+      locallyForwardedIds.has(applicationId)
+    ) {
+      toast.info("Application is already forwarded to CVO");
+      return;
+    }
 
-const handleViewDocument = async (doc) => {
-  if (!doc?.id) {
-    toast.error("Document ID missing");
-    return;
-  }
-
-  try {
-    const response = await viewDogBreederDocument(doc.id);
-
-    openBlob(
-      response,
-      doc.fileName,
-      false,
-      doc.mimeType || "application/pdf"
+    const confirmForward = window.confirm(
+      "Are you sure you want to forward this application to CVO?"
     );
-  } catch (error) {
-    console.error("Document view error:", error);
-    toast.error("Failed to view document");
-  }
-};
 
-const handleDownloadDocument = async (doc) => {
-  if (!doc?.id) {
-    toast.error("Document ID missing");
-    return;
-  }
+    if (!confirmForward) {
+      return;
+    }
 
-  try {
-    const response = await downloadDogBreederDocument(doc.id);
+    try {
+      setForwardingId(applicationId);
 
-    openBlob(
-      response,
-      doc.fileName,
-      true,
-      doc.mimeType || "application/octet-stream"
-    );
-  } catch (error) {
-    console.error("Document download error:", error);
-    toast.error("Failed to download document");
-  }
-};
-  const registration = previewData?.registrationDetails || previewData || {};
-  const breeder = previewData?.breederDetails || {};
-  const facility = previewData?.facilityDetails || {};
-  const declaration = previewData?.declarationDetails || {};
-  const breeds = getArray(previewData?.breedDetails);
-const documents = getArray(
-  previewData?.documentDetails ||
-    previewData?.documents ||
-    previewData?.applicationDocuments ||
-    previewData?.applicationDocumentList ||
-    previewData?.registrationDetails?.documentDetails ||
-    previewData?.registrationDetails?.documents
-);
+      await forwardDogBreederApplication(applicationId);
+
+      /*
+       * Immediately disable the button.
+       */
+      setLocallyForwardedIds((previousIds) => {
+        const updatedIds = new Set(previousIds);
+        updatedIds.add(applicationId);
+        return updatedIds;
+      });
+
+      toast.success(
+        "Application forwarded to CVO successfully"
+      );
+
+      if (typeof props.refreshList === "function") {
+        await props.refreshList();
+      } else if (typeof props.handleRefresh === "function") {
+        await props.handleRefresh();
+      }
+    } catch (error) {
+      console.error(
+        "Dog breeder forward to CVO error:",
+        error
+      );
+
+      toast.error("Failed to forward application to CVO");
+    } finally {
+      setForwardingId(null);
+    }
+  };
+
+  const openBlob = (
+    response,
+    fileName,
+    isDownload = false,
+    mimeType = "application/octet-stream"
+  ) => {
+    const blob = new Blob([response.data], {
+      type:
+        response.headers?.["content-type"] ||
+        mimeType ||
+        "application/octet-stream",
+    });
+
+    const url = URL.createObjectURL(blob);
+
+    if (isDownload) {
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.download = fileName || "document";
+
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } else {
+      window.open(url, "_blank");
+    }
+
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  };
+
+  const handleViewDocument = async (document) => {
+    if (!document?.id) {
+      toast.error("Document ID missing");
+      return;
+    }
+
+    try {
+      const response =
+        await viewDogBreederDocument(document.id);
+
+      openBlob(
+        response,
+        document.fileName,
+        false,
+        document.mimeType || "application/pdf"
+      );
+    } catch (error) {
+      console.error("Document view error:", error);
+      toast.error("Failed to view document");
+    }
+  };
+
+  const handleDownloadDocument = async (document) => {
+    if (!document?.id) {
+      toast.error("Document ID missing");
+      return;
+    }
+
+    try {
+      const response =
+        await downloadDogBreederDocument(document.id);
+
+      openBlob(
+        response,
+        document.fileName,
+        true,
+        document.mimeType || "application/octet-stream"
+      );
+    } catch (error) {
+      console.error("Document download error:", error);
+      toast.error("Failed to download document");
+    }
+  };
+
+  const registration =
+    previewData?.registrationDetails ||
+    previewData ||
+    {};
+
+  const breeder =
+    previewData?.breederDetails || {};
+
+  const facility =
+    previewData?.facilityDetails || {};
+
+  const declaration =
+    previewData?.declarationDetails || {};
+
+  const breeds = getArray(
+    previewData?.breedDetails
+  );
+
+  const documents = getArray(
+    previewData?.documentDetails ||
+      previewData?.documents ||
+      previewData?.applicationDocuments ||
+      previewData?.applicationDocumentList ||
+      previewData?.registrationDetails?.documentDetails ||
+      previewData?.registrationDetails?.documents
+  );
+
   return (
     <>
       <Table stickyHeader sx={{ minWidth: 650 }}>
         <TableHead>
           <TableRow>
-            {props.tableColumns.map((col, index) => (
-              <TableCell key={index}>
+            {props.tableColumns.map((column, index) => (
+              <TableCell key={column.attr || index}>
                 <TableSortLabel
-                  onClick={props.handleSortClick(col.attr)}
-                  active={col.attr === props.sortAttributeDirection.attr}
+                  onClick={props.handleSortClick(column.attr)}
+                  active={
+                    column.attr ===
+                    props.sortAttributeDirection.attr
+                  }
                   direction={
-                    col.attr === props.sortAttributeDirection.attr
+                    column.attr ===
+                    props.sortAttributeDirection.attr
                       ? props.sortAttributeDirection.direction
                       : "asc"
                   }
                 >
-                  {col.header}
+                  {column.header}
                 </TableSortLabel>
               </TableCell>
             ))}
 
             <TableCell>Preview</TableCell>
             <TableCell>Download</TableCell>
+
+            {showForwardAction && (
+              <TableCell>Action</TableCell>
+            )}
           </TableRow>
         </TableHead>
 
         <TableBody>
-          {props.rows.map((row, index) => (
-            <TableRow key={getApplicationId(row) || index}>
-              {props.tableColumns.map((col, colIndex) => (
-                <TableCell key={colIndex}>
-                  {typeof col.render === "function"
-                    ? col.render(row)
-                    : String(row[col.attr] ?? "")}
+          {props.rows.map((row, index) => {
+            const applicationId = getApplicationId(row);
+
+            const forwarded =
+              isForwardedToCvo(row) ||
+              locallyForwardedIds.has(applicationId);
+
+            const currentlyForwarding =
+              forwardingId === applicationId;
+
+            return (
+              <TableRow key={applicationId || index}>
+                {props.tableColumns.map(
+                  (column, columnIndex) => (
+                    <TableCell
+                      key={column.attr || columnIndex}
+                    >
+                      {typeof column.render === "function"
+                        ? column.render(row)
+                        : String(
+                            row[column.attr] ?? ""
+                          )}
+                    </TableCell>
+                  )
+                )}
+
+                <TableCell>
+                  {row.entityType === "DOG_BREEDER" ? (
+                    <Tooltip title="Preview Dog Breeder Application">
+                      <IconButton
+                        color="primary"
+                        onClick={() =>
+                          handlePreviewClick(row)
+                        }
+                      >
+                        <VisibilityIcon />
+                      </IconButton>
+                    </Tooltip>
+                  ) : (
+                    "-"
+                  )}
                 </TableCell>
-              ))}
 
-              <TableCell>
-                {row.entityType === "DOG_BREEDER" ? (
-                  <Tooltip title="Preview Dog Breeder Application">
-                    <IconButton
-                      color="primary"
-                      onClick={() => handlePreviewClick(row)}
-                    >
-                      <VisibilityIcon />
-                    </IconButton>
-                  </Tooltip>
-                ) : (
-                  "-"
-                )}
-              </TableCell>
+                <TableCell>
+                  {row.entityType === "DOG_BREEDER" ? (
+                    <Tooltip title="Download Dog Breeder Application">
+                      <IconButton
+                        color="success"
+                        onClick={() =>
+                          handleDownloadClick(row)
+                        }
+                      >
+                        <DownloadIcon />
+                      </IconButton>
+                    </Tooltip>
+                  ) : (
+                    "-"
+                  )}
+                </TableCell>
 
-              <TableCell>
-                {row.entityType === "DOG_BREEDER" ? (
-                  <Tooltip title="Download Dog Breeder Application">
-                    <IconButton
-                      color="success"
-                      onClick={() => handleDownloadClick(row)}
-                    >
-                      <DownloadIcon />
-                    </IconButton>
-                  </Tooltip>
-                ) : (
-                  "-"
+                {showForwardAction && (
+                  <TableCell>
+                    {row.entityType ===
+                    "DOG_BREEDER" ? (
+                      <Button
+                        variant="contained"
+                        size="small"
+                        color={
+                          forwarded
+                            ? "inherit"
+                            : "warning"
+                        }
+                        disabled={
+                          forwarded ||
+                          currentlyForwarding
+                        }
+                        onClick={() =>
+                          handleForwardClick(row)
+                        }
+                      >
+                        {forwarded
+                          ? "Forwarded"
+                          : currentlyForwarding
+                            ? "Forwarding..."
+                            : "Forward to CVO"}
+                      </Button>
+                    ) : (
+                      "-"
+                    )}
+                  </TableCell>
                 )}
-              </TableCell>
-            </TableRow>
-          ))}
+              </TableRow>
+            );
+          })}
 
           {props.rows.length === 0 && (
             <TableRow>
-              <TableCell colSpan={(props.tableColumns?.length || 0) + 2}>
+              <TableCell
+                colSpan={
+                  (props.tableColumns?.length || 0) +
+                  (showForwardAction ? 3 : 2)
+                }
+              >
                 No dog breeder applications found
               </TableCell>
             </TableRow>
@@ -331,21 +637,34 @@ const documents = getArray(
         maxWidth="md"
         fullWidth
       >
-        <DialogTitle>Dog Breeder Application Preview</DialogTitle>
+        <DialogTitle>
+          Dog Breeder Application Preview
+        </DialogTitle>
 
         <DialogContent dividers>
           {previewLoading ? (
-            <Box sx={{ display: "flex", justifyContent: "center", p: 3 }}>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                p: 3,
+              }}
+            >
               <CircularProgress />
             </Box>
           ) : (
             <>
-              <SectionTitle>Registration Details</SectionTitle>
+              <SectionTitle>
+                Registration Details
+              </SectionTitle>
 
               <Grid container spacing={2}>
                 <PreviewRow
                   label="Application ID"
-                  value={registration.id || registration.applicationId}
+                  value={
+                    registration.id ||
+                    registration.applicationId
+                  }
                 />
 
                 <PreviewRow
@@ -365,25 +684,40 @@ const documents = getArray(
 
                 <PreviewRow
                   label="Status"
-                  value={registration.status?.name || registration.statusId}
+                  value={
+                    registration.status?.name ||
+                    registration.status?.statusName ||
+                    registration.statusName ||
+                    registration.statusId
+                  }
                 />
 
                 <PreviewRow
                   label="District"
-                  value={registration.district?.name || registration.districtId}
+                  value={
+                    registration.district?.name ||
+                    registration.district
+                      ?.districtName ||
+                    registration.districtName ||
+                    registration.districtId
+                  }
                 />
 
                 <PreviewRow
                   label="Applicant User ID"
                   value={registration.applicantUserId}
                 />
-
               </Grid>
 
-              <SectionTitle>Breeder Details</SectionTitle>
+              <SectionTitle>
+                Breeder Details
+              </SectionTitle>
 
               <Grid container spacing={2}>
-                <PreviewRow label="Breeder Name" value={breeder.breederName} />
+                <PreviewRow
+                  label="Breeder Name"
+                  value={breeder.breederName}
+                />
 
                 <PreviewRow
                   label="Address Line 1"
@@ -395,13 +729,25 @@ const documents = getArray(
                   value={breeder.addressLine2}
                 />
 
-                <PreviewRow label="City" value={breeder.city} />
+                <PreviewRow
+                  label="City"
+                  value={breeder.city}
+                />
 
-                <PreviewRow label="Pincode" value={breeder.pincode} />
+                <PreviewRow
+                  label="Pincode"
+                  value={breeder.pincode}
+                />
 
-                <PreviewRow label="Mobile" value={breeder.contactMobile} />
+                <PreviewRow
+                  label="Mobile"
+                  value={breeder.contactMobile}
+                />
 
-                <PreviewRow label="Email" value={breeder.contactEmail} />
+                <PreviewRow
+                  label="Email"
+                  value={breeder.contactEmail}
+                />
 
                 <PreviewRow
                   label="Facility Details"
@@ -414,12 +760,16 @@ const documents = getArray(
                 />
               </Grid>
 
-              <SectionTitle>Facility Details</SectionTitle>
+              <SectionTitle>
+                Facility Details
+              </SectionTitle>
 
               <Grid container spacing={2}>
                 <PreviewRow
                   label="Accommodation Infrastructure"
-                  value={facility.accommodationInfrastructure}
+                  value={
+                    facility.accommodationInfrastructure
+                  }
                 />
 
                 <PreviewRow
@@ -427,11 +777,16 @@ const documents = getArray(
                   value={facility.workingHours}
                 />
 
-                <PreviewRow label="Rest Day" value={facility.restDay} />
+                <PreviewRow
+                  label="Rest Day"
+                  value={facility.restDay}
+                />
 
                 <PreviewRow
                   label="Ventilation Arrangement"
-                  value={facility.ventilationArrangement}
+                  value={
+                    facility.ventilationArrangement
+                  }
                 />
 
                 <PreviewRow
@@ -441,46 +796,66 @@ const documents = getArray(
 
                 <PreviewRow
                   label="Heating / Cooling Arrangement"
-                  value={facility.heatingCoolingArrangement}
+                  value={
+                    facility.heatingCoolingArrangement
+                  }
                 />
 
                 <PreviewRow
                   label="Food Storage Arrangement"
-                  value={facility.foodStorageArrangement}
+                  value={
+                    facility.foodStorageArrangement
+                  }
                 />
 
                 <PreviewRow
                   label="Cleanliness / Waste Arrangement"
-                  value={facility.cleanlinessWasteArrangement}
+                  value={
+                    facility.cleanlinessWasteArrangement
+                  }
                 />
 
                 <PreviewRow
                   label="Dead Animal Disposal"
-                  value={facility.deadAnimalDisposalArrangement}
+                  value={
+                    facility.deadAnimalDisposalArrangement
+                  }
                 />
 
                 <PreviewRow
                   label="Veterinary Support"
-                  value={facility.veterinarySupportArrangement}
+                  value={
+                    facility.veterinarySupportArrangement
+                  }
                 />
 
                 <PreviewRow
                   label="Cage / Enclosure Details"
-                  value={facility.cageEnclosureDetails}
+                  value={
+                    facility.cageEnclosureDetails
+                  }
                 />
               </Grid>
 
-              <SectionTitle>Declaration Details</SectionTitle>
+              <SectionTitle>
+                Declaration Details
+              </SectionTitle>
 
               <Grid container spacing={2}>
                 <PreviewRow
                   label="Qualification / Experience"
-                  value={declaration.qualificationExperience}
+                  value={
+                    declaration.qualificationExperience
+                  }
                 />
 
                 <PreviewRow
                   label="Declaration Accepted"
-                  value={declaration.declarationAccepted ? "Yes" : "No"}
+                  value={
+                    declaration.declarationAccepted
+                      ? "Yes"
+                      : "No"
+                  }
                 />
 
                 <PreviewRow
@@ -503,98 +878,154 @@ const documents = getArray(
                   value={declaration.signatureName}
                 />
 
-                <PreviewRow label="Signed At" value={declaration.signedAt} />
+                <PreviewRow
+                  label="Signed At"
+                  value={declaration.signedAt}
+                />
               </Grid>
 
-              <SectionTitle>Breed Details</SectionTitle>
+              <SectionTitle>
+                Breed Details
+              </SectionTitle>
 
               {breeds.length === 0 ? (
-                <Typography>No breed details found</Typography>
+                <Typography>
+                  No breed details found
+                </Typography>
               ) : (
                 breeds.map((breed, index) => (
-                  <Box key={breed.id || index} sx={{ mb: 2 }}>
+                  <Box
+                    key={breed.id || index}
+                    sx={{ mb: 2 }}
+                  >
                     <Grid container spacing={2}>
-                      <PreviewRow label="Breed Name" value={breed.breedName} />
-                      <PreviewRow label="Dog Count" value={breed.dogCount} />
+                      <PreviewRow
+                        label="Breed Name"
+                        value={breed.breedName}
+                      />
+
+                      <PreviewRow
+                        label="Dog Count"
+                        value={breed.dogCount}
+                      />
+
                       <PreviewRow
                         label="Age Description"
                         value={breed.ageDescription}
                       />
                     </Grid>
 
-                    {index !== breeds.length - 1 && <Divider sx={{ mt: 1 }} />}
+                    {index !== breeds.length - 1 && (
+                      <Divider sx={{ mt: 1 }} />
+                    )}
                   </Box>
                 ))
               )}
 
-            <SectionTitle>Documents</SectionTitle>
+              <SectionTitle>
+                Documents
+              </SectionTitle>
 
-{documents.length === 0 ? (
-  <Typography>No documents uploaded</Typography>
-) : (
-  documents.map((doc, index) => (
-    <Box
-      key={doc.id || index}
-      sx={{
-        mb: 1.5,
-        pb: 1.5,
-        borderBottom: "1px solid rgba(255,255,255,0.12)",
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        gap: 2,
-      }}
-    >
-      <Box>
-        <Typography sx={{ fontWeight: 700 }}>
-          {getValue(
-            doc.documentTypeName ||
-              doc.documentType?.name ||
-              doc.documentTypeId
-          )}
-        </Typography>
+              {documents.length === 0 ? (
+                <Typography>
+                  No documents uploaded
+                </Typography>
+              ) : (
+                documents.map((document, index) => (
+                  <Box
+                    key={document.id || index}
+                    sx={{
+                      mb: 1.5,
+                      pb: 1.5,
+                      borderBottom:
+                        "1px solid rgba(255,255,255,0.12)",
+                      display: "flex",
+                      justifyContent:
+                        "space-between",
+                      alignItems: "center",
+                      gap: 2,
+                    }}
+                  >
+                    <Box>
+                      <Typography
+                        sx={{ fontWeight: 700 }}
+                      >
+                        {getValue(
+                          document.documentTypeName ||
+                            document.documentType
+                              ?.name ||
+                            document.documentTypeId
+                        )}
+                      </Typography>
 
-        <Typography variant="body2" color="text.secondary">
-          File Name: {getValue(doc.fileName)}
-        </Typography>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                      >
+                        File Name:{" "}
+                        {getValue(document.fileName)}
+                      </Typography>
 
-        <Typography variant="body2" color="text.secondary">
-          Mime Type: {getValue(doc.mimeType)}
-        </Typography>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                      >
+                        Mime Type:{" "}
+                        {getValue(document.mimeType)}
+                      </Typography>
 
-        <Typography variant="body2" color="text.secondary">
-          Size: {getValue(doc.fileSizeBytes)}
-        </Typography>
-      </Box>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                      >
+                        Size:{" "}
+                        {getValue(
+                          document.fileSizeBytes
+                        )}
+                      </Typography>
+                    </Box>
 
-      <Box sx={{ display: "flex", gap: 1 }}>
-        <Button
-          variant="outlined"
-          size="small"
-          startIcon={<VisibilityIcon />}
-          onClick={() => handleViewDocument(doc)}
-        >
-          View
-        </Button>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        gap: 1,
+                      }}
+                    >
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        startIcon={<VisibilityIcon />}
+                        onClick={() =>
+                          handleViewDocument(document)
+                        }
+                      >
+                        View
+                      </Button>
 
-        <Button
-          variant="contained"
-          size="small"
-          startIcon={<DownloadIcon />}
-          onClick={() => handleDownloadDocument(doc)}
-        >
-          Download
-        </Button>
-      </Box>
-    </Box>
-  ))
-)}
+                      <Button
+                        variant="contained"
+                        size="small"
+                        startIcon={<DownloadIcon />}
+                        onClick={() =>
+                          handleDownloadDocument(
+                            document
+                          )
+                        }
+                      >
+                        Download
+                      </Button>
+                    </Box>
+                  </Box>
+                ))
+              )}
             </>
           )}
         </DialogContent>
 
         <DialogActions>
-          <Button onClick={handleClosePreview}>Close</Button>
+          <Button onClick={handleClosePreview}>
+            Close
+          </Button>
         </DialogActions>
       </Dialog>
     </>
@@ -606,12 +1037,23 @@ List.propTypes = {
   tableColumns: PropTypes.array,
   handleSortClick: PropTypes.func,
   sortAttributeDirection: PropTypes.object,
+  refreshList: PropTypes.func,
+  handleRefresh: PropTypes.func,
+  showForwardAction: PropTypes.bool,
 };
 
 List.defaultProps = {
   rows: [],
   tableColumns: [],
-  sortAttributeDirection: {},
+  handleSortClick: () => {},
+  sortAttributeDirection: {
+    attr: "",
+    direction: "asc",
+  },
+  refreshList: undefined,
+  handleRefresh: undefined,
+  showForwardAction: undefined,
 };
 
 export default List;
+
