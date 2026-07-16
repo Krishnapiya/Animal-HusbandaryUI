@@ -127,10 +127,10 @@ export const PAYMENT_TRANSACTION_LIST_URL = "/admin/auth/awb/payment-transaction
 export const PAYMENT_STATUS_MASTER_DROPDOWN_URL = "/admin/auth/master/payment-status-master/list/all?dropDown=true";
 
 export const APPLICATION_DOCUMENT_API_URL =
-"/petshop/auth/application-document/";
+  "/petshop/auth/application-document/";
 
 export const APPLICATION_DOCUMENT_LIST_URL =
-"/petshop/auth/application-document/";
+  "/petshop/auth/application-document/";
 
 
 export const USER_DROPDOWN_URL =
@@ -218,4 +218,11 @@ export const PET_SHOP_REGISTRATION_APPLICATION_LIST_URL =
   export const PET_SHOP_REGISTRATION_APPLICATION_DOWNLOAD_URL =
   "petshop/auth/registration-application/download";
 
- export const OFFICEE_DROPDOWN_URL ="/admin/auth/master/office/list/all?dropDown=true";
+export const PET_SHOP_FORWARDED_APPLICATION_LIST_URL =
+  "/petshop/auth/registration-application/list/all?forwardedOnly=true";
+
+  export const PET_SHOP_MY_APPLICATION_API_URL =
+  "/petshop/auth/registration-application/";
+
+export const PET_SHOP_MY_APPLICATION_LIST_URL =
+  "/petshop/auth/registration-application/my-applications";

@@ -6,7 +6,6 @@ import {
   Card,
   CardContent,
   CardHeader,
-  Container,
   CssBaseline,
   Grid2 as Grid,
   Link,
@@ -14,7 +13,7 @@ import {
 } from "@mui/material";
 import PersonAddAlt1Icon from "@mui/icons-material/PersonAddAlt1";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import { Link as RouterLink, useNavigate } from "react-router-dom";
+import { Link as RouterLink, useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "material-react-toastify";
 import TextInput from "../components/FormComponents/TextInput";
 import { registerPetShopOwner } from "../api-client/accounts";
@@ -22,8 +21,15 @@ import { encryptStorage } from "../utils";
 import {
   LOGIN_PATH,
   PET_SHOP_REGISTER_PATH,
+  DOG_BREEDER_REGISTER_PATH
 } from "../config/routes";
 import { useAuthz } from "../context/AuthzContext";
+import AppBrandHeader from "../components/branding/AppBrandHeader";
+import AuthSplitLayout from "../components/branding/AuthSplitLayout";
+import {
+  BRAND_COLORS,
+  BRAND_TEXT,
+} from "../config/branding";
 
 const initialForm = {
   fname: "",
@@ -37,6 +43,11 @@ const initialForm = {
 
 const PetShopOwnerRegisterPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  const ownerType = searchParams.get("ownerType") || "PET_SHOP";
+  const isDogBreeder = ownerType === "DOG_BREEDER";
+
   const { refreshAuthz } = useAuthz();
   const [formValues, setFormValues] = useState(initialForm);
   const [errors, setErrors] = useState({});
@@ -54,7 +65,12 @@ const PetShopOwnerRegisterPage = () => {
     setIsSubmitting(true);
     setErrors({});
 
-    const response = await registerPetShopOwner(formValues);
+    const payload = {
+      ...formValues,
+      ownerType: ownerType,
+    };
+
+    const response = await registerPetShopOwner(payload);
     setIsSubmitting(false);
 
     if (response.isSuccess) {
@@ -63,11 +79,22 @@ const PetShopOwnerRegisterPage = () => {
         JSON.stringify({
           token: response.data.token,
           user: response.data.user,
-        }),
+        })
       );
+
       await refreshAuthz();
-      toast.success("Account created. Continue with pet shop registration.");
-      navigate(`/${PET_SHOP_REGISTER_PATH}`);
+
+      toast.success(
+        isDogBreeder
+          ? "Account created. Continue with dog breeder registration."
+          : "Account created. Continue with pet shop registration."
+      );
+
+      navigate(
+  isDogBreeder
+    ? `/${DOG_BREEDER_REGISTER_PATH}`
+    : `/${PET_SHOP_REGISTER_PATH}`
+);
       return;
     }
 
@@ -84,29 +111,33 @@ const PetShopOwnerRegisterPage = () => {
   };
 
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        p: 2,
-        background: "linear-gradient(180deg, #f5f7fb 0%, #eef2f7 100%)",
-        fontFamily: "Arial, sans-serif",
-      }}
-    >
-      <Container component="main" maxWidth="sm">
-        <CssBaseline />
-        <Box sx={{ textAlign: "center", mb: 3 }}>
-          <Typography variant="h4" sx={{ fontWeight: 700, color: "#1f2937" }}>
-            Register as Pet Shop Owner
-          </Typography>
-          <Typography variant="body2" sx={{ color: "#6b7280", mt: 1 }}>
-            Create your login, then complete FORM-1 pet shop registration.
-          </Typography>
-        </Box>
+    <AuthSplitLayout>
+      <CssBaseline />
 
-        <Card sx={{ borderRadius: 2, border: "1px solid #e5e7eb" }}>
+      <Box sx={{ display: { xs: "block", md: "none" }, mb: 2 }}>
+        <AppBrandHeader
+          compact
+          title={
+            isDogBreeder
+              ? "Dog Breeder Registration"
+              : "Pet Shop Owner Registration"
+          }
+          subtitle={
+            isDogBreeder
+              ? "Create your login, then complete dog breeder registration."
+              : "Create your login, then complete FORM-1 pet shop registration."
+          }
+        />
+      </Box>
+
+      <Card
+        sx={{
+          borderRadius: 2,
+          backgroundColor: BRAND_COLORS.white,
+          border: `1px solid ${BRAND_COLORS.border}`,
+          boxShadow: "0 10px 30px rgba(15, 23, 42, 0.08)",
+        }}
+      >
           <CardHeader
             title="Account details"
             subheader="Basic information to create your login"
@@ -198,7 +229,10 @@ const PetShopOwnerRegisterPage = () => {
                   mt: 3,
                   mb: 1,
                   textTransform: "none",
-                  backgroundColor: "#2563eb",
+                  backgroundColor: BRAND_COLORS.primary,
+                  "&:hover": {
+                    backgroundColor: BRAND_COLORS.primaryDark,
+                  },
                 }}
               >
                 {isSubmitting ? "Creating account..." : "Create account & continue"}
@@ -218,14 +252,13 @@ const PetShopOwnerRegisterPage = () => {
           </CardContent>
         </Card>
 
-        <Typography variant="body2" align="center" sx={{ mt: 2 }}>
+        <Typography variant="body2" align="center" sx={{ mt: 2, color: BRAND_COLORS.grey }}>
           Already have an account?{" "}
           <Link component={RouterLink} to={`/${LOGIN_PATH}`}>
             Sign in
           </Link>
         </Typography>
-      </Container>
-    </Box>
+    </AuthSplitLayout>
   );
 };
 

@@ -175,6 +175,7 @@ const DataTable = (props) => {
               tableColumns: props.tableColumns,
               alertString: props.alertString,
               handleEditClick: handleEditClick,
+              handleForwardClick: props.handleForwardClick,
               handleRefreshTable: handleRefreshTable,
               sortAttributeDirection: sortAttributeDirection,
               setSortAttributeDirection: setSortAttributeDirection,

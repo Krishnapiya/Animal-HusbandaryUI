@@ -96,6 +96,24 @@ const Step1ShopOwner = ({
             errors={errors}
           />
         </Grid>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <TextInput
+            label="Latitude"
+            name="latitude"
+            value={formValues.latitude}
+            onChange={onChange}
+            errors={errors}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <TextInput
+            label="Longitude"
+            name="longitude"
+            value={formValues.longitude}
+            onChange={onChange}
+            errors={errors}
+          />
+        </Grid>
         <Grid size={{ xs: 12, md: 4 }}>
           <TextInput
             label="Shop city"
@@ -124,6 +142,49 @@ const Step1ShopOwner = ({
             required
           />
         </Grid>
+        <Grid size={{ xs: 12, md: 6 }}>
+  <TextInput
+    label="Father/Husband Name"
+    name="fatherOrHusbandName"
+    value={formValues.fatherOrHusbandName}
+    onChange={onChange}
+    errors={errors}
+    required
+  />
+</Grid>
+
+<Grid size={{ xs: 12, md: 6 }}>
+  <TextInput
+    label="Age"
+    name="age"
+    type="number"
+    value={formValues.age}
+    onChange={onChange}
+    errors={errors}
+    required
+  />
+</Grid>
+<Grid size={{ xs: 12 }}>
+  <Typography
+    variant="subtitle1"
+    sx={{
+      mt: 2,
+      mb: 1,
+      fontWeight: 600,
+      color: "primary.main",
+    }}
+  >
+    Owner Address
+  </Typography>
+</Grid>
+<Grid size={{ xs: 12 }}>
+          <FormControlLabel
+            control={
+              <Checkbox checked={formValues.sameAsShop} onChange={onSameAsShop} />
+            }
+            label="Owner address same as shop address"
+          />
+        </Grid>
         <Grid size={{ xs: 12 }}>
           <TextInput
             label="Residential address (r/o)"
@@ -133,14 +194,7 @@ const Step1ShopOwner = ({
             errors={errors}
           />
         </Grid>
-        <Grid size={{ xs: 12 }}>
-          <FormControlLabel
-            control={
-              <Checkbox checked={formValues.sameAsShop} onChange={onSameAsShop} />
-            }
-            label="Owner address same as shop address"
-          />
-        </Grid>
+        
         <Grid size={{ xs: 12, md: 6 }}>
           <TextInput
             label="Owner address line 1"
@@ -199,24 +253,7 @@ const Step1ShopOwner = ({
             required
           />
         </Grid>
-        <Grid size={{ xs: 12, md: 6 }}>
-          <TextInput
-            label="Latitude"
-            name="latitude"
-            value={formValues.latitude}
-            onChange={onChange}
-            errors={errors}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, md: 6 }}>
-          <TextInput
-            label="Longitude"
-            name="longitude"
-            value={formValues.longitude}
-            onChange={onChange}
-            errors={errors}
-          />
-        </Grid>
+        
       </Grid>
     </Box>
   );

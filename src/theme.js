@@ -9,7 +9,12 @@ export const themeConfig = () => {
       light: {
         palette: {
           primary: {
-            main: "#550fae",
+            main: "#2563eb",
+            dark: "#1d4ed8",
+            light: "#3b82f6",
+          },
+          secondary: {
+            main: "#6b7280",
           },
         },
         components: {
