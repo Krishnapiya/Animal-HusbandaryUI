@@ -126,9 +126,11 @@ export const PAYMENT_TRANSACTION_API_URL = "/admin/auth/awb/payment-transaction/
 export const PAYMENT_TRANSACTION_LIST_URL = "/admin/auth/awb/payment-transaction/";
 export const PAYMENT_STATUS_MASTER_DROPDOWN_URL = "/admin/auth/master/payment-status-master/list/all?dropDown=true";
 
-export const APPLICATION_DOCUMENT_API_URL ="/admin/auth/awb/application-document/";
+export const APPLICATION_DOCUMENT_API_URL =
+"/petshop/auth/application-document/";
 
-export const APPLICATION_DOCUMENT_LIST_URL ="/admin/auth/awb/application-document/";
+export const APPLICATION_DOCUMENT_LIST_URL =
+"/petshop/auth/application-document/";
 
 
 export const USER_DROPDOWN_URL =
@@ -156,3 +158,64 @@ export const PET_SHOP_REGISTRATION_STEP1_URL =
 
 export const PET_SHOP_REGISTRATION_DRAFT_URL =
   "/petshop/auth/awb/pet-shop/registration/draft";
+  
+export const DOG_BREEDER_REGISTRATION_DRAFT_URL =
+  "/dogbreeder/auth/awb/dog-breeder/registration/draft";
+
+export const DOG_BREEDER_REGISTRATION_STEP1_URL =
+  "/dogbreeder/auth/awb/dog-breeder/registration/step-1";
+
+  export const DOG_BREEDER_FACILITY_API_URL =
+  "/dogbreeder/auth/master/dog-breeder-facility/";
+
+export const DOG_BREEDER_DECLARATION_API_URL =
+  "/dogbreeder/auth/master/dog-breeder-declaration/";
+
+export const APPLICATION_DOCUMENT_UPLOAD_URL =
+  "/dogbreeder/auth/awb/application-document/upload";
+
+export const APPLICATION_DOCUMENT_BY_APPLICATION_URL =
+  "/dogbreeder/auth/awb/application-document/list/by-application/";
+
+export const APPLICATION_DOCUMENT_VIEW_URL =
+  "/dogbreeder/auth/awb/application-document/view/";
+export const DOG_BREEDER_APPLICATION_API_URL =
+  "/dogbreeder/auth/registration-application/";
+
+export const DOG_BREEDER_APPLICATION_LIST_URL =
+  "/dogbreeder/auth/registration-application/list/all?entityType=DOG_BREEDER";
+  export const APPLICATION_DOCUMENT_DOWNLOAD_URL = "/dogbreeder/auth/awb/application-document/download/";
+  export const DOG_BREEDER_APPLICATION_PREVIEW_URL =
+  "/dogbreeder/auth/registration-application/preview/";
+
+export const DOG_BREEDER_APPLICATION_DOWNLOAD_URL =
+  "/dogbreeder/auth/registration-application/download/";
+  export const DOG_BREEDER_DOCUMENT_VIEW_URL =
+  "/dogbreeder/auth/awb/application-document/view/";
+
+export const DOG_BREEDER_DOCUMENT_DOWNLOAD_URL =
+  "/dogbreeder/auth/awb/application-document/download/";
+  export const PET_SHOP_REGISTRATION_STEP2_URL =
+  "petshop/auth/master/pet-shop-facility/save";
+
+  
+export const ANIMAL_SPECIES_API_URL =
+  "/admin/auth/master/animal-species/";
+
+export const ANIMAL_SPECIES_LIST_URL =
+  "/admin/auth/master/animal-species/";
+
+
+export const PET_SHOP_REGISTRATION_APPLICATION_API_URL =
+    "/petshop/auth/registration-application/";
+
+export const PET_SHOP_REGISTRATION_APPLICATION_LIST_URL =
+    "/petshop/auth/registration-application/";
+
+    export const PET_SHOP_REGISTRATION_APPLICATION_VIEW_URL =
+  "/petshop/auth/registration-application/view/";
+
+  export const PET_SHOP_REGISTRATION_APPLICATION_DOWNLOAD_URL =
+  "petshop/auth/registration-application/download";
+
+ export const OFFICEE_DROPDOWN_URL ="/admin/auth/master/office/list/all?dropDown=true";
