@@ -1,9 +1,14 @@
 import PropTypes from "prop-types";
-import { Box, Grid2 as Grid, Typography } from "@mui/material";
 import TextInput from "../../components/FormComponents/TextInput";
 import TextField from "@mui/material/TextField";
 import {
+  Box,
+  Grid2 as Grid,
+  Typography,
   FormControl,
+  FormControlLabel,
+  Radio,
+  RadioGroup,
   InputLabel,
   Select,
   MenuItem,
@@ -13,6 +18,79 @@ const Step2FacilityInfrastructure = ({
   errors,
   onChange,
 }) => {
+ const renderArrangementField = (
+  title,
+  availableName,
+  descriptionName
+) => (
+  <Grid size={{ xs: 12 }}>
+    <Box
+  sx={{
+    py: 2,
+    borderBottom: "1px solid #ececec",
+  }}
+>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: 2,
+        }}
+      >
+        <Typography
+    sx={{
+        fontWeight: 500,
+        fontSize: "15px"
+    }}
+>
+          {title}
+        </Typography>
+
+        <RadioGroup
+          row
+          name={availableName}
+          value={String(formValues[availableName])}
+          onChange={(e) =>
+            onChange({
+              target: {
+                name: availableName,
+                value: e.target.value === "true",
+              },
+            })
+          }
+        >
+          <FormControlLabel
+            value="true"
+            control={<Radio size="small" />}
+            label="Yes"
+          />
+
+          <FormControlLabel
+            value="false"
+            control={<Radio size="small" />}
+            label="No"
+          />
+        </RadioGroup>
+      </Box>
+
+      {formValues[availableName] && (
+        <Box sx={{ mt: 2 }}>
+          <TextInput
+            multiline
+            rows={3}
+            label="Description"
+            name={descriptionName}
+            value={formValues[descriptionName]}
+            onChange={onChange}
+            errors={errors}
+          />
+        </Box>
+      )}
+    </Box>
+  </Grid>
+);
   return (
     <Box>
       <Typography variant="h6" sx={{ mb: 2, fontFamily: "Arial" }}>
@@ -91,149 +169,58 @@ const Step2FacilityInfrastructure = ({
   </Select>
 </FormControl>
 
-        <Grid size={{ xs: 12 }}>
-          <textarea
-  name="ventilationArrangement"
-  value={formValues.ventilationArrangement}
-  onChange={onChange}
-  placeholder="Ventilation Arrangement"
-  style={{
-    width: "100%",
-    minHeight: "120px",
-    padding: "12px",
-    background: "#ffffff",
-    color: "#000000",
-    border: "1px solid #666",
-    borderRadius: "4px",
-    resize: "vertical",
-    fontSize: "14px",
-    boxSizing: "border-box",
-  }}
-/>
-        </Grid>
+{renderArrangementField(
+  "Ventilation Arrangement",
+  "ventilationAvailable",
+  "ventilationArrangement"
+)}
 
-        <Grid size={{ xs: 12 }}>
-          <textarea
-  name="lightingArrangement"
-  value={formValues.lightingArrangement}
-  onChange={onChange}
-  placeholder="Lighting Arrangement"
-  style={{
-    width: "100%",
-    minHeight: "120px",
-    padding: "12px",
-    background: "#ffffff",
-    color: "#000000",
-    border: "1px solid #666",
-    borderRadius: "4px",
-    resize: "vertical",
-    fontSize: "14px",
-    boxSizing: "border-box",
-  }}
-/>
-        </Grid>
+        {renderArrangementField(
+  "Lighting Arrangement",
+  "lightingAvailable",
+  "lightingArrangement"
+)}
 
-        <Grid size={{ xs: 12 }}>
-          <TextInput
-            multiline
-            rows={3}
-            label="Fire Safety Arrangement"
-            name="fireSafetyArrangement"
-            value={formValues.fireSafetyArrangement}
-            onChange={onChange}
-            errors={errors}
-          />
-        </Grid>
+        {renderArrangementField(
+  "Fire Safety Arrangement",
+  "fireSafetyAvailable",
+  "fireSafetyArrangement"
+)}
 
-        <Grid size={{ xs: 12 }}>
-          <textarea
-  name="heatingCoolingArrangement"
-  value={formValues.heatingCoolingArrangement}
-  onChange={onChange}
-  placeholder="Heating / Cooling Arrangement"
-  style={{
-    width: "100%",
-    minHeight: "120px",
-    padding: "12px",
-    background: "#ffffff",
-    color: "#000000",
-    border: "1px solid #666",
-    borderRadius: "4px",
-    resize: "vertical",
-    fontSize: "14px",
-    boxSizing: "border-box",
-  }}
-/>
-        </Grid>
+        {renderArrangementField(
+  "Heating / Cooling Arrangement",
+  "heatingCoolingAvailable",
+  "heatingCoolingArrangement"
+)}
 
-        <Grid size={{ xs: 12 }}>
-          <TextInput
-            multiline
-            rows={3}
-            label="Power Backup Arrangement"
-            name="powerBackupArrangement"
-            value={formValues.powerBackupArrangement}
-            onChange={onChange}
-            errors={errors}
-          />
-        </Grid>
+{renderArrangementField(
+  "Power Backup Arrangement",
+  "powerBackupAvailable",
+  "powerBackupArrangement"
+)}
 
-        <Grid size={{ xs: 12 }}>
-          <TextInput
-            multiline
-            rows={3}
-            label="Food Storage Arrangement"
-            name="foodStorageArrangement"
-            value={formValues.foodStorageArrangement}
-            onChange={onChange}
-            errors={errors}
-          />
-        </Grid>
+{renderArrangementField(
+  "Food Storage Arrangement",
+  "foodStorageAvailable",
+  "foodStorageArrangement"
+)}
 
-        <Grid size={{ xs: 12 }}>
-          <textarea
-  name="cleanlinessWasteArrangement"
-  value={formValues.cleanlinessWasteArrangement}
-  onChange={onChange}
-  placeholder="Cleanliness & Waste Arrangement"
-  style={{
-    width: "100%",
-    minHeight: "120px",
-    padding: "12px",
-    background: "#ffffff",
-    color: "#000000",
-    border: "1px solid #666",
-    borderRadius: "4px",
-    resize: "vertical",
-    fontSize: "14px",
-    boxSizing: "border-box",
-  }}
-/>
-        </Grid>
+ {renderArrangementField(
+  "Cleanliness & Waste Arrangement",
+  "cleanlinessWasteAvailable",
+  "cleanlinessWasteArrangement"
+)}
 
-        <Grid size={{ xs: 12 }}>
-          <TextInput
-            multiline
-            rows={3}
-            label="Dead Animal Disposal Arrangement"
-            name="deadAnimalDisposalArrangement"
-            value={formValues.deadAnimalDisposalArrangement}
-            onChange={onChange}
-            errors={errors}
-          />
-        </Grid>
-
-        <Grid size={{ xs: 12 }}>
-          <TextInput
-            multiline
-            rows={3}
-            label="Veterinary Support Arrangement"
-            name="veterinarySupportArrangement"
-            value={formValues.veterinarySupportArrangement}
-            onChange={onChange}
-            errors={errors}
-          />
-        </Grid>
+{renderArrangementField(
+    "Carcass Disposal Arrangement",
+  "deadAnimalDisposalAvailable",
+  "deadAnimalDisposalArrangement"
+)}
+{renderArrangementField(
+  "Veterinary Support Arrangement",
+  "veterinarySupportAvailable",
+  "veterinarySupportArrangement"
+)}
       </Grid>
     </Box>
   );

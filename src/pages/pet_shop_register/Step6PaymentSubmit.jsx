@@ -40,6 +40,19 @@ const Step6PaymentSubmit = ({
   declaration,
   documents,
 }) => {
+  console.log("applicationId =", applicationId);
+console.log("formValues =", formValues);
+  const [showPreview, setShowPreview] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+const handlePayment = () => { alert("Payment Gateway Integration Pending");};
+const handleSubmit = async () => {
+  try {
+    await axios.patch(
+      `${BASE_API_URL.replace(/\/$/, "")}/petshop/auth/registration-application/submit/${applicationId}`,
+      {},
+      {
+        headers: getHeader(),
+      }
   const [isDownloading, setIsDownloading] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
 
@@ -99,6 +112,62 @@ const Step6PaymentSubmit = ({
     );
   };
 
+    toast.success("Application submitted successfully.");
+    setSubmitted(true);
+
+    // Optional: redirect after submit
+    // navigate("/my-applications");
+
+  } catch (error) {
+    console.error(error);
+    toast.error("Submission failed.");
+  }
+};
+const buildApiUrl = (baseUrl, endpointPath, id) => {
+  const normalizedBaseUrl = String(baseUrl || "").replace(/\/+$/, "");
+  const normalizedEndpointPath = String(endpointPath || "")
+    .replace(/^\/+/, "")
+    .replace(/\/+$/, "");
+  const normalizedId = String(id || "").replace(/^\/+/, "");
+
+  return `${normalizedBaseUrl}/${normalizedEndpointPath}/${normalizedId}`;
+};
+
+const handleDownloadPdf = async () => {
+  try {
+    const url = buildApiUrl(
+      BASE_API_URL,
+      PET_SHOP_REGISTRATION_APPLICATION_DOWNLOAD_URL,
+      applicationId
+    );
+
+    console.log("Download URL:", url);
+
+    const response = await axios.get(url, {
+      headers: getHeader(),
+      responseType: "blob",
+    });
+
+    const blob = new Blob([response.data], {
+      type: "application/pdf",
+    });
+
+    const downloadUrl = window.URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = downloadUrl;
+    link.download = `PetShopApplication-${applicationId}.pdf`;
+
+    document.body.appendChild(link);
+    link.click();
+
+    link.remove();
+    window.URL.revokeObjectURL(downloadUrl);
+  } catch (err) {
+    console.error("Download failed", err);
+  }
+};
+
   return (
     <Card>
       <CardContent>
@@ -122,7 +191,7 @@ const Step6PaymentSubmit = ({
 
         <Typography sx={{ mb: 2 }}>
           <b>Registration Fee :</b>
-          ₹500
+          ₹200
         </Typography>
 
         <Typography sx={{ mb: 3 }}>
@@ -155,6 +224,15 @@ const Step6PaymentSubmit = ({
           </Button>
 
           <Button
+
+  variant="contained"
+  color={submitted ? "success" : "primary"}
+  disabled={submitted}
+  onClick={handleSubmit}
+>
+  {submitted ? "APPLICATION SUBMITTED" : "SUBMIT APPLICATION"}
+</Button>
+
             variant="outlined"
             startIcon={<DownloadIcon />}
             onClick={handleDownloadApplication}
@@ -164,6 +242,7 @@ const Step6PaymentSubmit = ({
               ? "Downloading..."
               : "Download Application"}
           </Button>
+
 
           <Button
             variant="outlined"
