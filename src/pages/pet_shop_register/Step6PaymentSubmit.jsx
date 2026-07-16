@@ -30,12 +30,9 @@ const Step6PaymentSubmit = ({
 }) => {
   console.log("applicationId =", applicationId);
 console.log("formValues =", formValues);
-  const [showPreview, setShowPreview] =
-  useState(false);
-const handlePayment = () => {
-  alert("Payment Gateway Integration Pending");
-};
-
+  const [showPreview, setShowPreview] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+const handlePayment = () => { alert("Payment Gateway Integration Pending");};
 const handleSubmit = async () => {
   try {
     await axios.patch(
@@ -47,6 +44,7 @@ const handleSubmit = async () => {
     );
 
     toast.success("Application submitted successfully.");
+    setSubmitted(true);
 
     // Optional: redirect after submit
     // navigate("/my-applications");
@@ -124,7 +122,7 @@ const handleDownloadPdf = async () => {
 
         <Typography sx={{ mb: 2 }}>
           <b>Registration Fee :</b>
-          ₹500
+          ₹200
         </Typography>
 
         <Typography sx={{ mb: 3 }}>
@@ -148,10 +146,11 @@ const handleDownloadPdf = async () => {
           </Button>
           <Button
   variant="contained"
-  color="primary"
+  color={submitted ? "success" : "primary"}
+  disabled={submitted}
   onClick={handleSubmit}
 >
-  Submit Application
+  {submitted ? "APPLICATION SUBMITTED" : "SUBMIT APPLICATION"}
 </Button>
 
           <Button

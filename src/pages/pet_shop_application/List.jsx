@@ -63,14 +63,32 @@ const List = (props) => {
 
 {/* Actions */}
 <TableCell align="center">
+  {row.status?.name?.toLowerCase() === "forwarded to cvo".toLowerCase() ? (
     <Button
-        variant="contained"
-        color="success"
-        size="small"
-        onClick={() => props.handleForwardClick(row.id)}
+      variant="contained"
+      color="primary"
+      size="small"
+      disabled
+      sx={{
+        "&.Mui-disabled": {
+          backgroundColor: "#1976d2",
+          color: "#fff",
+          opacity: 1,
+        },
+      }}
     >
-        FORWARD
+      FORWARDED TO CVO
     </Button>
+  ) : (
+    <Button
+      variant="contained"
+      color="success"
+      size="small"
+      onClick={() => props.handleForwardClick(row.id)}
+    >
+      FORWARD
+    </Button>
+  )}
 </TableCell>
             </TableRow>
           ))}

@@ -211,6 +211,7 @@ console.log(
         id: item.id,
         species: item.species,
         breed: item.breed || "",
+        gender: item.gender || "",
         quantity: item.quantity || "",
         ageDescription: item.ageDescription || "",
         priceOffered: item.priceOffered || "",
@@ -283,6 +284,32 @@ if (facilityResponse?.isSuccess) {
 
     veterinarySupportArrangement:
       facility.veterinarySupportArrangement || "",
+      ventilationAvailable:
+  facility.ventilationAvailable ?? false,
+
+lightingAvailable:
+  facility.lightingAvailable ?? false,
+
+fireSafetyAvailable:
+  facility.fireSafetyAvailable ?? false,
+
+heatingCoolingAvailable:
+  facility.heatingCoolingAvailable ?? false,
+
+powerBackupAvailable:
+  facility.powerBackupAvailable ?? false,
+
+foodStorageAvailable:
+  facility.foodStorageAvailable ?? false,
+
+cleanlinessWasteAvailable:
+  facility.cleanlinessWasteAvailable ?? false,
+
+deadAnimalDisposalAvailable:
+  facility.deadAnimalDisposalAvailable ?? false,
+
+veterinarySupportAvailable:
+  facility.veterinarySupportAvailable ?? false,
   });
   if (declarationResponse?.isSuccess) {
 
@@ -478,14 +505,31 @@ age:
 
   restDay: [],
 
+  ventilationAvailable: false,
   ventilationArrangement: "",
+
+  lightingAvailable: false,
   lightingArrangement: "",
+
+  fireSafetyAvailable: false,
   fireSafetyArrangement: "",
+
+  heatingCoolingAvailable: false,
   heatingCoolingArrangement: "",
+
+  powerBackupAvailable: false,
   powerBackupArrangement: "",
+
+  foodStorageAvailable: false,
   foodStorageArrangement: "",
+
+  cleanlinessWasteAvailable: false,
   cleanlinessWasteArrangement: "",
+
+  deadAnimalDisposalAvailable: false,
   deadAnimalDisposalArrangement: "",
+
+  veterinarySupportAvailable: false,
   veterinarySupportArrangement: "",
 });
 
@@ -494,6 +538,7 @@ const [animals, setAnimals] = useState([
     id: "",
     species: "",
     breed: "",
+    gender: "",
     quantity: "",
     ageDescription: "",
     priceOffered: "",
@@ -573,6 +618,7 @@ const [declaration, setDeclaration] = useState({
         recordKind: "PROPOSED",
         species: animal.species,
         breed: animal.breed,
+        gender: animal.gender,
         quantity: animal.quantity
           ? Number(animal.quantity)
           : null,
@@ -760,54 +806,77 @@ toast.error(
     setErrors({});
 
     const payload = {
-      id: facilityForm.id || null,
+  id: facilityForm.id || null,
 
-      petShopDetailId: Number(
-        formValues.detailId
-      ),
+  petShopDetailId: Number(formValues.detailId),
 
-      accommodationInfrastructure:
-        facilityForm.accommodationInfrastructure,
+  accommodationInfrastructure:
+    facilityForm.accommodationInfrastructure,
 
-      workingHours:
-        facilityForm.openingTime &&
-        facilityForm.closingTime
-          ? `${facilityForm.openingTime} - ${facilityForm.closingTime}`
-          : "",
+  workingHours:
+    facilityForm.openingTime &&
+    facilityForm.closingTime
+      ? `${facilityForm.openingTime} - ${facilityForm.closingTime}`
+      : "",
 
-      restDay: Array.isArray(
-        facilityForm.restDay
-      )
-        ? facilityForm.restDay.join(",")
-        : facilityForm.restDay || "",
+  restDay: Array.isArray(facilityForm.restDay)
+    ? facilityForm.restDay.join(",")
+    : facilityForm.restDay || "",
 
-      ventilationArrangement:
-        facilityForm.ventilationArrangement,
+  ventilationAvailable:
+    facilityForm.ventilationAvailable,
 
-      lightingArrangement:
-        facilityForm.lightingArrangement,
+  ventilationArrangement:
+    facilityForm.ventilationArrangement,
 
-      fireSafetyArrangement:
-        facilityForm.fireSafetyArrangement,
+  lightingAvailable:
+    facilityForm.lightingAvailable,
 
-      heatingCoolingArrangement:
-        facilityForm.heatingCoolingArrangement,
+  lightingArrangement:
+    facilityForm.lightingArrangement,
 
-      powerBackupArrangement:
-        facilityForm.powerBackupArrangement,
+  fireSafetyAvailable:
+    facilityForm.fireSafetyAvailable,
 
-      foodStorageArrangement:
-        facilityForm.foodStorageArrangement,
+  fireSafetyArrangement:
+    facilityForm.fireSafetyArrangement,
 
-      cleanlinessWasteArrangement:
-        facilityForm.cleanlinessWasteArrangement,
+  heatingCoolingAvailable:
+    facilityForm.heatingCoolingAvailable,
 
-      deadAnimalDisposalArrangement:
-        facilityForm.deadAnimalDisposalArrangement,
+  heatingCoolingArrangement:
+    facilityForm.heatingCoolingArrangement,
 
-      veterinarySupportArrangement:
-        facilityForm.veterinarySupportArrangement,
-    };
+  powerBackupAvailable:
+    facilityForm.powerBackupAvailable,
+
+  powerBackupArrangement:
+    facilityForm.powerBackupArrangement,
+
+  foodStorageAvailable:
+    facilityForm.foodStorageAvailable,
+
+  foodStorageArrangement:
+    facilityForm.foodStorageArrangement,
+
+  cleanlinessWasteAvailable:
+    facilityForm.cleanlinessWasteAvailable,
+
+  cleanlinessWasteArrangement:
+    facilityForm.cleanlinessWasteArrangement,
+
+  deadAnimalDisposalAvailable:
+    facilityForm.deadAnimalDisposalAvailable,
+
+  deadAnimalDisposalArrangement:
+    facilityForm.deadAnimalDisposalArrangement,
+
+  veterinarySupportAvailable:
+    facilityForm.veterinarySupportAvailable,
+
+  veterinarySupportArrangement:
+    facilityForm.veterinarySupportArrangement,
+};
 
     let response;
 

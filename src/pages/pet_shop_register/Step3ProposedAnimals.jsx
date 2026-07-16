@@ -50,6 +50,7 @@ const Step3ProposedAnimals = ({
       {
         id: "",
         species: null,
+        gender: "",
         breed: "",
         quantity: "",
         ageDescription: "",
@@ -149,7 +150,7 @@ const Step3ProposedAnimals = ({
 
             <Grid size={{ xs: 12, md: 4 }}>
               <TextInput
-                label="Quantity"
+                  label="No. of Animals"
                 value={animal.quantity}
                 onChange={(e) =>
                   handleChange(
@@ -160,6 +161,27 @@ const Step3ProposedAnimals = ({
                 }
               />
             </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+  <FormControl fullWidth>
+    <InputLabel>Gender</InputLabel>
+
+    <Select
+      value={animal.gender || ""}
+      label="Gender"
+      onChange={(e) =>
+        handleChange(
+          index,
+          "gender",
+          e.target.value
+        )
+      }
+    >
+      <MenuItem value="Male">Male</MenuItem>
+      <MenuItem value="Female">Female</MenuItem>
+      <MenuItem value="Both">Both</MenuItem>
+    </Select>
+  </FormControl>
+</Grid>
 
             <Grid size={{ xs: 12, md: 6 }}>
               <TextInput
