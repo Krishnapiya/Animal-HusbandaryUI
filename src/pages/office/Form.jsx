@@ -15,6 +15,7 @@ const Form = (props) => {
     parentId: null,
     parentName: "",
     parentOffice: null,
+    districtId: null,
   };
 
   const {
@@ -50,12 +51,37 @@ const Form = (props) => {
     }));
   }, [formValues.parentId, formValues.parentName, formValues.parentOffice, setFormValues]);
 
+  useEffect(() => {
+  if (formValues.districtId == null) {
+    return;
+  }
+
+  if (typeof formValues.districtId === "object") {
+    return;
+  }
+
+  const district = props.dropDownLists?.district?.find(
+    (d) => Number(d.id) === Number(formValues.districtId)
+  );
+
+  if (district) {
+    setFormValues((prev) => ({
+      ...prev,
+      districtId: district,
+    }));
+  }
+}, [
+  formValues.districtId,
+  props.dropDownLists,
+  setFormValues,
+]);
   const handleSubmit = async (event) => {
     event.preventDefault();
     const payload = {
       officeType: formValues.officeType,
       name: formValues.name,
       parentId: formValues.parentOffice?.id ?? null,
+        districtId: formValues.districtId?.id ?? formValues.districtId ?? null,
     };
     if (props.operationType === "edit") {
       payload.id = formValues.id;
@@ -102,6 +128,16 @@ const Form = (props) => {
               onChange={handleChangeDropDown}
               list={parentOptions}
               label="Parent office"
+              errors={errors}
+            />
+          </Grid>
+          <Grid size={{ xs: 12 }}>
+            <DropDown
+              name="districtId"
+              formValues={formValues}
+              onChange={handleChangeDropDown}
+              list={props.dropDownLists?.district || []}
+              label="District"
               errors={errors}
             />
           </Grid>

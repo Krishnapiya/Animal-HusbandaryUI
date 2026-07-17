@@ -31,6 +31,19 @@ const Filter = (props) => {
           }
         />
       </Grid>
+      <Grid item size={{ xs: 12, sm: 6 }}>
+        <TextInput
+          label="District"
+          name="district"
+          value={props.filterFetchParams.district || ""}
+          onChange={(e) =>
+            props.setFilterFetchParams((prev) => ({
+              ...prev,
+              district: e.target.value,
+            }))
+          }
+        />
+      </Grid>
     </>
   );
 };
