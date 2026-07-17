@@ -168,45 +168,45 @@ const PetShopRegisterPage = () => {
   const [initialStepResolved, setInitialStepResolved] =
     useState(false);
   const [maxAccessibleStep, setMaxAccessibleStep] = useState(0);
-  const [facilityForm, setFacilityForm] = useState({
-    id: "",
-    accommodationInfrastructure: "",
-    openingTime: "",
-    closingTime: "",
-    restDay: [],
-    ventilationArrangement: "",
-    lightingArrangement: "",
-    fireSafetyArrangement: "",
-    heatingCoolingArrangement: "",
-    powerBackupArrangement: "",
-    foodStorageArrangement: "",
-    cleanlinessWasteArrangement: "",
-    deadAnimalDisposalArrangement: "",
-    veterinarySupportArrangement: "",
-  });
-  const [animals, setAnimals] = useState([
-    {
-      id: "",
-      species: "",
-      breed: "",
-      quantity: "",
-      ageDescription: "",
-      priceOffered: "",
-      description: "",
-    },
-  ]);
-  const [declaration, setDeclaration] = useState({
-    id: "",
-    declarationPlace: "",
-    declarationDate: "",
-    informationAccurate: false,
-    affidavitRule2018Ack: false,
-    affidavitAwbiRulesAck: false,
-    affidavitConditionsAck: false,
-    affidavitCancellationAck: false,
-    affidavitTruthAck: false,
-    affidavitDeponentName: "",
-  });
+  // const [facilityForm, setFacilityForm] = useState({
+  //   id: "",
+  //   accommodationInfrastructure: "",
+  //   openingTime: "",
+  //   closingTime: "",
+  //   restDay: [],
+  //   ventilationArrangement: "",
+  //   lightingArrangement: "",
+  //   fireSafetyArrangement: "",
+  //   heatingCoolingArrangement: "",
+  //   powerBackupArrangement: "",
+  //   foodStorageArrangement: "",
+  //   cleanlinessWasteArrangement: "",
+  //   deadAnimalDisposalArrangement: "",
+  //   veterinarySupportArrangement: "",
+  // });
+  // const [animals, setAnimals] = useState([
+  //   {
+  //     id: "",
+  //     species: "",
+  //     breed: "",
+  //     quantity: "",
+  //     ageDescription: "",
+  //     priceOffered: "",
+  //     description: "",
+  //   },
+  // ]);
+  // const [declaration, setDeclaration] = useState({
+  //   id: "",
+  //   declarationPlace: "",
+  //   declarationDate: "",
+  //   informationAccurate: false,
+  //   affidavitRule2018Ack: false,
+  //   affidavitAwbiRulesAck: false,
+  //   affidavitConditionsAck: false,
+  //   affidavitCancellationAck: false,
+  //   affidavitTruthAck: false,
+  //   affidavitDeponentName: "",
+  // });
 
   useEffect(() => {
     let cancelled = false;
