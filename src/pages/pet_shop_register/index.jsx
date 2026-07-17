@@ -168,6 +168,72 @@ const PetShopRegisterPage = () => {
   const [initialStepResolved, setInitialStepResolved] =
     useState(false);
   const [maxAccessibleStep, setMaxAccessibleStep] = useState(0);
+  const [facilityForm, setFacilityForm] = useState({
+  id: "",
+  accommodationInfrastructure: "",
+
+  openingTime: "",
+  closingTime: "",
+
+  restDay: [],
+
+  ventilationAvailable: false,
+  ventilationArrangement: "",
+
+  lightingAvailable: false,
+  lightingArrangement: "",
+
+  fireSafetyAvailable: false,
+  fireSafetyArrangement: "",
+
+  heatingCoolingAvailable: false,
+  heatingCoolingArrangement: "",
+
+  powerBackupAvailable: false,
+  powerBackupArrangement: "",
+
+  foodStorageAvailable: false,
+  foodStorageArrangement: "",
+
+  cleanlinessWasteAvailable: false,
+  cleanlinessWasteArrangement: "",
+
+  deadAnimalDisposalAvailable: false,
+  deadAnimalDisposalArrangement: "",
+
+  veterinarySupportAvailable: false,
+  veterinarySupportArrangement: "",
+});
+
+const [animals, setAnimals] = useState([
+  {
+    id: "",
+    species: "",
+    breed: "",
+    gender: "",
+    quantity: "",
+    ageDescription: "",
+    priceOffered: "",
+    description: "",
+  },
+]);
+
+const [declaration, setDeclaration] = useState({
+  id: "",
+  declarationPlace: "",
+  declarationDate: "",
+
+  informationAccurate: false,
+
+  affidavitRule2018Ack: false,
+  affidavitAwbiRulesAck: false,
+  affidavitConditionsAck: false,
+  affidavitCancellationAck: false,
+  affidavitTruthAck: false,
+
+  affidavitDeponentName: "",
+});
+
   // const [facilityForm, setFacilityForm] = useState({
   //   id: "",
   //   accommodationInfrastructure: "",
@@ -643,72 +709,7 @@ age:
     longitude: formValues.longitude ? Number(formValues.longitude) : null,
   });
 
- const [facilityForm, setFacilityForm] = useState({
-  id: "",
-  accommodationInfrastructure: "",
-
-  openingTime: "",
-  closingTime: "",
-
-  restDay: [],
-
-  ventilationAvailable: false,
-  ventilationArrangement: "",
-
-  lightingAvailable: false,
-  lightingArrangement: "",
-
-  fireSafetyAvailable: false,
-  fireSafetyArrangement: "",
-
-  heatingCoolingAvailable: false,
-  heatingCoolingArrangement: "",
-
-  powerBackupAvailable: false,
-  powerBackupArrangement: "",
-
-  foodStorageAvailable: false,
-  foodStorageArrangement: "",
-
-  cleanlinessWasteAvailable: false,
-  cleanlinessWasteArrangement: "",
-
-  deadAnimalDisposalAvailable: false,
-  deadAnimalDisposalArrangement: "",
-
-  veterinarySupportAvailable: false,
-  veterinarySupportArrangement: "",
-});
-
-const [animals, setAnimals] = useState([
-  {
-    id: "",
-    species: "",
-    breed: "",
-    gender: "",
-    quantity: "",
-    ageDescription: "",
-    priceOffered: "",
-    description: "",
-  },
-]);
-
-const [declaration, setDeclaration] = useState({
-  id: "",
-  declarationPlace: "",
-  declarationDate: "",
-
-  informationAccurate: false,
-
-  affidavitRule2018Ack: false,
-  affidavitAwbiRulesAck: false,
-  affidavitConditionsAck: false,
-  affidavitCancellationAck: false,
-  affidavitTruthAck: false,
-
-  affidavitDeponentName: "",
-});
-
+ 
 
   const handleSaveStep1 = async () => {
     if (isSaving) return;
