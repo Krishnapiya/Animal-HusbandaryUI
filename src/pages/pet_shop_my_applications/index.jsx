@@ -60,7 +60,7 @@ const PetShopMyApplicationsPage = () => {
     >
       <Filter />
 
-      <FormDialog maxWidth="md">
+      <FormDialog maxWidth="xl">
         <Form />
       </FormDialog>
 

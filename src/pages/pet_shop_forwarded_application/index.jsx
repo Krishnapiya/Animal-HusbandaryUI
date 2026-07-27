@@ -3,6 +3,8 @@ import FormDialog from "../../components/page_builder/FormDialog";
 import Form from "./Form";
 import Filter from "./Filter";
 import List from "./List";
+import { scheduleInspection ,uploadInspectionReport, } from "../../api-client/petShopRegistration";
+import UploadInspectionReportForm from "./UploadInspectionReportForm";
 import { useAuthz } from "../../context/AuthzContext";
 import {
   PET_SHOP_REGISTRATION_APPLICATION_API_URL,
@@ -12,9 +14,69 @@ import {
   PET_SHOP_FORWARDED_APPLICATION_PATH,
 } from "../../config/routes";
 import useCan from "../../hooks/useCan";
+import { useState } from "react";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import ScheduleInspectionForm from "./ScheduleInspectionForm";
 
 const PetShopApplicationPage = () => {
   const { can } = useAuthz();
+  const [openScheduleDialog, setOpenScheduleDialog] = useState(false);
+const [selectedApplicationId, setSelectedApplicationId] = useState(null);
+const [openReportDialog, setOpenReportDialog] = useState(false);
+const [selectedReportApplicationId, setSelectedReportApplicationId] =
+  useState(null);
+
+const handleScheduleInspection = (id) => {
+  setSelectedApplicationId(id);
+  setOpenScheduleDialog(true);
+};
+
+const handleCloseScheduleDialog = () => {
+  setOpenScheduleDialog(false);
+  setSelectedApplicationId(null);
+};
+const handleInspectionSubmit = async (inspectionData) => {
+  try {
+    await scheduleInspection({
+      applicationId: inspectionData.applicationId,
+      inspectionDate: inspectionData.inspectionDate,
+      inspectionRemarks: inspectionData.remarks,
+    });
+
+    handleCloseScheduleDialog();
+
+    window.location.reload();
+  } catch (error) {
+    console.error(error);
+  }
+};
+const handleUploadReport = (id) => {
+  setSelectedReportApplicationId(id);
+  setOpenReportDialog(true);
+};
+
+const handleCloseReportDialog = () => {
+  setOpenReportDialog(false);
+  setSelectedReportApplicationId(null);
+};
+
+const handleReportSubmit = async (reportData) => {
+  try {
+    await uploadInspectionReport({
+      applicationId: reportData.applicationId,
+      reportFile: reportData.reportFile,
+      remarks: reportData.remarks,
+      recommendation: reportData.recommendation,
+    });
+
+    handleCloseReportDialog();
+
+    window.location.reload();
+  } catch (error) {
+    console.error(error);
+  }
+};
 
 const {
   canList,
@@ -41,7 +103,8 @@ const {
   },
 ];
 
-  return (
+return (
+  <>
     <DataTable
       api_url={PET_SHOP_REGISTRATION_APPLICATION_API_URL}
       list_url={PET_SHOP_FORWARDED_APPLICATION_LIST_URL}
@@ -53,7 +116,9 @@ const {
       canList={canList}
       canEdit={canEdit}
       canDelete={canDelete}
-     canExport={can(PET_SHOP_FORWARDED_APPLICATION_PATH, "export")} 
+      canExport={can(PET_SHOP_FORWARDED_APPLICATION_PATH, "export")}
+      handleScheduleInspection={handleScheduleInspection}
+handleUploadReport={handleUploadReport}
     >
       <Filter />
 
@@ -63,7 +128,38 @@ const {
 
       <List />
     </DataTable>
-  );
+
+    <Dialog
+      open={openScheduleDialog}
+      onClose={handleCloseScheduleDialog}
+      maxWidth="sm"
+      fullWidth
+    >
+      <DialogTitle>Schedule Inspection</DialogTitle>
+<ScheduleInspectionForm
+  applicationId={selectedApplicationId}
+  onClose={handleCloseScheduleDialog}
+  onSubmit={handleInspectionSubmit}
+/>
+    </Dialog>
+    <Dialog
+  open={openReportDialog}
+  onClose={handleCloseReportDialog}
+  maxWidth="sm"
+  fullWidth
+>
+  <DialogTitle>
+    Upload Inspection Report
+  </DialogTitle>
+
+  <UploadInspectionReportForm
+    applicationId={selectedReportApplicationId}
+    onClose={handleCloseReportDialog}
+    onSubmit={handleReportSubmit}
+  />
+</Dialog>
+  </>
+);
 };
 
 export default PetShopApplicationPage;

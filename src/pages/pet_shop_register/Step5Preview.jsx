@@ -154,7 +154,8 @@ const Step5Preview = ({
   return (
     <Card
       sx={{
-        width: "210mm",
+        width: "100%",
+maxWidth: "210mm",
         minHeight: "297mm",
         mx: "auto",
         p: 4,

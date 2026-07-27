@@ -3,6 +3,7 @@ import FormDialog from "../../components/page_builder/FormDialog";
 import Form from "./Form";
 import Filter from "./Filter";
 import List from "./List";
+
 import { useAuthz } from "../../context/AuthzContext";
 import {
   PET_SHOP_REGISTRATION_APPLICATION_API_URL,
@@ -10,10 +11,13 @@ import {
 } from "../../config/endpoints";
 import { PET_SHOP_APPLICATION_PATH } from "../../config/routes";
 import useCan from "../../hooks/useCan";
-
 import axios from "axios";
 import { toast } from "material-react-toastify";
 import { getHeader } from "../../utils";
+import {
+  approveApplication,
+  rejectApplication,
+} from "../../api-client/petShopRegistration";
 const PetShopApplicationPage = () => {
   const handleForwardClick = async (id) => {
   try {
@@ -34,6 +38,30 @@ await axios.patch(
   } catch (error) {
     console.error(error);
     toast.error("Forward failed");
+  }
+};
+const handleApproveClick = async (id) => {
+  try {
+    await approveApplication(id);
+
+    toast.success("Application approved successfully");
+
+    window.location.reload();
+  } catch (error) {
+    console.error(error);
+    toast.error("Approval failed");
+  }
+};
+const handleRejectClick = async (id) => {
+  try {
+    await rejectApplication(id);
+
+    toast.success("Application rejected successfully");
+
+    window.location.reload();
+  } catch (error) {
+    console.error(error);
+    toast.error("Rejection failed");
   }
 };
   const { can } = useAuthz();
@@ -77,10 +105,12 @@ await axios.patch(
       canEdit={canEdit}
       canDelete={canDelete}
       canExport={can(PET_SHOP_APPLICATION_PATH, "export")}
+      handleApproveClick={handleApproveClick}
+handleRejectClick={handleRejectClick}
     >
       <Filter />
 
-      <FormDialog maxWidth="md">
+      <FormDialog maxWidth="xl">
         <Form />
       </FormDialog>
 
