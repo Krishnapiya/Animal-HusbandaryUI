@@ -63,32 +63,101 @@ const List = (props) => {
 
 {/* Actions */}
 <TableCell align="center">
-  {row.status?.name?.toLowerCase() === "forwarded to cvo".toLowerCase() ? (
-    <Button
-      variant="contained"
-      color="primary"
-      size="small"
-      disabled
-      sx={{
-        "&.Mui-disabled": {
-          backgroundColor: "#1976d2",
-          color: "#fff",
-          opacity: 1,
-        },
-      }}
-    >
-      FORWARDED TO CVO
-    </Button>
-  ) : (
-    <Button
-      variant="contained"
-      color="success"
-      size="small"
-      onClick={() => props.handleForwardClick(row.id)}
-    >
-      FORWARD
-    </Button>
-  )}
+  {(() => {
+    const status = row.status?.name?.toLowerCase();
+
+    if (status === "submitted") {
+      return (
+        <Button
+          variant="contained"
+          color="success"
+          size="small"
+          onClick={() => props.handleForwardClick(row.id)}
+        >
+          FORWARD
+        </Button>
+      );
+    }
+
+    if (
+      status === "forwarded to cvo" ||
+      status === "inspection scheduled"
+    ) {
+      return (
+       <Button
+  variant="contained"
+  size="small"
+  disabled
+  sx={{
+    "&.Mui-disabled": {
+      backgroundColor: "#e0e0e0",
+      color: "#757575",
+      opacity: 0.7,
+      boxShadow: "none",
+    },
+  }}
+>
+  FORWARDED TO CVO
+</Button>
+      );
+    }
+
+    if (
+      status === "verified by cvo" ||
+      status === "rejected by cvo"
+    ) {
+      return (
+        <>
+          <Button
+            variant="contained"
+            color="success"
+            size="small"
+            sx={{ mr: 1 }}
+            onClick={() => props.handleApproveClick(row.id)}
+          >
+            APPROVE
+          </Button>
+
+          <Button
+            variant="contained"
+            color="error"
+            size="small"
+            onClick={() => props.handleRejectClick(row.id)}
+          >
+            REJECT
+          </Button>
+        </>
+      );
+    }
+
+    if (status === "application approved") {
+      return (
+        <Button
+          variant="contained"
+          color="success"
+          size="small"
+          disabled
+        >
+          APPROVED
+        </Button>
+      );
+    }
+
+    if (status === "application rejected") {
+      return (
+        <Button
+          variant="contained"
+          color="error"
+          size="small"
+          disabled
+        >
+          REJECTED
+        </Button>
+      );
+    }
+
+    return null;
+  })()}
 </TableCell>
             </TableRow>
           ))}
@@ -112,6 +181,8 @@ List.propTypes = {
   tableColumns: PropTypes.array,
   canEdit: PropTypes.bool,
   canDelete: PropTypes.bool,
+  handleApproveClick: PropTypes.func,
+handleRejectClick: PropTypes.func,
 };
 
 export default List;

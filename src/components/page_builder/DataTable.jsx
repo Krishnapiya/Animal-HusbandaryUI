@@ -20,7 +20,58 @@ import IconButton from "@mui/material/IconButton";
 import RecordsPerPage from "./RecordsPerPage";
 import { useEffect } from "react";
 import Typography from "@mui/material/Typography";
+import NotificationsIcon from "@mui/icons-material/Notifications";
+import Badge from "@mui/material/Badge";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
+import Button from "@mui/material/Button";
+import {
+  getNotifications,
+  getUnreadCount,
+  markNotificationAsRead,
+  markAllNotificationsAsRead,
+} from "../../api-client/notification";
 const DataTable = (props) => {
+  const [notificationOpen, setNotificationOpen] = useState(false);
+
+const [notifications, setNotifications] = useState([]);
+const [unreadCount, setUnreadCount] = useState(0);
+const [loadingNotifications, setLoadingNotifications] = useState(false);
+const loadUnreadCount = async () => {
+  const response = await getUnreadCount();
+
+  if (response.isSuccess) {
+    setUnreadCount(response.data.payLoad || 0);
+  }
+};
+
+const loadNotifications = async () => {
+  setLoadingNotifications(true);
+
+  const response = await getNotifications();
+
+  if (response.isSuccess) {
+    setNotifications(response.data.payLoad || []);
+  }
+
+  setLoadingNotifications(false);
+};
+
+const handleNotificationClick = async () => {
+  await loadNotifications();
+
+  // Mark all notifications as read
+  const response = await markAllNotificationsAsRead();
+
+  if (response.isSuccess) {
+    await loadNotifications();
+    await loadUnreadCount();
+  }
+
+  setNotificationOpen(true);
+};
   const children_array = Children.toArray(props.children);
   const {
     rows,
@@ -51,7 +102,9 @@ const DataTable = (props) => {
   useEffect(() => {
     console.log("ROWWWWIDDD--->", rowID);
   }, [rowID]);
-
+useEffect(() => {
+  loadUnreadCount();
+}, []);
   //---------------------------------------------------------
   //------------------------FOR SORTING----------------------
   const [sortAttributeDirection, setSortAttributeDirection] = useState({
@@ -138,11 +191,26 @@ const DataTable = (props) => {
           ) : (
             ""
           )}
-          <Tooltip title="Reset" placement="bottom">
-            <IconButton onClick={handleClearFilter} color="secondary">
-              <RestartAltRoundedIcon />
-            </IconButton>
-          </Tooltip>
+          <Tooltip title="Notifications" placement="bottom">
+<IconButton
+  color="primary"
+  onClick={handleNotificationClick}
+>
+    <Badge
+  color="error"
+  badgeContent={unreadCount}
+  invisible={unreadCount === 0}
+>
+      <NotificationsIcon />
+    </Badge>
+  </IconButton>
+</Tooltip>
+
+<Tooltip title="Reset" placement="bottom">
+  <IconButton onClick={handleClearFilter} color="secondary">
+    <RestartAltRoundedIcon />
+  </IconButton>
+</Tooltip>
         </Box>
       </Box>
       {/* FormDialog */}
@@ -176,6 +244,8 @@ const DataTable = (props) => {
               alertString: props.alertString,
               handleEditClick: handleEditClick,
               handleForwardClick: props.handleForwardClick,
+              handleApproveClick: props.handleApproveClick,
+handleRejectClick: props.handleRejectClick,
               handleRefreshTable: handleRefreshTable,
               sortAttributeDirection: sortAttributeDirection,
               setSortAttributeDirection: setSortAttributeDirection,
@@ -183,6 +253,9 @@ const DataTable = (props) => {
               canEdit: props.canEdit,
               canDelete: props.canDelete,
               dropDownLists: props.dropDownLists,
+              handleScheduleInspection: props.handleScheduleInspection,
+               handleUploadReport: props.handleUploadReport,
+              
             })
           )}
         </TableContainer>
@@ -230,7 +303,110 @@ const DataTable = (props) => {
           )}
         </Stack>
       </Paper>
+<Dialog
+  open={notificationOpen}
+  onClose={async () => {
+    await markAllNotificationsAsRead();
+    await loadNotifications();
+    await loadUnreadCount();
+    setNotificationOpen(false);
+  }}
+  maxWidth="sm"
+  fullWidth
+>
+  <DialogTitle>
+    Notifications
+  </DialogTitle>
 
+ <DialogContent dividers>
+
+  {loadingNotifications ? (
+
+    <Typography>Loading...</Typography>
+
+  ) : notifications.length === 0 ? (
+
+    <Typography>No notifications found.</Typography>
+
+  ) : (
+
+    notifications.map((notification) => (
+
+      <Box
+        key={notification.id}
+        sx={{
+          mb: 2,
+          p: 2,
+          border: "1px solid #ddd",
+          borderRadius: 2,
+          bgcolor: notification.isRead ? "#ffffff" : "#f5f9ff",
+          cursor: "pointer",
+        }}
+        onClick={async () => {
+          if (!notification.isRead) {
+            await markNotificationAsRead(notification.id);
+            await loadNotifications();
+            await loadUnreadCount();
+          }
+        }}
+      >
+
+       <Typography variant="subtitle1" fontWeight="bold">
+  {notification.title}
+</Typography>
+
+{notification.applicationNumber && (
+  <Typography
+    variant="body2"
+    sx={{ mt: 1, color: "text.secondary" }}
+  >
+    <strong>Application No :</strong> {notification.applicationNumber}
+  </Typography>
+)}
+
+{notification.district && (
+  <Typography
+    variant="body2"
+    sx={{ color: "text.secondary" }}
+  >
+    <strong>District :</strong> {notification.district}
+  </Typography>
+)}
+
+{notification.applicationStatus && (
+  <Typography
+    variant="body2"
+    sx={{ color: "text.secondary" }}
+  >
+    <strong>Status :</strong> {notification.applicationStatus}
+  </Typography>
+)}
+
+<Typography sx={{ mt: 1.5 }}>
+  {notification.message}
+</Typography>
+
+      </Box>
+
+    ))
+
+  )}
+
+</DialogContent>
+
+  <DialogActions>
+   <Button
+  onClick={async () => {
+    await markAllNotificationsAsRead();
+    await loadNotifications();
+    await loadUnreadCount();
+    setNotificationOpen(false);
+  }}
+>
+  Close
+</Button>
+  </DialogActions>
+</Dialog>
       <LoadingPercentageBackDrop open={isTableLoading} progress={progress} />
     </Paper>
   );
@@ -252,6 +428,10 @@ DataTable.propTypes = {
   canEdit: PropTypes.bool,
   canDelete: PropTypes.bool,
   canExport: PropTypes.bool,
+  handleScheduleInspection: PropTypes.func,
+  handleUploadReport: PropTypes.func,
+  handleApproveClick: PropTypes.func,
+handleRejectClick: PropTypes.func,
 };
 
 export default DataTable;

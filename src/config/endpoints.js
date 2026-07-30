@@ -240,3 +240,5 @@ export const DOG_BREEDER_APPLICATION_CVO_LIST_URL =
   "/dogbreeder/auth/registration-application/cvo/list/all";
 
    export const OFFICEE_DROPDOWN_URL ="/admin/auth/master/office/list/all?dropDown=true";
+
+   export const REGISTRATION_INSPECTION_API_URL = "/petshop/auth/registration-inspection/";
