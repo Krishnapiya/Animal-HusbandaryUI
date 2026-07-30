@@ -3,6 +3,7 @@ import { addItem, getItemList,editSingleItem, } from "./apiCall";
 import { BASE_API_URL } from "./apiCall";
 import { callApi } from "./client";
 import { getHeader } from "../utils";
+import { REGISTRATION_INSPECTION_API_URL } from "../config/endpoints";
 import axios from "axios";
 export const getPetShopRegistrationDraft = async () => {
   return getItemList(PET_SHOP_REGISTRATION_DRAFT_URL);
@@ -61,6 +62,36 @@ export const updateApplicationDeclaration = (payload) =>
   editSingleItem("/petshop/auth/master/application-declaration/save", {
     payLoad: payload,
   });
+  export const scheduleInspection = async (payload) => {
+  return addItem(
+    `${REGISTRATION_INSPECTION_API_URL}save`,
+    {
+      payLoad: payload,
+    }
+  );
+};
+
+export const uploadInspectionReport = ({
+  applicationId,
+  reportFile,
+  remarks,
+  recommendation,
+}) => {
+  const formData = new FormData();
+
+  formData.append("applicationId", applicationId);
+  formData.append("reportFile", reportFile);
+  formData.append("remarks", remarks);
+  formData.append("recommendation", recommendation);
+
+  return callApi({
+    method: "POST",
+    baseURL: BASE_API_URL,
+    url: `${REGISTRATION_INSPECTION_API_URL}upload-report`,
+    data: formData,
+    headers: getHeader(),
+  });
+};
 
 export const uploadApplicationDocument = ({
   file,
@@ -97,6 +128,7 @@ export const fetchApplicationDocumentBlob = async (filePath) => {
     headers: getHeader() || {},
     responseType: "blob",
   });
+  
 
   const blob = response.data;
 
@@ -108,6 +140,25 @@ export const fetchApplicationDocumentBlob = async (filePath) => {
   return blob;
 };
 
+// ==========================================
+// Admin Final Approval APIs
+// ==========================================
+
+export const approveApplication = (id) =>
+  callApi({
+    method: "POST",
+    baseURL: BASE_API_URL,
+    url: `/petshop/auth/registration-application/approve/${id}`,
+    headers: getHeader(),
+  });
+
+export const rejectApplication = (id) =>
+  callApi({
+    method: "POST",
+    baseURL: BASE_API_URL,
+    url: `/petshop/auth/registration-application/reject/${id}`,
+    headers: getHeader(),
+  });
 export const downloadPetShopRegistrationApplication = async (
   applicationId
 ) => {

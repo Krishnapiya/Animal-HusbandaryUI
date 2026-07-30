@@ -151,7 +151,7 @@ const Step2FacilityInfrastructure = ({
        
 
         <FormControl fullWidth>
-  <InputLabel>Rest Days</InputLabel>
+  <InputLabel>Holiday</InputLabel>
 
   <Select
     multiple

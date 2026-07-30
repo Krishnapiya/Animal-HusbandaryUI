@@ -9,6 +9,8 @@ import TableSortLabel from "@mui/material/TableSortLabel";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
+import Button from "@mui/material/Button";
+import EventIcon from "@mui/icons-material/Event";
 
 const List = (props) => {
 
@@ -34,7 +36,11 @@ const List = (props) => {
             ))}
 
            <TableCell align="center">View</TableCell>
-{/* <TableCell align="center">Actions</TableCell> */}
+           <TableCell align="center">Actions</TableCell>
+           <TableCell align="center">Decision</TableCell>
+
+ 
+
           </TableRow>
         </TableHead>
 
@@ -60,17 +66,79 @@ const List = (props) => {
     </Tooltip>
 </TableCell>
 
-{/* Actions
+<>
+{/* Actions */}
 <TableCell align="center">
-    <Button
+  {(() => {
+   const inspectionScheduled =
+  row.status?.name === "Inspection Scheduled" ||
+  row.status?.name === "Verified by CVO" ||
+  row.status?.name === "Rejected by CVO" ||
+  row.status?.name === "Application Approved" ||
+  row.status?.name === "Application Rejected";
+
+    return (
+      <Button
         variant="contained"
-        color="success"
+        color={inspectionScheduled ? "success" : "warning"}
         size="small"
-        onClick={() => props.handleForwardClick(row.id)}
-    >
-        FORWARD
-    </Button>
-</TableCell> */}
+        startIcon={<EventIcon />}
+        disabled={inspectionScheduled}
+        onClick={() => props.handleScheduleInspection(row.id)}
+      >
+        {inspectionScheduled ? "Scheduled" : "Schedule Inspection"}
+      </Button>
+    );
+  })()}
+</TableCell>
+
+{/* Report */}
+{/* Decision */}
+<TableCell align="center">
+  {row.status?.name === "Inspection Scheduled" ? (
+  <Button
+    variant="contained"
+    color="info"
+    size="small"
+    onClick={() => props.handleUploadReport(row.id)}
+  >
+    Upload Report
+  </Button>
+) : row.status?.name === "Verified by CVO" ? (
+  <Button
+    variant="contained"
+    size="small"
+    disabled
+    sx={{
+      "&.Mui-disabled": {
+        backgroundColor: "#2e7d32",
+        color: "#fff",
+        opacity: 1,
+      },
+    }}
+  >
+    ✓ Verified by CVO
+  </Button>
+) : row.status?.name === "Rejected by CVO" ? (
+  <Button
+    variant="contained"
+    size="small"
+    disabled
+    sx={{
+      "&.Mui-disabled": {
+        backgroundColor: "#d32f2f",
+        color: "#fff",
+        opacity: 1,
+      },
+    }}
+  >
+    ✗ Rejected by CVO
+  </Button>
+) : (
+  "-"
+)}
+</TableCell>
+</>
             </TableRow>
           ))}
         </TableBody>
@@ -93,6 +161,8 @@ List.propTypes = {
   tableColumns: PropTypes.array,
   canEdit: PropTypes.bool,
   canDelete: PropTypes.bool,
+  handleScheduleInspection: PropTypes.func,
+  handleUploadReport: PropTypes.func,
 };
 
 export default List;

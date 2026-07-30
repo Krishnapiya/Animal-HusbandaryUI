@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import axios from "axios";
-import { PET_SHOP_REGISTRATION_APPLICATION_DOWNLOAD_URL } from "../../config/endpoints";
+import { downloadPetShopRegistrationApplication } from "../../api-client/petShopRegistration";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
 import Button from "@mui/material/Button";
@@ -178,38 +178,11 @@ const Form = ({ rowID, onClose }) => {
     fetchApplication();
   }, [rowID]);
 
-  const handleDownloadPdf = async () => {
-  try {
-    const headers = getHeader();
+const handleDownloadPdf = async () => {
+  const response = await downloadPetShopRegistrationApplication(rowID);
 
-    const url = buildApiUrl(
-      BASE_API_URL,
-      PET_SHOP_REGISTRATION_APPLICATION_DOWNLOAD_URL,
-      rowID
-    );
-
-    const response = await axios.get(url, {
-      headers,
-      responseType: "blob",
-    });
-
-    const blob = new Blob([response.data], {
-      type: "application/pdf",
-    });
-
-    const downloadUrl = window.URL.createObjectURL(blob);
-
-    const link = document.createElement("a");
-    link.href = downloadUrl;
-    link.download = `PetShopApplication-${rowID}.pdf`;
-
-    document.body.appendChild(link);
-    link.click();
-
-    link.remove();
-    window.URL.revokeObjectURL(downloadUrl);
-  } catch (err) {
-    console.error("Download failed", err);
+  if (!response.isSuccess) {
+    console.error(response.message);
   }
 };
 
