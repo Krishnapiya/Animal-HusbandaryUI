@@ -53,9 +53,19 @@ const initialStep1 = {
 const initialStep2 = {
   id: "",
   dogBreederDetailId: "",
+
+  ventilationAvailable: false,
+  lightingAvailable: false,
+  heatingCoolingAvailable: false,
+  foodStorageAvailable: false,
+  cleanlinessWasteAvailable: false,
+  deadAnimalDisposalAvailable: false,
+  veterinarySupportAvailable: false,
+
   accommodationInfrastructure: "",
   workingHours: "",
-  restDay: "",
+  holiday: "",
+
   ventilationArrangement: "",
   lightingArrangement: "",
   heatingCoolingArrangement: "",
@@ -63,6 +73,7 @@ const initialStep2 = {
   cleanlinessWasteArrangement: "",
   deadAnimalDisposalArrangement: "",
   veterinarySupportArrangement: "",
+
   cageEnclosureDetails: "",
 };
 
@@ -572,40 +583,83 @@ const DogBreederRegisterPage = () => {
           totalDogsCount: detail?.totalDogsCount ?? prev.totalDogsCount,
         }));
 
-        setFacilityValues((prev) => ({
-          ...prev,
-          id: facility?.id || prev.id,
-          dogBreederDetailId:
-            dogBreederDetailId ||
-            facility?.dogBreederDetailId ||
-            facility?.dogBreederDetail?.id ||
-            prev.dogBreederDetailId,
-          accommodationInfrastructure:
-            facility?.accommodationInfrastructure ||
-            prev.accommodationInfrastructure,
-          workingHours: facility?.workingHours || prev.workingHours,
-          restDay: facility?.restDay || prev.restDay,
-          ventilationArrangement:
-            facility?.ventilationArrangement || prev.ventilationArrangement,
-          lightingArrangement:
-            facility?.lightingArrangement || prev.lightingArrangement,
-          heatingCoolingArrangement:
-            facility?.heatingCoolingArrangement ||
-            prev.heatingCoolingArrangement,
-          foodStorageArrangement:
-            facility?.foodStorageArrangement || prev.foodStorageArrangement,
-          cleanlinessWasteArrangement:
-            facility?.cleanlinessWasteArrangement ||
-            prev.cleanlinessWasteArrangement,
-          deadAnimalDisposalArrangement:
-            facility?.deadAnimalDisposalArrangement ||
-            prev.deadAnimalDisposalArrangement,
-          veterinarySupportArrangement:
-            facility?.veterinarySupportArrangement ||
-            prev.veterinarySupportArrangement,
-          cageEnclosureDetails:
-            facility?.cageEnclosureDetails || prev.cageEnclosureDetails,
-        }));
+setFacilityValues((prev) => ({
+  ...prev,
+  id: facility?.id || prev.id,
+  dogBreederDetailId:
+    dogBreederDetailId ||
+    facility?.dogBreederDetailId ||
+    facility?.dogBreederDetail?.id ||
+    prev.dogBreederDetailId,
+
+  ventilationAvailable:
+    facility?.ventilationAvailable ?? prev.ventilationAvailable,
+
+  lightingAvailable:
+    facility?.lightingAvailable ?? prev.lightingAvailable,
+
+  heatingCoolingAvailable:
+    facility?.heatingCoolingAvailable ??
+    prev.heatingCoolingAvailable,
+
+  foodStorageAvailable:
+    facility?.foodStorageAvailable ??
+    prev.foodStorageAvailable,
+
+  cleanlinessWasteAvailable:
+    facility?.cleanlinessWasteAvailable ??
+    prev.cleanlinessWasteAvailable,
+
+  deadAnimalDisposalAvailable:
+    facility?.deadAnimalDisposalAvailable ??
+    prev.deadAnimalDisposalAvailable,
+
+  veterinarySupportAvailable:
+    facility?.veterinarySupportAvailable ??
+    prev.veterinarySupportAvailable,
+
+  accommodationInfrastructure:
+    facility?.accommodationInfrastructure ||
+    prev.accommodationInfrastructure,
+
+  workingHours:
+    facility?.workingHours || prev.workingHours,
+
+  holiday:
+    facility?.holiday || prev.holiday,
+
+  ventilationArrangement:
+    facility?.ventilationArrangement ||
+    prev.ventilationArrangement,
+
+  lightingArrangement:
+    facility?.lightingArrangement ||
+    prev.lightingArrangement,
+
+  heatingCoolingArrangement:
+    facility?.heatingCoolingArrangement ||
+    prev.heatingCoolingArrangement,
+
+  foodStorageArrangement:
+    facility?.foodStorageArrangement ||
+    prev.foodStorageArrangement,
+
+  cleanlinessWasteArrangement:
+    facility?.cleanlinessWasteArrangement ||
+    prev.cleanlinessWasteArrangement,
+
+  deadAnimalDisposalArrangement:
+    facility?.deadAnimalDisposalArrangement ||
+    prev.deadAnimalDisposalArrangement,
+
+  veterinarySupportArrangement:
+    facility?.veterinarySupportArrangement ||
+    prev.veterinarySupportArrangement,
+
+  cageEnclosureDetails:
+    facility?.cageEnclosureDetails ||
+    prev.cageEnclosureDetails,
+}));
 
         setBreedValues((prev) => ({
           ...prev,
@@ -958,8 +1012,8 @@ const handlePreviewClick = () => {
       newErrors.workingHours = "Working hours is required";
     }
 
-    if (!facilityValues.restDay) {
-      newErrors.restDay = "Rest day is required";
+    if (!facilityValues.holiday) {
+      newErrors.holiday = "Holiday is required";
     }
 
     setFacilityErrors(newErrors);
@@ -995,25 +1049,50 @@ const handlePreviewClick = () => {
       setIsSavingFacility(true);
       setFacilityErrors({});
 
-      const payload = {
-        id: facilityValues.id || null,
-        dogBreederDetailId,
-        accommodationInfrastructure:
-          facilityValues.accommodationInfrastructure,
-        workingHours: facilityValues.workingHours,
-        restDay: facilityValues.restDay,
-        ventilationArrangement: facilityValues.ventilationArrangement,
-        lightingArrangement: facilityValues.lightingArrangement,
-        heatingCoolingArrangement: facilityValues.heatingCoolingArrangement,
-        foodStorageArrangement: facilityValues.foodStorageArrangement,
-        cleanlinessWasteArrangement:
-          facilityValues.cleanlinessWasteArrangement,
-        deadAnimalDisposalArrangement:
-          facilityValues.deadAnimalDisposalArrangement,
-        veterinarySupportArrangement:
-          facilityValues.veterinarySupportArrangement,
-        cageEnclosureDetails: facilityValues.cageEnclosureDetails,
-      };
+   const payload = {
+    id: facilityValues.id || null,
+    dogBreederDetailId,
+
+    ventilationAvailable: facilityValues.ventilationAvailable,
+    lightingAvailable: facilityValues.lightingAvailable,
+    heatingCoolingAvailable: facilityValues.heatingCoolingAvailable,
+    foodStorageAvailable: facilityValues.foodStorageAvailable,
+    cleanlinessWasteAvailable: facilityValues.cleanlinessWasteAvailable,
+    deadAnimalDisposalAvailable:
+        facilityValues.deadAnimalDisposalAvailable,
+    veterinarySupportAvailable:
+        facilityValues.veterinarySupportAvailable,
+
+    accommodationInfrastructure:
+        facilityValues.accommodationInfrastructure,
+
+    workingHours: facilityValues.workingHours,
+    holiday: facilityValues.holiday,
+
+    ventilationArrangement:
+        facilityValues.ventilationArrangement,
+
+    lightingArrangement:
+        facilityValues.lightingArrangement,
+
+    heatingCoolingArrangement:
+        facilityValues.heatingCoolingArrangement,
+
+    foodStorageArrangement:
+        facilityValues.foodStorageArrangement,
+
+    cleanlinessWasteArrangement:
+        facilityValues.cleanlinessWasteArrangement,
+
+    deadAnimalDisposalArrangement:
+        facilityValues.deadAnimalDisposalArrangement,
+
+    veterinarySupportArrangement:
+        facilityValues.veterinarySupportArrangement,
+
+    cageEnclosureDetails:
+        facilityValues.cageEnclosureDetails,
+};
 
       const response = await saveDogBreederFacility(payload);
 
