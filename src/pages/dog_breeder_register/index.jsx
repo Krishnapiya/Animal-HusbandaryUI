@@ -9,7 +9,6 @@ import {
 } from "@mui/material";
 import SaveIcon from "@mui/icons-material/Save";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
-import VisibilityIcon from "@mui/icons-material/Visibility";
 import { toast } from "material-react-toastify";
 
 import WizardStepper from "./WizardStepper";
@@ -34,7 +33,7 @@ import {
   getApplicationDocumentsByApplicationId,
 } from "../../api-client/applicationDocument";
 import { getUserAttributes } from "../../utils";
-
+import { submitDogBreederApplication } from "../../api-client/dogBreederRegistration";
 const initialStep1 = {
   id: "",
   applicationId: "",
@@ -503,7 +502,7 @@ const DogBreederRegisterPage = () => {
   const [documentValues, setDocumentValues] = useState({});
   const [documentErrors, setDocumentErrors] = useState({});
   const [isSavingDocument, setIsSavingDocument] = useState(false);
-
+const [isSubmitting, setIsSubmitting] = useState(false);
   const [previewValues, setPreviewValues] = useState(null);
 
   const goToStep = (stepIndex) => {
@@ -1580,7 +1579,27 @@ const handlePreviewClick = () => {
       setIsSavingDocument(false);
     }
   };
+const handleSubmitApplication = async () => {
+  const applicationId = formValues.applicationId;
 
+  if (!applicationId) {
+    toast.error("Application ID not found.");
+    return;
+  }
+
+  try {
+    setIsSubmitting(true);
+
+    await submitDogBreederApplication(applicationId);
+
+    toast.success("Application submitted successfully.");
+  } catch (error) {
+    console.error(error);
+    toast.error("Submission failed.");
+  } finally {
+    setIsSubmitting(false);
+  }
+};
   return (
     <Box sx={{ p: 2, fontFamily: "Arial, sans-serif" }}>
       <Typography
@@ -1657,38 +1676,33 @@ const handlePreviewClick = () => {
             />
           )}
 
-          {activeStep === 5 && (
-            <>
-              {!previewValues && (
-                <Box sx={{ textAlign: "center", py: 4 }}>
-                  <Typography variant="h6" sx={{ mb: 1 }}>
-                    Preview Application
-                  </Typography>
+ {activeStep === 5 && (
+  <>
+    {!previewValues ? (
+      <Box sx={{ textAlign: "center", py: 4 }}>
+        <Typography variant="h6" sx={{ mb: 1 }}>
+          Preview Application
+        </Typography>
 
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    sx={{ mb: 2 }}
-                  >
-                    Click Preview to view FORM-I dog breeder application details.
-                  </Typography>
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{ mb: 3 }}
+        >
+          Click Preview to view your completed application.
+        </Typography>
 
-                  <Button
-                    variant="contained"
-                    startIcon={<VisibilityIcon />}
-                    onClick={handlePreviewClick}
-                    sx={{
-                      textTransform: "none",
-                      backgroundColor: "#2563eb",
-                    }}
-                  >
-                    Preview
-                  </Button>
-                </Box>
-              )}
-
-              {previewValues && (
-              <Step6Preview
+        <Button
+          variant="contained"
+          onClick={handlePreviewClick}
+          sx={{ textTransform: "none" }}
+        >
+          Preview Application
+        </Button>
+      </Box>
+    ) : (
+      <>
+       <Step6Preview
   breederDetails={previewValues.breederDetails}
   facilityDetails={previewValues.facilityDetails}
   breedDetails={previewValues.breedDetails}
@@ -1697,9 +1711,41 @@ const handlePreviewClick = () => {
   documentValues={previewValues.documents || documentValues}
   documentDetails={previewValues.documentDetails}
 />
-              )}
-            </>
-          )}
+
+        <Box
+          sx={{
+            mt: 3,
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: 2,
+          }}
+        >
+          <Button
+            variant="outlined"
+            onClick={() => {
+              setPreviewValues(null);
+            }}
+            sx={{ textTransform: "none" }}
+          >
+            Close Preview
+          </Button>
+
+          <Button
+            variant="contained"
+            color="success"
+            onClick={handleSubmitApplication}
+            disabled={isSubmitting}
+            sx={{ textTransform: "none" }}
+          >
+            {isSubmitting
+              ? "Submitting..."
+              : "Submit Application"}
+          </Button>
+        </Box>
+      </>
+    )}
+  </>
+)}
 
           {activeStep === 6 && (
             <Box sx={{ textAlign: "center", py: 4 }}>

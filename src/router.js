@@ -35,6 +35,7 @@ import {
   PET_SHOP_APPLICATION_PATH,
    PET_SHOP_FORWARDED_APPLICATION_PATH,
    PET_SHOP_MY_APPLICATION_PATH,
+   DOG_BREEDER_MY_APPLICATION_PATH,
 } from "./config/routes";
 
 import PetShopMyApplicationPage from "./pages/pet_shop_my_applications";
@@ -71,6 +72,7 @@ import RegistrationApplicationPage from "./pages/registration_application";
 import DocumentTypePage from "./pages/document_type";
 import DogBreederBreedPage from "./pages/dog_breeder_breed";
 import PaymentTransactionPage from "./pages/payment_transaction";
+import DogBreederMyApplicationPage from "./pages/dog_breeder_my_applications";
 
 const PetShopMyApplicationPageWithPermission = () =>
   createElement(
@@ -273,7 +275,15 @@ const DogBreederApplicationPageWithPermission = () =>
     },
     createElement(DogBreederApplicationPage)
   );
-
+const DogBreederMyApplicationPageWithPermission = () =>
+  createElement(
+    PermissionGate,
+    {
+      menuKey: DOG_BREEDER_MY_APPLICATION_PATH,
+      action: "list",
+    },
+    createElement(DogBreederMyApplicationPage)
+  );
 export const router = createBrowserRouter([
   {
     Component: App,
@@ -402,6 +412,10 @@ export const router = createBrowserRouter([
               {
                 path: DOG_BREEDER_APPLICATION_PATH,
                 Component: DogBreederApplicationPageWithPermission,
+              },
+              {
+                  path: DOG_BREEDER_MY_APPLICATION_PATH,
+                  Component: DogBreederMyApplicationPageWithPermission,
               },
              
               {
