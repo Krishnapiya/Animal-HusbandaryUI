@@ -240,3 +240,23 @@ export const DOG_BREEDER_APPLICATION_CVO_LIST_URL =
   "/dogbreeder/auth/registration-application/cvo/list/all";
 
    export const OFFICEE_DROPDOWN_URL ="/admin/auth/master/office/list/all?dropDown=true";
+   export const DOG_BREEDER_MY_APPLICATION_URL = "/dogbreeder/auth/registration-application/my-applications";
+
+     export const DOG_BREEDER_MY_APPLICATION_API_URL =
+  "/dogbreeder/auth/registration-application/";
+
+
+export const DOG_BREEDER_MY_APPLICATION_LIST_URL =
+  "/dogbreeder/auth/registration-application/my-applications";
+
+  export const DOG_BREEDER_APPLICATION_SUBMIT_URL =
+  "/dogbreeder/auth/registration-application/submit/";
+
+  export const DOG_BREEDER_INSPECTION_SAVE_URL =
+  "/dogbreeder/auth/registration-inspection/save";
+
+  export const DOG_BREEDER_INSPECTION_REPORT_UPLOAD_URL =
+  "/dogbreeder/auth/registration-inspection/upload-report";
+
+export const DOG_BREEDER_INSPECTION_VIEW_URL =
+  "/dogbreeder/auth/registration-inspection/application/";

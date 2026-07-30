@@ -77,6 +77,9 @@ const DogBreederApplicationPage = () => {
 
   const isCvo = userRoles.includes("CVO");
 
+  // Allow list access for ADMIN, CVO, or if useCan returns true
+  const canAccessList = isAdmin || isCvo || canList;
+
   const tableColumns = [
     {
       attr: "applicationNumber",
@@ -118,6 +121,8 @@ const DogBreederApplicationPage = () => {
     userRoles,
     isAdmin,
     isCvo,
+    canList,
+    canAccessList,
     selectedApiUrl,
   });
 
@@ -126,12 +131,12 @@ const DogBreederApplicationPage = () => {
       key={`${isCvo}-${selectedApiUrl}`}
       api_url={selectedApiUrl}
       list_url={selectedApiUrl}
-      alertString="Dog Breeder Application"
+      alertString="Dog Breeder Registration Application"
       tableColumns={tableColumns}
-      includeFilter={isCvo || canList}
+      includeFilter={canAccessList}
       disableAdd={true}
-      pageTitle="Dog Breeder Registration List"
-      canList={isCvo || canList}
+      pageTitle="Dog Breeder Registration Application "
+      canList={canAccessList}
       canEdit={false}
       canDelete={false}
       canExport={

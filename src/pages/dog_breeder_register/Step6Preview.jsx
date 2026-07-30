@@ -6,6 +6,7 @@ import {
   CardContent,
   Divider,
   Typography,
+  
 } from "@mui/material";
 
 import { viewApplicationDocument } from "../../api-client/applicationDocument";
@@ -127,6 +128,7 @@ const Step6Preview = ({
   declarationDetails = {},
   documents = {},
   documentValues = {},
+  
 }) => {
   const [signaturePreviewUrl, setSignaturePreviewUrl] = useState("");
 
@@ -536,12 +538,15 @@ const Step6Preview = ({
           IFSC Code: KLGB0040341
         </Typography>
 
-        <Typography sx={{ fontSize: 15, lineHeight: 1.8 }}>
-          Name of Branch: Main Branch, Trivandrum GPO (PO),
-          Thiruvananthapuram Dist, 695001
-        </Typography>
+      <Typography sx={{ fontSize: 15, lineHeight: 1.8 }}>
+  Name of Branch: Main Branch, Trivandrum GPO (PO),
+  Thiruvananthapuram Dist, 695001
+</Typography>
+
+        
       </CardContent>
     </Card>
+    
   );
 };
 
@@ -559,10 +564,28 @@ SubFieldLine.propTypes = {
 Step6Preview.propTypes = {
   breederDetails: PropTypes.object,
   facilityDetails: PropTypes.object,
-  breedDetails: PropTypes.oneOfType([PropTypes.array, PropTypes.object]),
+  breedDetails: PropTypes.oneOfType([
+    PropTypes.array,
+    PropTypes.object,
+  ]),
   declarationDetails: PropTypes.object,
-  documents: PropTypes.oneOfType([PropTypes.object, PropTypes.array]),
-  documentValues: PropTypes.oneOfType([PropTypes.object, PropTypes.array]),
+  documents: PropTypes.oneOfType([
+    PropTypes.object,
+    PropTypes.array,
+  ]),
+  documentValues: PropTypes.oneOfType([
+    PropTypes.object,
+    PropTypes.array,
+  ]),
+};
+
+Step6Preview.defaultProps = {
+  breederDetails: {},
+  facilityDetails: {},
+  breedDetails: [],
+  declarationDetails: {},
+  documents: {},
+  documentValues: {},
 };
 
 export default Step6Preview;
