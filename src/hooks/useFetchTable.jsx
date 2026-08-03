@@ -6,7 +6,10 @@ import { getHeader } from "../utils";
 
 const BASE_API_URL = import.meta.env.VITE_APP_BASE_API_URL;
 
-const useFetchTable = (apiURL) => {
+const useFetchTable = (
+  apiURL,
+  selectedStatus = ""
+) => {
   const [rows, setRows] = useState([]);
   const [totalRows, setTotalRows] = useState(0);
   const [pageCount, setPageCount] = useState(0);
@@ -80,10 +83,14 @@ const useFetchTable = (apiURL) => {
   
     try {
       // Clean query params
-      const params = {
-        pageNo: fetchParams.pageNo,
-        pageSize: fetchParams.pageSize,
-      };
+const params = {
+  pageNo: fetchParams.pageNo,
+  pageSize: fetchParams.pageSize,
+};
+
+if (selectedStatus) {
+  params.status = selectedStatus;
+}
   
       if (fetchParams.sortBy) params.sortBy = fetchParams.sortBy;
       if (fetchParams.sortOrder) params.sortOrder = fetchParams.sortOrder;
@@ -148,11 +155,19 @@ const useFetchTable = (apiURL) => {
   };
 
   // Fetch table on initial load and whenever fetchParams change
-  useEffect(() => {
-    if (!searchParams.get("filter")) {
-      fetchData();
-    }
-  }, [fetchParams, searchParams, apiURL]);
+useEffect(() => {
+  if (!searchParams.get("filter")) {
+    fetchData();
+  }
+}, [
+  fetchParams,
+  searchParams,
+  apiURL,
+  selectedStatus,
+]);
+useEffect(() => {
+    fetchData();
+}, [selectedStatus]);
 
   return {
     rows,
