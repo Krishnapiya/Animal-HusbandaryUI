@@ -1,6 +1,18 @@
 /* eslint-disable */
 import PropTypes from "prop-types";
-import { Box, Button, Grid2 as Grid, Typography, Alert } from "@mui/material";
+import {
+  Box,
+  Grid2 as Grid,
+  Typography,
+  FormControl,
+  FormControlLabel,
+  Radio,
+  RadioGroup,
+  InputLabel,
+  Select,
+  MenuItem,
+  Button
+} from "@mui/material";
 import SaveIcon from "@mui/icons-material/Save";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
@@ -63,9 +75,9 @@ const Step2FacilityInfrastructure = ({
 
         <Grid size={{ xs: 12, md: 6 }}>
           <TextInput
-            label="3. Rest day"
-            name="restDay"
-            value={values.restDay || ""}
+            label="3. Holiday"
+            name="holiday"
+            value={values.holiday || ""}
             onChange={onChange}
             errors={errors}
             required
@@ -73,88 +85,326 @@ const Step2FacilityInfrastructure = ({
         </Grid>
 
         <Grid size={{ xs: 12, md: 6 }}>
-          <TextInput
-            label="4. Ventilation arrangement"
-            name="ventilationArrangement"
-            value={values.ventilationArrangement || ""}
-            onChange={onChange}
-            errors={errors}
-            multiline
-            minRows={3}
-          />
+        <FormControl fullWidth>
+  <Typography sx={{ mb: 1, fontWeight: 500 }}>
+    4. Ventilation available
+  </Typography>
+
+  <RadioGroup
+    row
+    name="ventilationAvailable"
+value={String(values.ventilationAvailable ?? false)}
+    onChange={(e) =>
+      onChange({
+        target: {
+          name: "ventilationAvailable",
+          value: e.target.value === "true",
+        },
+      })
+    }
+  >
+    <FormControlLabel
+      value="true"
+      control={<Radio />}
+      label="Yes"
+    />
+
+    <FormControlLabel
+      value="false"
+      control={<Radio />}
+      label="No"
+    />
+  </RadioGroup>
+</FormControl>
+
+{values.ventilationAvailable === true && (
+    <TextInput
+    label="Ventilation arrangement"
+    name="ventilationArrangement"
+    value={values.ventilationArrangement || ""}
+    onChange={onChange}
+    errors={errors}
+    multiline
+    minRows={3}
+  />
+)}
         </Grid>
 
-        <Grid size={{ xs: 12, md: 6 }}>
-          <TextInput
-            label="5. Lighting arrangement"
-            name="lightingArrangement"
-            value={values.lightingArrangement || ""}
-            onChange={onChange}
-            errors={errors}
-            multiline
-            minRows={3}
-          />
-        </Grid>
+     <Grid size={{ xs: 12, md: 6 }}>
+  <FormControl fullWidth>
+    <Typography sx={{ mb: 1, fontWeight: 500 }}>
+      5. Lighting available
+    </Typography>
+
+    <RadioGroup
+      row
+      name="lightingAvailable"
+      value={String(values.lightingAvailable)}
+      onChange={(e) =>
+        onChange({
+          target: {
+            name: "lightingAvailable",
+            value: e.target.value === "true",
+          },
+        })
+      }
+    >
+      <FormControlLabel
+        value="true"
+        control={<Radio />}
+        label="Yes"
+      />
+
+      <FormControlLabel
+        value="false"
+        control={<Radio />}
+        label="No"
+      />
+    </RadioGroup>
+  </FormControl>
+
+  {values.lightingAvailable && (
+    <TextInput
+      label="Lighting arrangement"
+      name="lightingArrangement"
+      value={values.lightingArrangement || ""}
+      onChange={onChange}
+      errors={errors}
+      multiline
+      minRows={3}
+    />
+  )}
+</Grid>
+
+     <Grid size={{ xs: 12, md: 6 }}>
+  <FormControl fullWidth>
+    <Typography sx={{ mb: 1, fontWeight: 500 }}>
+      6. Heating / Cooling available
+    </Typography>
+
+    <RadioGroup
+      row
+      name="heatingCoolingAvailable"
+      value={String(values.heatingCoolingAvailable)}
+      onChange={(e) =>
+        onChange({
+          target: {
+            name: "heatingCoolingAvailable",
+            value: e.target.value === "true",
+          },
+        })
+      }
+    >
+      <FormControlLabel
+        value="true"
+        control={<Radio />}
+        label="Yes"
+      />
+
+      <FormControlLabel
+        value="false"
+        control={<Radio />}
+        label="No"
+      />
+    </RadioGroup>
+  </FormControl>
+
+  {values.heatingCoolingAvailable && (
+    <TextInput
+      label="Heating / Cooling arrangement"
+      name="heatingCoolingArrangement"
+      value={values.heatingCoolingArrangement || ""}
+      onChange={onChange}
+      errors={errors}
+      multiline
+      minRows={3}
+    />
+  )}
+</Grid>
+
+      <Grid size={{ xs: 12, md: 6 }}>
+  <FormControl fullWidth>
+    <Typography sx={{ mb: 1, fontWeight: 500 }}>
+      7. Food storage available
+    </Typography>
+
+    <RadioGroup
+      row
+      name="foodStorageAvailable"
+      value={String(values.foodStorageAvailable)}
+      onChange={(e) =>
+        onChange({
+          target: {
+            name: "foodStorageAvailable",
+            value: e.target.value === "true",
+          },
+        })
+      }
+    >
+      <FormControlLabel
+        value="true"
+        control={<Radio />}
+        label="Yes"
+      />
+
+      <FormControlLabel
+        value="false"
+        control={<Radio />}
+        label="No"
+      />
+    </RadioGroup>
+  </FormControl>
+
+  {values.foodStorageAvailable && (
+    <TextInput
+      label="Food storage arrangement"
+      name="foodStorageArrangement"
+      value={values.foodStorageArrangement || ""}
+      onChange={onChange}
+      errors={errors}
+      multiline
+      minRows={3}
+    />
+  )}
+</Grid>
 
         <Grid size={{ xs: 12, md: 6 }}>
-          <TextInput
-            label="6. Heating / cooling arrangement"
-            name="heatingCoolingArrangement"
-            value={values.heatingCoolingArrangement || ""}
-            onChange={onChange}
-            errors={errors}
-            multiline
-            minRows={3}
-          />
-        </Grid>
+  <FormControl fullWidth>
+    <Typography sx={{ mb: 1, fontWeight: 500 }}>
+      8. Cleanliness / Waste available
+    </Typography>
+
+    <RadioGroup
+      row
+      name="cleanlinessWasteAvailable"
+      value={String(values.cleanlinessWasteAvailable)}
+      onChange={(e) =>
+        onChange({
+          target: {
+            name: "cleanlinessWasteAvailable",
+            value: e.target.value === "true",
+          },
+        })
+      }
+    >
+      <FormControlLabel
+        value="true"
+        control={<Radio />}
+        label="Yes"
+      />
+
+      <FormControlLabel
+        value="false"
+        control={<Radio />}
+        label="No"
+      />
+    </RadioGroup>
+  </FormControl>
+
+  {values.cleanlinessWasteAvailable && (
+    <TextInput
+      label="Cleanliness / Waste arrangement"
+      name="cleanlinessWasteArrangement"
+      value={values.cleanlinessWasteArrangement || ""}
+      onChange={onChange}
+      errors={errors}
+      multiline
+      minRows={3}
+    />
+  )}
+</Grid>
+
+      <Grid size={{ xs: 12, md: 6 }}>
+  <FormControl fullWidth>
+    <Typography sx={{ mb: 1, fontWeight: 500 }}>
+      9. Dead animal disposal available
+    </Typography>
+
+    <RadioGroup
+      row
+      name="deadAnimalDisposalAvailable"
+      value={String(values.deadAnimalDisposalAvailable)}
+      onChange={(e) =>
+        onChange({
+          target: {
+            name: "deadAnimalDisposalAvailable",
+            value: e.target.value === "true",
+          },
+        })
+      }
+    >
+      <FormControlLabel
+        value="true"
+        control={<Radio />}
+        label="Yes"
+      />
+
+      <FormControlLabel
+        value="false"
+        control={<Radio />}
+        label="No"
+      />
+    </RadioGroup>
+  </FormControl>
+
+  {values.deadAnimalDisposalAvailable && (
+    <TextInput
+      label="Dead animal disposal arrangement"
+      name="deadAnimalDisposalArrangement"
+      value={values.deadAnimalDisposalArrangement || ""}
+      onChange={onChange}
+      errors={errors}
+      multiline
+      minRows={3}
+    />
+  )}
+</Grid>
 
         <Grid size={{ xs: 12, md: 6 }}>
-          <TextInput
-            label="7. Food storage arrangement"
-            name="foodStorageArrangement"
-            value={values.foodStorageArrangement || ""}
-            onChange={onChange}
-            errors={errors}
-            multiline
-            minRows={3}
-          />
-        </Grid>
+  <FormControl fullWidth>
+    <Typography sx={{ mb: 1, fontWeight: 500 }}>
+      10. Veterinary support available
+    </Typography>
 
-        <Grid size={{ xs: 12, md: 6 }}>
-          <TextInput
-            label="8. Cleanliness / waste arrangement"
-            name="cleanlinessWasteArrangement"
-            value={values.cleanlinessWasteArrangement || ""}
-            onChange={onChange}
-            errors={errors}
-            multiline
-            minRows={3}
-          />
-        </Grid>
+    <RadioGroup
+      row
+      name="veterinarySupportAvailable"
+      value={String(values.veterinarySupportAvailable)}
+      onChange={(e) =>
+        onChange({
+          target: {
+            name: "veterinarySupportAvailable",
+            value: e.target.value === "true",
+          },
+        })
+      }
+    >
+      <FormControlLabel
+        value="true"
+        control={<Radio />}
+        label="Yes"
+      />
 
-        <Grid size={{ xs: 12, md: 6 }}>
-          <TextInput
-            label="9. Dead animal disposal arrangement"
-            name="deadAnimalDisposalArrangement"
-            value={values.deadAnimalDisposalArrangement || ""}
-            onChange={onChange}
-            errors={errors}
-            multiline
-            minRows={3}
-          />
-        </Grid>
+      <FormControlLabel
+        value="false"
+        control={<Radio />}
+        label="No"
+      />
+    </RadioGroup>
+  </FormControl>
 
-        <Grid size={{ xs: 12, md: 6 }}>
-          <TextInput
-            label="10. Veterinary support arrangement"
-            name="veterinarySupportArrangement"
-            value={values.veterinarySupportArrangement || ""}
-            onChange={onChange}
-            errors={errors}
-            multiline
-            minRows={3}
-          />
-        </Grid>
+  {values.veterinarySupportAvailable && (
+    <TextInput
+      label="Veterinary support arrangement"
+      name="veterinarySupportArrangement"
+      value={values.veterinarySupportArrangement || ""}
+      onChange={onChange}
+      errors={errors}
+      multiline
+      minRows={3}
+    />
+  )}
+</Grid>
 
         <Grid size={{ xs: 12, md: 6 }}>
           <TextInput
