@@ -1,4 +1,4 @@
-import { getItemList, getBlobItem, addItem } from "./apiCall";
+import { getItemList, getBlobItem, addItem, editSingleItem } from "./apiCall";
 import { addFormDataItem } from "./apiCall";
 import {
   DOG_BREEDER_APPLICATION_PREVIEW_URL,
@@ -8,7 +8,10 @@ import {
   DOG_BREEDER_APPLICATION_FORWARD_URL,
   DOG_BREEDER_INSPECTION_SAVE_URL,
   DOG_BREEDER_INSPECTION_REPORT_UPLOAD_URL,
-  DOG_BREEDER_INSPECTION_VIEW_URL
+  DOG_BREEDER_INSPECTION_VIEW_URL,
+  DOG_BREEDER_APPLICATION_APPROVE_URL, // Added
+  DOG_BREEDER_APPLICATION_REJECT_URL,  // Added
+  DOG_BREEDER_APPLICATION_RESUBMIT_URL,
 } from "../config/endpoints";
 
 export const getAdminDogBreederApplicationPreview = async (applicationId) => {
@@ -48,4 +51,15 @@ export const getDogBreederInspection = async (applicationId) => {
   return getItemList(
     `${DOG_BREEDER_INSPECTION_VIEW_URL}${applicationId}`
   );
+};
+export const approveDogBreederApplication = async (applicationId) => {
+  return addItem(`${DOG_BREEDER_APPLICATION_APPROVE_URL}${applicationId}`, {});
+};
+
+export const rejectDogBreederApplication = async (applicationId) => {
+  return addItem(`${DOG_BREEDER_APPLICATION_REJECT_URL}${applicationId}`, {});
+};
+
+export const resubmitDogBreederApplication = async (payload) => {
+  return editSingleItem(DOG_BREEDER_APPLICATION_RESUBMIT_URL, payload);
 };
