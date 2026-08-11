@@ -262,3 +262,26 @@ export const DOG_BREEDER_INSPECTION_VIEW_URL =
   "/dogbreeder/auth/registration-inspection/application/";
 
    export const REGISTRATION_INSPECTION_API_URL = "/petshop/auth/registration-inspection/";
+export const CITIZEN_COMPLAINT_API_URL =
+"/citizen/auth/complaint-registration/";
+export const CITIZEN_COMPLAINT_LIST_URL =
+  "/citizen/auth/complaint-registration/list/all";
+
+  // =====================================================
+// CITIZEN COMPLAINT DOCUMENT
+// =====================================================
+
+export const CITIZEN_COMPLAINT_DOCUMENT_API_URL =
+  "/citizen/auth/complaint-document/";
+
+export const CITIZEN_COMPLAINT_DOCUMENT_UPLOAD_URL =
+  "/citizen/auth/complaint-document/upload";
+
+export const CITIZEN_COMPLAINT_DOCUMENT_LIST_URL =
+  "/citizen/auth/complaint-document/list/all";
+
+export const CITIZEN_COMPLAINT_DOCUMENT_DRAFT_URL =
+  "/citizen/auth/complaint-document/draft/";
+
+export const CITIZEN_COMPLAINT_DOCUMENT_VIEW_URL =
+  "/citizen/auth/complaint-document/view/";

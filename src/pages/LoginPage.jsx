@@ -28,6 +28,7 @@ import {
   PET_SHOP_OWNER_SIGNUP_PATH,
   PET_SHOP_REGISTER_PATH,
   DOG_BREEDER_REGISTER_PATH,
+  CITIZEN_SIGNUP_PATH,
 } from "../config/routes";
 import { useAuthz } from "../context/AuthzContext";
 import AppBrandHeader from "../components/branding/AppBrandHeader";
@@ -102,13 +103,18 @@ const LoginPage = () => {
         return;
       }
 
-      if (ownerType === "PET_SHOP") {
-        navigate(`/${PET_SHOP_REGISTER_PATH}`);
-        return;
-      }
+     if (ownerType === "PET_SHOP") {
+  navigate(`/${PET_SHOP_REGISTER_PATH}`);
+  return;
+}
 
-      navigate(`/${ROOT_PATH}`);
-      return;
+if (ownerType === "CITIZEN") {
+  navigate(`/${ROOT_PATH}`);
+  return;
+}
+
+navigate(`/${ROOT_PATH}`);
+return;
     }
 
     const errData = response?.data ?? {};
@@ -230,17 +236,36 @@ const LoginPage = () => {
             >
               Register as Dog Breeder
             </Button>
+            <Button
+  component={RouterLink}
+  to={`/${CITIZEN_SIGNUP_PATH}`}
+  fullWidth
+  variant="outlined"
+  startIcon={<PersonAddAlt1Icon />}
+  sx={{
+    mb: 1,
+    textTransform: "none",
+    borderColor: BRAND_COLORS.primary,
+    color: BRAND_COLORS.primary,
+  }}
+>
+  Register as Citizen
+</Button>
           </Box>
         </CardContent>
       </Card>
 
-      <Typography variant="body2" align="center" sx={{ mt: 2, color: BRAND_COLORS.grey }}>
-        New applicant?{" "}
-        <Link component={RouterLink} to={`/${PET_SHOP_OWNER_SIGNUP_PATH}`}>
-          Create an owner account
-        </Link>{" "}
-        to apply online.
-      </Typography>
+     <Typography
+  variant="body2"
+  align="center"
+  sx={{ mt: 2, color: BRAND_COLORS.grey }}
+>
+  New applicant?{" "}
+  <Link component={RouterLink} to={`/${CITIZEN_SIGNUP_PATH}`}>
+    Register as Citizen
+  </Link>{" "}
+  or choose one of the registration options above.
+</Typography>
 
       <Copyright />
     </AuthSplitLayout>
