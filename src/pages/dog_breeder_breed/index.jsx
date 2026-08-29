@@ -18,9 +18,12 @@ import { DOG_BREEDER_BREED_PATH } from "../../config/routes";
 const DogBreederBreedPage = () => {
   const { can } = useAuthz();
 
-  const { canList, canSave, canEdit, canDelete } = useCan(
-    DOG_BREEDER_BREED_PATH
-  );
+  const {
+    canList,
+    canSave,
+    canEdit,
+    canDelete,
+  } = useCan(DOG_BREEDER_BREED_PATH);
 
   const dropDownLists = useDropDown([
     {
@@ -34,15 +37,40 @@ const DogBreederBreedPage = () => {
     {
       attr: "dogBreederDetail",
       header: "Dog Breeder Detail",
-      render: (row) => row.dogBreederDetail?.name || "-",
+      render: (row) =>
+        row.dogBreederDetail?.name || "-",
     },
+
     {
       attr: "breedName",
       header: "Breed Name",
+      render: (row) =>
+        row.breedName || "-",
     },
+
+    {
+      attr: "gender",
+      header: "Gender",
+      render: (row) =>
+        row.gender === "MALE"
+          ? "Male"
+          : row.gender === "FEMALE"
+          ? "Female"
+          : "-",
+    },
+
     {
       attr: "dogCount",
       header: "Dog Count",
+      render: (row) =>
+        row.dogCount ?? 0,
+    },
+
+    {
+      attr: "ageDescription",
+      header: "Age of each dog",
+      render: (row) =>
+        row.ageDescription || "-",
     },
   ];
 
@@ -59,14 +87,21 @@ const DogBreederBreedPage = () => {
       canList={canList}
       canEdit={canEdit}
       canDelete={canDelete}
-      canExport={can(DOG_BREEDER_BREED_PATH, "export")}
+      canExport={can(
+        DOG_BREEDER_BREED_PATH,
+        "export"
+      )}
     >
       {/* CHILD 0 → FILTER */}
-      <Filter dropDownLists={dropDownLists} />
+      <Filter
+        dropDownLists={dropDownLists}
+      />
 
       {/* CHILD 1 → FORM DIALOG */}
       <FormDialog maxWidth="md">
-        <Form dropDownLists={dropDownLists} />
+        <Form
+          dropDownLists={dropDownLists}
+        />
       </FormDialog>
 
       {/* CHILD 2 → LIST */}

@@ -19,13 +19,15 @@ const FormDialog = (props) => {
       >
         <DialogTitle>
           {/*eslint-disable*/}
-          {props.operationType == "insert"
-            ? "Add "
-            : props.operationType == "edit"
-              ? "Edit "
-              : ""}{" "}
-          {/*eslint-disable*/}
-          {props.alertString}
+          {props.title
+            ? props.title
+            : `${
+                props.operationType == "insert"
+                  ? "Add "
+                  : props.operationType == "edit"
+                    ? "Edit "
+                    : ""
+              } ${props.alertString}`}
           <ModalCloseButton
             onClick={props.handleCloseFormModal}
             sx={{
@@ -41,6 +43,7 @@ const FormDialog = (props) => {
             api_url: props.api_url,
             operationType: props.operationType,
             rowID: props.rowID,
+            rowData: props.rowData,
             setRowID: props.setRowID,
             handleCloseFormModal: props.handleCloseFormModal,
             handleRefreshTable: props.handleRefreshTable,
@@ -69,10 +72,13 @@ FormDialog.propTypes = {
   open: PropTypes.bool,
   operationType: PropTypes.string,
   rowID: PropTypes.string,
+  rowData: PropTypes.object,
   setOperationType: PropTypes.func,
   setRowID: PropTypes.func,
+  setRowData: PropTypes.func,
   tableColumns: PropTypes.array,
   canSave: PropTypes.bool,
+  title: PropTypes.string,
 };
 
 export default FormDialog;

@@ -94,10 +94,12 @@ const handleNotificationClick = async () => {
   const [openFormModal, handleOpenFormModal, handleCloseFormModal] = useModal();
   const [operationType, setOperationType] = useState("");
   const [rowID, setRowID] = useState("");
-  const handleEditClick = (id) => {
+  const [rowData, setRowData] = useState(null);
+  const handleEditClick = (id, row) => {
     handleOpenFormModal();
     setOperationType("edit");
     setRowID(id);
+    setRowData(row || null);
   };
   useEffect(() => {
     console.log("ROWWWWIDDD--->", rowID);
@@ -225,6 +227,8 @@ useEffect(() => {
         setOperationType: setOperationType,
         rowID: rowID,
         setRowID: setRowID,
+        rowData: rowData,
+        setRowData: setRowData,
         dropDownLists: props.dropDownLists,
         canSave: !props.disableAdd,
         tableColumns: props.tableColumns,
