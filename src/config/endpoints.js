@@ -264,5 +264,15 @@ export const DOG_BREEDER_MY_APPLICATION_LIST_URL =
 export const DOG_BREEDER_INSPECTION_VIEW_URL =
   "/dogbreeder/auth/registration-inspection/application/";
 
+   export const REGISTRATION_INSPECTION_API_URL = "/petshop/auth/registration-inspection/";
+
+   export const DOG_BREEDER_APPLICATION_APPROVE_URL =
+  "/dogbreeder/auth/registration-application/approve/";
+
+export const DOG_BREEDER_APPLICATION_REJECT_URL =
+  "/dogbreeder/auth/registration-application/reject/";
+  
+export const DOG_BREEDER_APPLICATION_RESUBMIT_URL =
+  "/dogbreeder/auth/registration-application/resubmit";
 
 

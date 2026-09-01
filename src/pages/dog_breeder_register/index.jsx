@@ -1165,6 +1165,38 @@ const handlePreviewClick = () => {
   const validateBreed = () => {
     const newErrors = {};
 
+    // If breedsList is provided (new UI), validate each entry
+    const list = Array.isArray(breedValues.breedsList)
+      ? breedValues.breedsList
+      : null;
+
+    if (list) {
+      const listErrors = {};
+
+      list.forEach((item, idx) => {
+        const itemErrors = {};
+
+        if (!item?.breedName) {
+          itemErrors.breedName = "Breed name is required";
+        }
+
+        const count = item?.dogCount;
+
+        if (count === "" || count === null || Number(count) < 0) {
+          itemErrors.dogCount = "Valid dog count is required";
+        }
+
+        if (Object.keys(itemErrors).length > 0) {
+          listErrors[`breedsList_${idx}`] = itemErrors;
+        }
+      });
+
+      setBreedErrors(listErrors);
+
+      return Object.keys(listErrors).length === 0;
+    }
+
+    // Fallback: validate single-value shape
     if (!breedValues.breedName) {
       newErrors.breedName = "Breed name is required";
     }
@@ -1182,34 +1214,97 @@ const handlePreviewClick = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSaveBreed = async () => {
-    if (!validateBreed()) {
-      return;
-    }
+ const handleSaveBreed = async () => {
+  if (!validateBreed()) {
+    return;
+  }
 
-    const dogBreederDetailId =
-      toValidNumber(breedValues.dogBreederDetailId) ||
-      toValidNumber(facilityValues.dogBreederDetailId) ||
-      toValidNumber(formValues.id);
+  const dogBreederDetailId =
+    toValidNumber(breedValues.dogBreederDetailId) ||
+    toValidNumber(facilityValues.dogBreederDetailId) ||
+    toValidNumber(formValues.id);
 
-    if (!dogBreederDetailId) {
-      toast.error("Please save Step 1 first. Dog breeder detail ID missing.");
-      return;
-    }
+  if (!dogBreederDetailId) {
+    toast.error("Please save Step 1 first. Dog breeder detail ID missing.");
+    return;
+  }
 
-    try {
-      setIsSavingBreed(true);
-      setBreedErrors({});
+  // Support saving multiple breeds if `breedsList` is present
+  const list = Array.isArray(breedValues.breedsList)
+    ? breedValues.breedsList
+    : null;
 
+  try {
+    setIsSavingBreed(true);
+    setBreedErrors({});
+
+    if (list && list.length > 0) {
+      const itemErrors = {};
+
+      for (let i = 0; i < list.length; i++) {
+        const item = list[i] || {};
+
+        const payload = {
+          id: item.id ? Number(item.id) : null,
+          dogBreederDetail: { id: Number(dogBreederDetailId) },
+          breedName: (item.breedName || "").trim(),
+          dogCount:
+            item.dogCount === "" || item.dogCount === null || item.dogCount === undefined
+              ? 0
+              : Number(item.dogCount),
+          ageDescription: (item.ageDescription || "").trim(),
+          gender: item.gender || "",
+        };
+
+        console.log("DOG BREED SAVE PAYLOAD (item):", payload);
+
+        try {
+          const response = await saveDogBreederBreed(payload);
+
+          if (response?.isSuccess === false) {
+            const data = response?.data ?? {};
+            itemErrors[`breedsList_${i}`] = data?.errors || { _error: data };
+          } else {
+            const savedData = getResponsePayload(response) || payload;
+
+            // update item id in list
+            list[i] = { ...item, ...savedData };
+          }
+        } catch (err) {
+          console.error("DOG BREED ITEM SAVE ERROR:", err);
+          itemErrors[`breedsList_${i}`] = { _error: err?.message || "Save failed" };
+        }
+      }
+
+      if (Object.keys(itemErrors).length > 0) {
+        setBreedErrors(itemErrors);
+        toast.error("Some breeds could not be saved. Check errors.");
+        return;
+      }
+
+      // All saved — persist ids back to state
+      setBreedValues((prev) => ({
+        ...prev,
+        breedsList: list,
+        dogBreederDetailId,
+      }));
+    } else {
+      // Single-item save (backwards compatibility)
       const payload = {
-        id: breedValues.id || null,
-        dogBreederDetail: {
-          id: dogBreederDetailId,
-        },
-        breedName: breedValues.breedName,
-        dogCount: breedValues.dogCount ? Number(breedValues.dogCount) : 0,
-        ageDescription: breedValues.ageDescription,
+        id: breedValues.id ? Number(breedValues.id) : null,
+        dogBreederDetail: { id: Number(dogBreederDetailId) },
+        breedName: (breedValues.breedName || "").trim(),
+        dogCount:
+          breedValues.dogCount === "" ||
+          breedValues.dogCount === null ||
+          breedValues.dogCount === undefined
+            ? 0
+            : Number(breedValues.dogCount),
+        ageDescription: (breedValues.ageDescription || "").trim(),
+        gender: breedValues.gender || "",
       };
+
+      console.log("DOG BREED SAVE PAYLOAD:", payload);
 
       const response = await saveDogBreederBreed(payload);
 
@@ -1221,9 +1316,7 @@ const handlePreviewClick = () => {
         }
 
         toast.error(
-          data?.resultString ||
-            data?.detail ||
-            "Could not save dog breed details"
+          data?.resultString || data?.detail || "Could not save dog breed details"
         );
 
         return;
@@ -1234,36 +1327,39 @@ const handlePreviewClick = () => {
       setBreedValues((prev) => ({
         ...prev,
         ...savedData,
+        id: savedData?.id || prev.id,
         dogBreederDetailId,
       }));
-
-      setDeclarationValues((prev) => ({
-        ...prev,
-        dogBreederDetailId,
-        applicantName: prev.applicantName || formValues.breederName,
-        signatureName: prev.signatureName || formValues.breederName,
-      }));
-
-      setPreviewValues(null);
-
-      toast.success("Dog breed details saved successfully");
-      goToStep(3);
-    } catch (error) {
-      const data = error?.response?.data;
-
-      if (typeof data === "object") {
-        setBreedErrors(data?.errors || data);
-      }
-
-      toast.error(
-        data?.resultString ||
-          data?.detail ||
-          "Could not save dog breed details"
-      );
-    } finally {
-      setIsSavingBreed(false);
     }
-  };
+
+    setDeclarationValues((prev) => ({
+      ...prev,
+      dogBreederDetailId,
+      applicantName: prev.applicantName || formValues.breederName,
+      signatureName: prev.signatureName || formValues.breederName,
+    }));
+
+    setPreviewValues(null);
+
+    toast.success("Dog breed details saved successfully");
+
+    goToStep(3);
+  } catch (error) {
+    console.error("DOG BREED SAVE ERROR:", error);
+
+    const data = error?.response?.data;
+
+    if (typeof data === "object") {
+      setBreedErrors(data?.errors || {});
+    }
+
+    toast.error(
+      data?.resultString || data?.detail || "Could not save dog breed details"
+    );
+  } finally {
+    setIsSavingBreed(false);
+  }
+};
 
   const handleDeclarationChange = (event) => {
     setDeclarationValues((prev) => ({

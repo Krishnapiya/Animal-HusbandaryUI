@@ -1,14 +1,21 @@
+/* eslint-disable react/prop-types */
 import PropTypes from "prop-types";
+import { useEffect, useState } from "react";
 import {
   Box,
   Button,
   Chip,
   Grid2 as Grid,
+  Paper,
+  TextField,
   Typography,
 } from "@mui/material";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import SaveIcon from "@mui/icons-material/Save";
-import VisibilityIcon from "@mui/icons-material/Visibility";
+import RefreshIcon from "@mui/icons-material/Refresh";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { toast } from "material-react-toastify";
 
 import { viewApplicationDocument } from "../../api-client/applicationDocument";
 
@@ -21,11 +28,189 @@ export const dogBreederDocumentList = [
   { id: 21, name: "Applicant Signature", mandatory: true },
 ];
 
+const MAX_FILE_SIZE = 6 * 1024 * 1024; // 6 MB
+
+const DocumentPreview = ({ document, documentId, onReplace }) => {
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const fileName = document?.fileName || document?.name || "";
+  const isImage =
+    document?.mimeType?.startsWith("image/") ||
+    document?.type?.startsWith("image/") ||
+    document?.file?.type?.startsWith("image/");
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    const loadPreview = async () => {
+      // 1. Direct Blob URL for newly selected local file
+      if (document?.file instanceof File) {
+        const url = URL.createObjectURL(document.file);
+        setPreviewUrl(url);
+        return () => URL.revokeObjectURL(url);
+      }
+
+      const savedId =
+        document?.id ||
+        document?.documentId ||
+        document?.applicationDocumentId;
+
+      // 2. Fetch saved document from API if it exists on backend
+      if (savedId) {
+        try {
+          setLoading(true);
+          const response = await viewApplicationDocument(savedId);
+
+          if (!isCancelled && response?.data) {
+            const blob = new Blob([response.data], {
+              type:
+                response.headers?.["content-type"] ||
+                document?.mimeType ||
+                "application/pdf",
+            });
+            const url = URL.createObjectURL(blob);
+            setPreviewUrl(url);
+          }
+        } catch (err) {
+          console.error("Failed to load document preview:", err);
+        } finally {
+          if (!isCancelled) setLoading(false);
+        }
+      } else {
+        setPreviewUrl(null);
+      }
+    };
+
+    const cleanup = loadPreview();
+
+    return () => {
+      isCancelled = true;
+      if (cleanup && typeof cleanup === "function") {
+        cleanup();
+      }
+    };
+  }, [document]);
+
+  const handleOpenInNewTab = () => {
+    if (previewUrl) {
+      window.open(previewUrl, "_blank");
+    }
+  };
+
+  if (!fileName) {
+    return (
+      <Box
+        sx={{
+          p: 3,
+          textAlign: "center",
+          color: "text.secondary",
+          fontSize: "0.85rem",
+          backgroundColor: "#fafafa",
+          borderTop: "1px dashed #e0e0e0",
+          mt: 2,
+        }}
+      >
+        No document uploaded yet
+      </Box>
+    );
+  }
+
+  return (
+    <Box
+      sx={{
+        mt: 2,
+        p: 2,
+        border: "1px solid #e2e8f0",
+        borderRadius: 1,
+        backgroundColor: "#f8fafc",
+      }}
+    >
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 1,
+        }}
+      >
+        <Typography variant="caption" sx={{ fontWeight: 600 }}>
+          Preview: {fileName}
+        </Typography>
+
+        <Box sx={{ display: "flex", gap: 1 }}>
+          <Button
+            size="small"
+            startIcon={<RefreshIcon />}
+            onClick={() => onReplace(documentId)}
+            sx={{ textTransform: "none", fontSize: "0.75rem" }}
+          >
+            Redo
+          </Button>
+
+          <Button
+            size="small"
+            startIcon={<OpenInNewIcon />}
+            onClick={handleOpenInNewTab}
+            disabled={!previewUrl}
+            sx={{ textTransform: "none", fontSize: "0.75rem" }}
+          >
+            Open
+          </Button>
+        </Box>
+      </Box>
+
+      <Box
+        sx={{
+          width: "100%",
+          height: 320,
+          backgroundColor: "#525659",
+          borderRadius: 1,
+          overflow: "hidden",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        {loading ? (
+          <Typography variant="body2" sx={{ color: "#fff" }}>
+            Loading preview...
+          </Typography>
+        ) : previewUrl ? (
+          isImage ? (
+            <img
+              src={previewUrl}
+              alt="Uploaded document preview"
+              style={{
+                maxHeight: "100%",
+                maxWidth: "100%",
+                objectFit: "contain",
+              }}
+            />
+          ) : (
+            <iframe
+              src={previewUrl}
+              title="Document Preview"
+              width="100%"
+              height="100%"
+              style={{ border: "none" }}
+            />
+          )
+        ) : (
+          <Typography variant="body2" sx={{ color: "#fff" }}>
+            Preview unavailable
+          </Typography>
+        )}
+      </Box>
+    </Box>
+  );
+};
+
 const Step5Documents = ({
   documents,
   setDocuments,
-  errors,
-  isSaving,
+  errors = {},
+  isSaving = false,
   onBack,
   onSave,
 }) => {
@@ -45,9 +230,21 @@ const Step5Documents = ({
   };
 
   const handleFileChange = (event, documentId) => {
-    const selectedFile = event.target.files && event.target.files[0];
+    const selectedFile = event.target.files?.[0];
 
     if (!selectedFile) {
+      return;
+    }
+
+    if (documentId === 21 && !selectedFile.type.startsWith("image/")) {
+      toast.error("Please upload a JPG or PNG format signature.");
+      event.target.value = "";
+      return;
+    }
+
+    if (selectedFile.size > MAX_FILE_SIZE) {
+      toast.error("File size cannot exceed 6 MB.");
+      event.target.value = "";
       return;
     }
 
@@ -78,274 +275,184 @@ const Step5Documents = ({
     event.target.value = "";
   };
 
-  const getDocumentName = (documentId) => {
-    const file = getDocumentFile(documentId);
-    return file?.fileName || file?.name || "";
-  };
-
-  const getDocumentSize = (documentId) => {
-    const file = getDocumentFile(documentId);
-    const size = file?.fileSizeBytes || file?.size || 0;
-
-    if (!size) {
-      return "";
+  const triggerFileInput = (documentId) => {
+    const inputEl = document.getElementById(`file-input-${documentId}`);
+    if (inputEl) {
+      inputEl.click();
     }
-
-    return `${Math.round(size / 1024)} KB`;
   };
 
   const isSavedDocument = (documentId) => {
     const file = getDocumentFile(documentId);
-    return file?.saved === true && file?.changed !== true;
-  };
-
-  const openBlobInWindow = (blob, targetWindow) => {
-    const blobUrl = URL.createObjectURL(blob);
-
-    if (targetWindow) {
-      targetWindow.location.href = blobUrl;
-    } else {
-      window.open(blobUrl, "_blank");
-    }
-
-    setTimeout(() => {
-      URL.revokeObjectURL(blobUrl);
-    }, 60000);
-  };
-
-  const handleViewDocument = async (documentId) => {
-    const file = getDocumentFile(documentId);
-
-    if (!file) {
-      alert("Document not found.");
-      return;
-    }
-
-    const targetWindow = window.open("", "_blank");
-
-    if (targetWindow) {
-      targetWindow.document.write("Loading document...");
-    }
-
-    try {
-      // View newly selected file before saving
-      if (file.file instanceof File) {
-        openBlobInWindow(file.file, targetWindow);
-        return;
-      }
-
-      if (file instanceof File) {
-        openBlobInWindow(file, targetWindow);
-        return;
-      }
-
-      // View already saved file from backend
-      const savedDocumentId = getSavedDocumentId(file);
-
-      if (!savedDocumentId) {
-        if (targetWindow) {
-          targetWindow.close();
-        }
-
-        console.log("DOCUMENT WITHOUT ID:", file);
-        alert("Document ID missing. Please reload the page and try again.");
-        return;
-      }
-
-      const response = await viewApplicationDocument(savedDocumentId);
-
-      console.log("VIEW STATUS:", response.status);
-      console.log("VIEW CONTENT TYPE:", response.headers?.["content-type"]);
-      console.log("VIEW BLOB SIZE:", response.data?.size);
-
-      if (!response.data || response.data.size === 0) {
-        if (targetWindow) {
-          targetWindow.close();
-        }
-
-        alert("File is empty or not found.");
-        return;
-      }
-
-      const contentType =
-        response.headers?.["content-type"] ||
-        file.mimeType ||
-        file.type ||
-        "application/pdf";
-
-      const blob = new Blob([response.data], {
-        type: contentType,
-      });
-
-      openBlobInWindow(blob, targetWindow);
-    } catch (error) {
-      console.error("DOCUMENT VIEW ERROR", error);
-
-      if (targetWindow) {
-        targetWindow.close();
-      }
-
-      alert("Could not open document. Please check backend view API.");
-    }
+    return Boolean(file?.saved === true && !file?.changed);
   };
 
   return (
-    <Box>
-      <Typography variant="body2" sx={{ mb: 2 }}>
-        Kerala State Animal Welfare Board — FORM 1 Dog Breeder Registration
+    <Box sx={{ width: "100%", p: 1 }}>
+      <Typography variant="h5" sx={{ fontWeight: 600, mb: 0.5 }}>
+        Documents Upload
       </Typography>
 
-      <Box
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+        Supported file formats: <strong>PDF, JPG, JPEG, PNG</strong> &nbsp;|&nbsp;
+        Maximum file size: <strong>6 MB</strong> per document
+      </Typography>
+
+      <Paper
+        elevation={0}
         sx={{
-          p: 2,
-          border: "1px solid #333",
-          borderRadius: 1,
-          backgroundColor: "#222",
-          color: "#fff",
+          p: 3,
+          borderRadius: 2,
+          mb: 3,
+          backgroundColor: "#fff",
+          border: "1px solid #e0e0e0",
         }}
       >
-        <Typography variant="h5" sx={{ mb: 3, fontWeight: 700 }}>
-          Documents Upload
-        </Typography>
+        <Grid container spacing={3}>
+          {dogBreederDocumentList.map((document) => {
+            const docObj = getDocumentFile(document.id);
+            const fileName = docObj?.fileName || docObj?.name || "";
+            const isSignature = document.id === 21;
+            const savedDraft = isSavedDocument(document.id);
 
-        {dogBreederDocumentList.map((document) => {
-          const documentName = getDocumentName(document.id);
-          const documentSize = getDocumentSize(document.id);
-          const savedDocument = isSavedDocument(document.id);
-
-          return (
-            <Grid
-              container
-              spacing={2}
-              alignItems="center"
-              key={document.id}
-              sx={{
-                mb: 3,
-                p: 1.5,
-                border: "1px solid #444",
-                borderRadius: 1,
-              }}
-            >
-              <Grid size={{ xs: 12, md: 3 }}>
-                <Typography sx={{ fontWeight: 600 }}>
-                  {document.name}
-                </Typography>
-
-                {document.mandatory && (
-                  <Chip
-                    label="Mandatory"
-                    size="small"
-                    color="error"
-                    sx={{ mt: 0.5 }}
-                  />
-                )}
-
-                {errors?.[document.id] && (
-                  <Typography color="error" variant="caption" display="block">
-                    {errors[document.id]}
-                  </Typography>
-                )}
-              </Grid>
-
-              <Grid size={{ xs: 12, md: 5 }}>
-                {documentName ? (
-                  <Box>
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        color: savedDocument ? "#4ade80" : "#93c5fd",
-                        fontWeight: 600,
-                      }}
-                    >
-                      {savedDocument
-                        ? `Already uploaded: ${documentName}`
-                        : `Selected: ${documentName}`}
-                    </Typography>
-
-                    {documentSize && (
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          color: "#d1d5db",
-                          display: "block",
-                          mt: 0.5,
-                        }}
-                      >
-                        Size: {documentSize}
-                      </Typography>
-                    )}
-                  </Box>
-                ) : (
-                  <Typography variant="body2" sx={{ color: "#d1d5db" }}>
-                    No document uploaded
-                  </Typography>
-                )}
-              </Grid>
-
-              <Grid size={{ xs: 12, md: 4 }}>
-                <Box sx={{ display: "flex", gap: 1 }}>
-                  {documentName && (
-                    <Button
-                      variant="outlined"
-                      startIcon={<VisibilityIcon />}
-                      onClick={() => handleViewDocument(document.id)}
-                      sx={{
-                        textTransform: "none",
-                        color: "#fff",
-                        borderColor: "#4ade80",
-                      }}
-                    >
-                      View
-                    </Button>
-                  )}
-
-                  <Button
-                    variant="outlined"
-                    component="label"
-                    startIcon={<UploadFileIcon />}
+            return (
+              <Grid size={{ xs: 12 }} key={document.id}>
+                <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 2 }}>
+                  <Box
                     sx={{
-                      textTransform: "none",
-                      color: "#fff",
-                      borderColor: "#93c5fd",
+                      display: "flex",
+                      alignItems: { xs: "flex-start", md: "center" },
+                      flexDirection: { xs: "column", md: "row" },
+                      gap: 2,
                     }}
                   >
-                    {documentName ? "Replace" : "Upload"}
+                    <Box sx={{ width: { xs: "100%", md: "260px" } }}>
+                      <Typography fontWeight={600} variant="body2">
+                        {document.name}
+                      </Typography>
 
-                    <input
-                      hidden
-                      type="file"
-                      accept=".pdf,.png,.jpg,.jpeg"
-                      onChange={(event) =>
-                        handleFileChange(event, document.id)
-                      }
+                      <Box
+                        sx={{
+                          mt: 0.5,
+                          display: "flex",
+                          flexWrap: "wrap",
+                          gap: 0.5,
+                        }}
+                      >
+                        {document.mandatory && (
+                          <Chip
+                            size="small"
+                            color="error"
+                            label="Mandatory"
+                            sx={{ height: 20, fontSize: "0.65rem" }}
+                          />
+                        )}
+
+                        {savedDraft && (
+                          <Chip
+                            size="small"
+                            color="info"
+                            label="Saved draft"
+                            sx={{ height: 20, fontSize: "0.65rem" }}
+                          />
+                        )}
+                      </Box>
+
+                      {errors?.[document.id] && (
+                        <Typography
+                          color="error"
+                          variant="caption"
+                          sx={{ mt: 0.5, display: "block" }}
+                        >
+                          {errors[document.id]}
+                        </Typography>
+                      )}
+                    </Box>
+
+                    <TextField
+                      size="small"
+                      fullWidth
+                      value={fileName}
+                      placeholder="No file selected"
+                      InputProps={{
+                        readOnly: true,
+                      }}
+                      sx={{
+                        backgroundColor: "#fafafa",
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: 1,
+                        },
+                      }}
                     />
-                  </Button>
-                </Box>
-              </Grid>
-            </Grid>
-          );
-        })}
 
-        <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
-          <Button
-            variant="outlined"
-            onClick={onBack}
-            sx={{ textTransform: "none" }}
-          >
-            Back
-          </Button>
+                    <Button
+                      variant="outlined"
+                      component="label"
+                      startIcon={<UploadFileIcon />}
+                      sx={{
+                        flexShrink: 0,
+                        textTransform: "none",
+                        borderColor: "#1976d2",
+                        px: 2.5,
+                      }}
+                    >
+                      {fileName ? "Replace" : "Upload"}
+                      <input
+                        id={`file-input-${document.id}`}
+                        hidden
+                        type="file"
+                        accept={
+                          isSignature
+                            ? "image/png,image/jpeg,image/jpg"
+                            : ".pdf,.jpg,.jpeg,.png"
+                        }
+                        onChange={(e) => handleFileChange(e, document.id)}
+                      />
+                    </Button>
+                  </Box>
+
+                  <DocumentPreview
+                    document={docObj}
+                    documentId={document.id}
+                    onReplace={triggerFileInput}
+                  />
+                </Paper>
+              </Grid>
+            );
+          })}
+        </Grid>
+
+        <Box
+          sx={{
+            mt: 4,
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: 2,
+          }}
+        >
+          {onBack && (
+            <Button
+              variant="outlined"
+              onClick={onBack}
+              startIcon={<ArrowBackIcon />}
+              sx={{ textTransform: "none", px: 3 }}
+            >
+              Back
+            </Button>
+          )}
 
           <Button
             variant="contained"
+            color="success"
             startIcon={<SaveIcon />}
             onClick={onSave}
             disabled={isSaving}
-            sx={{ textTransform: "none", backgroundColor: "#22c55e" }}
+            sx={{ textTransform: "none", px: 3, backgroundColor: "#2e7d32" }}
           >
             {isSaving ? "Saving..." : "Save & Continue"}
           </Button>
         </Box>
-      </Box>
+      </Paper>
     </Box>
   );
 };
@@ -355,13 +462,8 @@ Step5Documents.propTypes = {
   setDocuments: PropTypes.func.isRequired,
   errors: PropTypes.object,
   isSaving: PropTypes.bool,
-  onBack: PropTypes.func.isRequired,
+  onBack: PropTypes.func,
   onSave: PropTypes.func.isRequired,
-};
-
-Step5Documents.defaultProps = {
-  errors: {},
-  isSaving: false,
 };
 
 export default Step5Documents;

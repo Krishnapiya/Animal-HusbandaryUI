@@ -98,12 +98,15 @@ const handleNotificationClick = async () => {
   const [openFormModal, handleOpenFormModal, handleCloseFormModal] = useModal();
   const [operationType, setOperationType] = useState("");
   const [rowID, setRowID] = useState("");
+  const [rowData, setRowData] = useState(null);
+  const handleEditClick = (id, row) => {
   const [resubmitApplication, setResubmitApplication] = useState(null);
 const [openResubmitDialog, setOpenResubmitDialog] = useState(false);
   const handleEditClick = (id) => {
     handleOpenFormModal();
     setOperationType("edit");
     setRowID(id);
+    setRowData(row || null);
   };
  const handleResubmitClick = (row) => {
     setResubmitApplication(row);
@@ -235,6 +238,8 @@ useEffect(() => {
         setOperationType: setOperationType,
         rowID: rowID,
         setRowID: setRowID,
+        rowData: rowData,
+        setRowData: setRowData,
         dropDownLists: props.dropDownLists,
         canSave: !props.disableAdd,
         tableColumns: props.tableColumns,
