@@ -3,7 +3,10 @@ import FormDialog from "../../components/page_builder/FormDialog";
 import Form from "./Form";
 import Filter from "./Filter";
 import List from "./List";
-
+import { useState } from "react";
+import Tabs from "@mui/material/Tabs";
+import Tab from "@mui/material/Tab";
+import Box from "@mui/material/Box";
 import { useAuthz } from "../../context/AuthzContext";
 import {
   PET_SHOP_REGISTRATION_APPLICATION_API_URL,
@@ -19,6 +22,7 @@ import {
   rejectApplication,
 } from "../../api-client/petShopRegistration";
 const PetShopApplicationPage = () => {
+const [selectedStatus, setSelectedStatus] = useState("");
   const handleForwardClick = async (id) => {
   try {
     const baseUrl = import.meta.env.VITE_APP_BASE_API_URL.replace(/\/$/, "");
@@ -92,9 +96,61 @@ const handleRejectClick = async (id) => {
 ];
 
   return (
+  <>
+    <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 2 }}>
+      <Tabs
+        value={selectedStatus}
+        onChange={(e, value) => setSelectedStatus(value)}
+        variant="scrollable"
+        scrollButtons="auto"
+      >
+        <Tab label="All" value="" />
+
+        <Tab label="Submitted" value="SUBMITTED" />
+
+        <Tab
+          label="Forwarded to CVO"
+          value="FORWARDED_TO_CVO"
+        />
+
+        <Tab
+          label="Inspection Scheduled"
+          value="INSPECTION_SCHEDULED"
+        />
+
+        <Tab
+          label="Verified by CVO"
+          value="VERIFIED_BY_CVO"
+        />
+
+        <Tab
+          label="Rejected by CVO"
+          value="REJECTED_BY_CVO"
+        />
+
+        <Tab
+          label="Resubmitted"
+          value="RESUBMITTED"
+        />
+
+        <Tab
+          label="Approved"
+          value="APPLICATION_APPROVED"
+        />
+
+        <Tab
+          label="Rejected"
+          value="APPLICATION_REJECTED"
+        />
+      </Tabs>
+    </Box>
+
     <DataTable
       api_url={PET_SHOP_REGISTRATION_APPLICATION_API_URL}
       list_url={PET_SHOP_REGISTRATION_APPLICATION_LIST_URL}
+
+selectedStatus={selectedStatus}
+
       handleForwardClick={handleForwardClick}
       alertString="Pet Shop Registration"
       tableColumns={tableColumns}
@@ -115,8 +171,10 @@ handleRejectClick={handleRejectClick}
       </FormDialog>
 
       <List />
-    </DataTable>
-  );
+   </DataTable>
+  </>
+);
+  
 };
 
 export default PetShopApplicationPage;

@@ -5,13 +5,16 @@ import TableCell from "@mui/material/TableCell";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TableSortLabel from "@mui/material/TableSortLabel";
-
+import { useState } from "react";
+import HistoryIcon from "@mui/icons-material/History";
+import PetShopStatusHistoryDialog from "../../components/PetShopStatusHistoryDialog";
 import Button from "@mui/material/Button";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 
 const List = (props) => {
+  const [historyApplicationId, setHistoryApplicationId] = useState("");
 
   return (
     <>
@@ -35,6 +38,7 @@ const List = (props) => {
             ))}
 
            <TableCell align="center">View</TableCell>
+            <TableCell align="center">History</TableCell>
 <TableCell align="center">Actions</TableCell>
           </TableRow>
         </TableHead>
@@ -60,24 +64,36 @@ const List = (props) => {
         </IconButton>
     </Tooltip>
 </TableCell>
+<TableCell align="center">
+  <Tooltip title="View Status History">
+    <IconButton
+      onClick={() => setHistoryApplicationId(row.id)}
+    >
+      <HistoryIcon color="primary" />
+    </IconButton>
+  </Tooltip>
+</TableCell>
 
 {/* Actions */}
 <TableCell align="center">
   {(() => {
     const status = row.status?.name?.toLowerCase();
 
-    if (status === "submitted") {
-      return (
-        <Button
-          variant="contained"
-          color="success"
-          size="small"
-          onClick={() => props.handleForwardClick(row.id)}
-        >
-          FORWARD
-        </Button>
-      );
-    }
+if (
+  status === "submitted" ||
+  status === "resubmitted"
+) {
+  return (
+    <Button
+      variant="contained"
+      color="success"
+      size="small"
+      onClick={() => props.handleForwardClick(row.id)}
+    >
+      FORWARD
+    </Button>
+  );
+}
 
     if (
       status === "forwarded to cvo" ||
@@ -164,7 +180,10 @@ const List = (props) => {
         </TableBody>
       </Table>
 
-     
+     <PetShopStatusHistoryDialog
+        applicationId={historyApplicationId}
+        setApplicationId={setHistoryApplicationId}
+      />
     </>
   );
 };
