@@ -113,6 +113,34 @@ export const uploadApplicationDocument = ({
     headers: getHeader(),
   });
 };
+export const uploadResubmissionDocument = ({
+  file,
+  applicationId,
+}) => {
+  const formData = new FormData();
+
+  formData.append("file", file);
+  formData.append("applicationId", applicationId);
+
+  return callApi({
+    method: "POST",
+    baseURL: BASE_API_URL,
+    url: "/petshop/auth/registration-application/resubmission/upload",
+    data: formData,
+    headers: getHeader(),
+  });
+};
+
+export const resubmitApplication = (payload) =>
+  callApi({
+    method: "PATCH",
+    baseURL: BASE_API_URL,
+    url: "/petshop/auth/registration-application/resubmit",
+    data: {
+      payLoad: payload,
+    },
+    headers: getHeader(),
+  });
 
 const encodeDocumentFilePath = (filePath) =>
   filePath

@@ -11,9 +11,11 @@ import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 import Button from "@mui/material/Button";
 import EventIcon from "@mui/icons-material/Event";
-
+import { useState } from "react";
+import HistoryIcon from "@mui/icons-material/History";
+import PetShopStatusHistoryDialog from "../../components/PetShopStatusHistoryDialog";
 const List = (props) => {
-
+const [historyApplicationId, setHistoryApplicationId] = useState("");
   return (
     <>
       <Table stickyHeader sx={{ minWidth: 650 }}>
@@ -36,6 +38,7 @@ const List = (props) => {
             ))}
 
            <TableCell align="center">View</TableCell>
+           <TableCell align="center">History</TableCell>
            <TableCell align="center">Actions</TableCell>
            <TableCell align="center">Decision</TableCell>
 
@@ -64,6 +67,15 @@ const List = (props) => {
             <VisibilityIcon />
         </IconButton>
     </Tooltip>
+</TableCell>
+<TableCell align="center">
+  <Tooltip title="View Status History">
+    <IconButton
+      onClick={() => setHistoryApplicationId(row.id)}
+    >
+      <HistoryIcon color="primary" />
+    </IconButton>
+  </Tooltip>
 </TableCell>
 
 <>
@@ -143,7 +155,10 @@ const List = (props) => {
           ))}
         </TableBody>
       </Table>
-
+ <PetShopStatusHistoryDialog
+      applicationId={historyApplicationId}
+      setApplicationId={setHistoryApplicationId}
+    />
      
     </>
   );
