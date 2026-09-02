@@ -4,7 +4,7 @@ export const LOGIN_PATH = "login";
 
 export const PET_SHOP_OWNER_SIGNUP_PATH = "register/pet-shop-owner";
 export const PET_SHOP_REGISTER_PATH = "pet-shop/register";
-
+export const CITIZEN_SIGNUP_PATH = "register/citizen";
 export const REGISTRATION_PAGE_PATH = "registration-page";
 
 export const TEST_PAGE_PATH = "test-page";
@@ -39,3 +39,4 @@ export const PET_SHOP_APPLICATION_PATH ="pet-shop-application";
 export const PET_SHOP_FORWARDED_APPLICATION_PATH = "pet-shop-forwarded-application";
  export const PET_SHOP_MY_APPLICATION_PATH = "pet-shop-my-applications";
  export const DOG_BREEDER_MY_APPLICATION_PATH = "dog-breeder-my-applications";
+ export const CITIZEN_COMPLAINT_REGISTRATION_PATH = "citizen-complaint-registration";

@@ -94,28 +94,50 @@ const useForm = (
     });
     setErrors(errors);
   };
-  const handleInsert = async (formData, includeToken) => {
-    setErrors({});
-    setIsSubmitting(true);
-    setResponseData(null);
-    const data = { payLoad: formData };
-    const response = await addItem(`${api_url}save`, data, includeToken);
-    if (response.isSuccess) {
-      setResponseData({ data: response.data, operation: "add" });
-      toast.success(alertString + " Added Successfully");
-      handleCloseFormModal();
-      handleRefreshTable();
-    } else {
-      setErrorMessages(response.data);
-      if (response.data.detail) toast.error(response.data.detail);
-      else if (response.data.non_field_errors)
-        toast.error(response.data.non_field_errors[0]);
-      else if (response.status == 400)
-        toast.error("Please Check all the fields");
-      else toast.error("Some Thing Went Wrong");
-    }
-    setIsSubmitting(false);
+const handleInsert = async (formData, includeToken) => {
+  setErrors({});
+  setIsSubmitting(true);
+  setResponseData(null);
+
+  const data = {
+    payLoad: formData,
   };
+
+  const response = await addItem(
+    `${api_url}save`,
+    data,
+    includeToken
+  );
+
+  if (response.isSuccess) {
+    setResponseData({
+      data: response.data,
+      operation: "add",
+    });
+
+    toast.success(alertString + " Added Successfully");
+
+    handleRefreshTable();
+
+    return response;
+  }
+
+  setErrorMessages(response.data);
+
+  if (response.data?.detail) {
+    toast.error(response.data.detail);
+  } else if (response.data?.non_field_errors) {
+    toast.error(response.data.non_field_errors[0]);
+  } else if (response.status === 400) {
+    toast.error("Please Check all the fields");
+  } else {
+    toast.error("Some Thing Went Wrong");
+  }
+
+  setIsSubmitting(false);
+
+  return response;
+};
   const handleInsertAnother = async (formData, includeToken) => {
     setErrors({});
     setIsSubmitting(true);
