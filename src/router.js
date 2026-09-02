@@ -24,6 +24,7 @@ import {
   PET_SHOP_DETAIL_PATH,
   PET_SHOP_REGISTER_PATH,
   PET_SHOP_OWNER_SIGNUP_PATH,
+  CITIZEN_SIGNUP_PATH,
   APPLICATION_WORKFLOW_PATH,
   PAYMENT_TRANSACTION_PATH,
   DOG_BREEDER_BREED_PATH,
@@ -36,8 +37,10 @@ import {
    PET_SHOP_FORWARDED_APPLICATION_PATH,
    PET_SHOP_MY_APPLICATION_PATH,
    DOG_BREEDER_MY_APPLICATION_PATH,
+   CITIZEN_COMPLAINT_REGISTRATION_PATH,
 } from "./config/routes";
-
+import CitizenComplaintRegistrationPage from "./pages/citizen_complaint_registration";
+import CitizenRegisterPage from "./pages/CitizenRegisterPage";
 import PetShopMyApplicationPage from "./pages/pet_shop_my_applications";
 import PetShopForwardedApplicationPage from "./pages/pet_shop_forwarded_application";
 import PetShopApplicationPage from "./pages/pet_shop_application";
@@ -73,6 +76,16 @@ import DocumentTypePage from "./pages/document_type";
 import DogBreederBreedPage from "./pages/dog_breeder_breed";
 import PaymentTransactionPage from "./pages/payment_transaction";
 import DogBreederMyApplicationPage from "./pages/dog_breeder_my_applications";
+
+const CitizenComplaintRegistrationPageWithPermission = () =>
+  createElement(
+    PermissionGate,
+    {
+      menuKey: CITIZEN_COMPLAINT_REGISTRATION_PATH,
+      action: "list",
+    },
+    createElement(CitizenComplaintRegistrationPage)
+  );
 
 const PetShopMyApplicationPageWithPermission = () =>
   createElement(
@@ -417,6 +430,10 @@ export const router = createBrowserRouter([
                   path: DOG_BREEDER_MY_APPLICATION_PATH,
                   Component: DogBreederMyApplicationPageWithPermission,
               },
+              {
+    path: CITIZEN_COMPLAINT_REGISTRATION_PATH,
+    Component: CitizenComplaintRegistrationPageWithPermission,
+},
              
               {
                 path: "forbidden",
@@ -442,6 +459,10 @@ export const router = createBrowserRouter([
         path: `/${PET_SHOP_OWNER_SIGNUP_PATH}`,
         Component: PetShopOwnerRegisterPage,
       },
+      {
+    path: `/${CITIZEN_SIGNUP_PATH}`,
+    Component: CitizenRegisterPage,
+},
     ],
   },
 ]);

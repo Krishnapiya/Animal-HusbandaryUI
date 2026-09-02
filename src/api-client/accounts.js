@@ -22,3 +22,13 @@ export const registerPetShopOwner = async (data) => {
   };
   return await callApi(config);
 };
+export const registerCitizen = async (data) => {
+  const config = {
+    method: "post",
+    url: "/auth/register-citizen",
+    data: data,
+    baseURL: BASE_AUTH_URL,
+    headers: { "Content-Type": "application/json" },
+  };
+  return await callApi(config);
+};
