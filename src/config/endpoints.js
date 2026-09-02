@@ -242,6 +242,9 @@ export const DOG_BREEDER_APPLICATION_CVO_LIST_URL =
    export const OFFICEE_DROPDOWN_URL ="/admin/auth/master/office/list/all?dropDown=true";
    export const DOG_BREEDER_MY_APPLICATION_URL = "/dogbreeder/auth/registration-application/my-applications";
 
+   export const REGISTRATION_INSPECTION_API_URL = "/petshop/auth/registration-inspection/";
+export const REGISTRATION_APPLICATION_STATUS_HISTORY_API_URL =
+    "/petshop/auth/registration-application-status-history/application/";
      export const DOG_BREEDER_MY_APPLICATION_API_URL =
   "/dogbreeder/auth/registration-application/";
 
@@ -261,16 +264,17 @@ export const DOG_BREEDER_MY_APPLICATION_LIST_URL =
   export const DOG_BREEDER_INSPECTION_VIEW_URL =
   "/dogbreeder/auth/registration-inspection/application/";
 
-   export const REGISTRATION_INSPECTION_API_URL = "/petshop/auth/registration-inspection/";
 
    export const DOG_BREEDER_APPLICATION_APPROVE_URL =
   "/dogbreeder/auth/registration-application/approve/";
 
   export const DOG_BREEDER_APPLICATION_REJECT_URL =
   "/dogbreeder/auth/registration-application/reject/";
-  
+
   export const DOG_BREEDER_APPLICATION_RESUBMIT_URL =
   "/dogbreeder/auth/registration-application/resubmit";
 
   export const DOG_BREEDER_APPLICATION_STATUS_HISTORY_API_URL =
     "/dogbreeder/auth/application-status-history/application/";
+
+

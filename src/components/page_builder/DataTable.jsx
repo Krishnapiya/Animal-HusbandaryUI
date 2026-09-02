@@ -27,6 +27,7 @@ import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import Button from "@mui/material/Button";
+import ResubmitDialog from "../../pages/pet_shop_my_applications/ResubmitDialog";
 import {
   getNotifications,
   getUnreadCount,
@@ -88,7 +89,10 @@ const handleNotificationClick = async () => {
     handleFilterTable,
     handleResetTable,
     handleRefreshTable,
-  } = useFetchTable(props.list_url);
+  } = useFetchTable(
+    props.list_url,
+    props.selectedStatus
+);
 
   //------------------------FOR EDIT-----------------------------
   const [openFormModal, handleOpenFormModal, handleCloseFormModal] = useModal();
@@ -96,11 +100,18 @@ const handleNotificationClick = async () => {
   const [rowID, setRowID] = useState("");
   const [rowData, setRowData] = useState(null);
   const handleEditClick = (id, row) => {
+  const [resubmitApplication, setResubmitApplication] = useState(null);
+const [openResubmitDialog, setOpenResubmitDialog] = useState(false);
+  const handleEditClick = (id) => {
     handleOpenFormModal();
     setOperationType("edit");
     setRowID(id);
     setRowData(row || null);
   };
+ const handleResubmitClick = (row) => {
+    setResubmitApplication(row);
+    setOpenResubmitDialog(true);
+};
   useEffect(() => {
     console.log("ROWWWWIDDD--->", rowID);
   }, [rowID]);
@@ -242,6 +253,7 @@ useEffect(() => {
             </Box>
           ) : (
             cloneElement(children_array[2], {
+              handleResubmitClick: handleResubmitClick,
               rows: rows,
               api_url: props.api_url,
               tableColumns: props.tableColumns,
@@ -412,11 +424,20 @@ handleRejectClick: props.handleRejectClick,
   </DialogActions>
 </Dialog>
       <LoadingPercentageBackDrop open={isTableLoading} progress={progress} />
+      <ResubmitDialog
+    open={openResubmitDialog}
+    application={resubmitApplication}
+    onClose={() => {
+        setOpenResubmitDialog(false);
+        setResubmitApplication(null);
+    }}
+/>
     </Paper>
   );
 };
 
 DataTable.propTypes = {
+  selectedStatus: PropTypes.string,
   alertString: PropTypes.string,
   api_url: PropTypes.string,
   children: PropTypes.any,
@@ -436,6 +457,7 @@ DataTable.propTypes = {
   handleUploadReport: PropTypes.func,
   handleApproveClick: PropTypes.func,
 handleRejectClick: PropTypes.func,
+extraParams: PropTypes.object,
 };
 
 export default DataTable;
