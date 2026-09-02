@@ -264,7 +264,6 @@ export const DOG_BREEDER_MY_APPLICATION_LIST_URL =
 export const DOG_BREEDER_INSPECTION_VIEW_URL =
   "/dogbreeder/auth/registration-inspection/application/";
 
-   export const REGISTRATION_INSPECTION_API_URL = "/petshop/auth/registration-inspection/";
 export const CITIZEN_COMPLAINT_API_URL =
 "/citizen/auth/complaint-registration/";
 export const CITIZEN_COMPLAINT_LIST_URL =
