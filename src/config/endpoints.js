@@ -261,8 +261,9 @@ export const DOG_BREEDER_MY_APPLICATION_LIST_URL =
   export const DOG_BREEDER_INSPECTION_REPORT_UPLOAD_URL =
   "/dogbreeder/auth/registration-inspection/upload-report";
 
-export const DOG_BREEDER_INSPECTION_VIEW_URL =
+  export const DOG_BREEDER_INSPECTION_VIEW_URL =
   "/dogbreeder/auth/registration-inspection/application/";
+
 
 export const CITIZEN_COMPLAINT_API_URL =
 "/citizen/auth/complaint-registration/";
@@ -288,13 +289,17 @@ export const CITIZEN_COMPLAINT_DOCUMENT_DRAFT_URL =
 export const CITIZEN_COMPLAINT_DOCUMENT_VIEW_URL =
   "/citizen/auth/complaint-document/view/";
 
+
    export const DOG_BREEDER_APPLICATION_APPROVE_URL =
   "/dogbreeder/auth/registration-application/approve/";
 
-export const DOG_BREEDER_APPLICATION_REJECT_URL =
+  export const DOG_BREEDER_APPLICATION_REJECT_URL =
   "/dogbreeder/auth/registration-application/reject/";
-  
-export const DOG_BREEDER_APPLICATION_RESUBMIT_URL =
+
+  export const DOG_BREEDER_APPLICATION_RESUBMIT_URL =
   "/dogbreeder/auth/registration-application/resubmit";
+
+  export const DOG_BREEDER_APPLICATION_STATUS_HISTORY_API_URL =
+    "/dogbreeder/auth/application-status-history/application/";
 
 
