@@ -297,7 +297,7 @@ export const CITIZEN_COMPLAINT_DOCUMENT_VIEW_URL =
   "/dogbreeder/auth/registration-application/reject/";
 
   export const DOG_BREEDER_APPLICATION_RESUBMIT_URL =
-  "/dogbreeder/auth/registration-application/resubmit";
+  "/dogbreeder/auth/awb/resubmission/upload";
 
   export const DOG_BREEDER_APPLICATION_STATUS_HISTORY_API_URL =
     "/dogbreeder/auth/application-status-history/application/";
