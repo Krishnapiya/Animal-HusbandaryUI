@@ -1,9 +1,12 @@
+import { useState } from "react";
+
 import DataTable from "../../components/page_builder/DataTable";
 import FormDialog from "../../components/page_builder/FormDialog";
 
 import Filter from "./Filter";
 import Form from "./Form";
 import List from "./List";
+import ComplaintDetailsForm from "../citizen_complaint_forwarded_application/Form";
 
 import { useAuthz } from "../../context/AuthzContext";
 import useCan from "../../hooks/useCan";
@@ -18,11 +21,23 @@ import {
 } from "../../config/routes";
 
 const CitizenComplaintRegistrationPage = () => {
+  const [viewComplaintId, setViewComplaintId] = useState(null);
+  const [viewDialogOpen, setViewDialogOpen] = useState(false);
 
   const { can } = useAuthz();
 
   const { canList, canAdd, canEdit, canDelete } =
     useCan(CITIZEN_COMPLAINT_REGISTRATION_PATH);
+
+  const handleViewClick = (id) => {
+    setViewComplaintId(id);
+    setViewDialogOpen(true);
+  };
+
+  const handleCloseViewDialog = () => {
+    setViewDialogOpen(false);
+    setViewComplaintId(null);
+  };
 
   const tableColumns = [
     {
@@ -48,30 +63,45 @@ const CitizenComplaintRegistrationPage = () => {
   ];
 
   return (
-    <DataTable
-      api_url={CITIZEN_COMPLAINT_API_URL}
-      list_url={CITIZEN_COMPLAINT_LIST_URL}
-      alertString="Citizen Complaint"
-      tableColumns={tableColumns}
-      includeFilter={true}
-      pageTitle="Citizen Complaint Registration"
-      canList={canList}
-      canAdd={canAdd}
-      canEdit={canEdit}
-      canDelete={canDelete}
-      canExport={can(
-        CITIZEN_COMPLAINT_REGISTRATION_PATH,
-        "export"
-      )}
-    >
-      <Filter />
+    <>
+      <DataTable
+        api_url={CITIZEN_COMPLAINT_API_URL}
+        list_url={CITIZEN_COMPLAINT_LIST_URL}
+        alertString="Citizen Complaint"
+        tableColumns={tableColumns}
+        includeFilter={true}
+        pageTitle="Citizen Complaint Registration"
+        canList={canList}
+        canAdd={canAdd}
+        canEdit={canEdit}
+        canDelete={canDelete}
+        canExport={can(
+          CITIZEN_COMPLAINT_REGISTRATION_PATH,
+          "export"
+        )}
+        handleViewClick={handleViewClick}
+      >
+        <Filter />
 
-      <FormDialog maxWidth="lg">
-        <Form />
+        <FormDialog maxWidth="lg">
+          <Form />
+        </FormDialog>
+
+        <List />
+      </DataTable>
+
+      <FormDialog
+        maxWidth="lg"
+        open={viewDialogOpen}
+        handleCloseFormModal={handleCloseViewDialog}
+        title="Citizen Complaint Details"
+      >
+        <ComplaintDetailsForm
+          rowID={viewComplaintId}
+          onClose={handleCloseViewDialog}
+        />
       </FormDialog>
-
-      <List />
-    </DataTable>
+    </>
   );
 };
 

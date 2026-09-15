@@ -99,10 +99,10 @@ const handleNotificationClick = async () => {
   const [operationType, setOperationType] = useState("");
   const [rowID, setRowID] = useState("");
   const [rowData, setRowData] = useState(null);
-  const handleEditClick = (id, row) => {
+
   const [resubmitApplication, setResubmitApplication] = useState(null);
 const [openResubmitDialog, setOpenResubmitDialog] = useState(false);
-  const handleEditClick = (id) => {
+  const handleEditClick = (id,row) => {
     handleOpenFormModal();
     setOperationType("edit");
     setRowID(id);
@@ -258,6 +258,7 @@ useEffect(() => {
               api_url: props.api_url,
               tableColumns: props.tableColumns,
               alertString: props.alertString,
+              handleViewClick: props.handleViewClick,
               handleEditClick: handleEditClick,
               handleForwardClick: props.handleForwardClick,
               handleApproveClick: props.handleApproveClick,
@@ -271,6 +272,9 @@ handleRejectClick: props.handleRejectClick,
               dropDownLists: props.dropDownLists,
               handleScheduleInspection: props.handleScheduleInspection,
                handleUploadReport: props.handleUploadReport,
+               handleStartReview: props.handleStartReview,
+handleScheduleInvestigation: props.handleScheduleInvestigation,
+handleActionTaken: props.handleActionTaken,
               
             })
           )}
@@ -458,6 +462,9 @@ DataTable.propTypes = {
   handleApproveClick: PropTypes.func,
 handleRejectClick: PropTypes.func,
 extraParams: PropTypes.object,
+handleStartReview: PropTypes.func,
+handleScheduleInvestigation: PropTypes.func,
+handleActionTaken: PropTypes.func,
 };
 
 export default DataTable;

@@ -241,6 +241,26 @@ const Step5Documents = ({
 
       for (const [documentId, document] of selectedDocuments) {
         const file = document.file;
+        const existingSavedDocument =
+          documents?.[documentId] &&
+          (documents[documentId]?.id || documents[documentId]?.documentId || documents[documentId]?.applicationDocumentId || documents[documentId]?.isDraft);
+
+        if (existingSavedDocument && !document?.isDraft && !document?.saved) {
+          toast.info(
+            `${document.fileName || file.name} is already saved for this application.`
+          );
+          setDocuments((prev) => ({
+            ...prev,
+            [documentId]: {
+              ...prev[documentId],
+              ...document,
+              file: null,
+              isDraft: true,
+              saved: true,
+            },
+          }));
+          continue;
+        }
 
         const response = await uploadApplicationDocument({
           file,
@@ -269,6 +289,7 @@ const Step5Documents = ({
             fileName: savedDocument?.fileName || file.name,
             mimeType: savedDocument?.mimeType || file.type,
             isDraft: true,
+            saved: true,
           },
         }));
       }
