@@ -14,6 +14,30 @@ import HistoryIcon from "@mui/icons-material/History";
 import ReplayIcon from "@mui/icons-material/Replay";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
+
+const normalizeStatusName = (value) => {
+  const raw =
+    typeof value === "string"
+      ? value
+      : value?.name ||
+        value?.status ||
+        value?.statusName ||
+        value?.statusCode ||
+        value?.currentStatus ||
+        value?.applicationStatus ||
+        value?.applicationStatusName ||
+        value?.approvalStatus ||
+        value?.value ||
+        value?.code ||
+        "";
+
+  return String(raw)
+    .trim()
+    .replace(/[_\s-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .toLowerCase();
+};
+
 const List = (props) => {
 const [historyApplicationId, setHistoryApplicationId] = useState("");
   return (
@@ -55,6 +79,20 @@ const [historyApplicationId, setHistoryApplicationId] = useState("");
         {props.rows.map((row, index) => (
 
           <TableRow key={index}>
+            {(() => {
+              const status = normalizeStatusName(
+                row?.status ||
+                  row?.statusName ||
+                  row?.statusCode ||
+                  row?.currentStatus ||
+                  row?.applicationStatus ||
+                  row?.applicationStatusName ||
+                  row?.approvalStatus
+              );
+              const isResubmittable = status.includes("rejected");
+
+              return (
+                <>
             
 
             {props.tableColumns.map((col, colIndex) => (
@@ -85,7 +123,7 @@ const [historyApplicationId, setHistoryApplicationId] = useState("");
 </TableCell>
 <TableCell align="center">
 
-    {row.status?.name === "Rejected by CVO" ? (
+  {isResubmittable ? (
 
         <Button
             variant="contained"
@@ -97,7 +135,7 @@ const [historyApplicationId, setHistoryApplicationId] = useState("");
             Resubmit
         </Button>
 
-    ) : row.status?.name === "Resubmitted" ? (
+    ) : status === "resubmitted" ? (
 
         <Chip
             icon={<ReplayIcon />}
@@ -114,6 +152,9 @@ const [historyApplicationId, setHistoryApplicationId] = useState("");
 
 </TableCell>
 
+                </>
+              );
+            })()}
           </TableRow>
 
         ))}

@@ -40,3 +40,5 @@ export const PET_SHOP_FORWARDED_APPLICATION_PATH = "pet-shop-forwarded-applicati
  export const PET_SHOP_MY_APPLICATION_PATH = "pet-shop-my-applications";
  export const DOG_BREEDER_MY_APPLICATION_PATH = "dog-breeder-my-applications";
  export const CITIZEN_COMPLAINT_REGISTRATION_PATH = "citizen-complaint-registration";
+ export const CITIZEN_COMPLAINT_APPLICATION_PATH = "citizen-complaint-application";
+ export const CITIZEN_COMPLAINT_FORWARDED_APPLICATION_PATH = "citizen-complaint-forwarded-application";
