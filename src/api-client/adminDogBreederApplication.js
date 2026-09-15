@@ -12,6 +12,7 @@ import {
   DOG_BREEDER_APPLICATION_APPROVE_URL, // Added
   DOG_BREEDER_APPLICATION_REJECT_URL,  // Added
   DOG_BREEDER_APPLICATION_RESUBMIT_URL,
+  DOG_BREEDER_APPLICATION_STATUS_HISTORY_API_URL
 } from "../config/endpoints";
 
 export const getAdminDogBreederApplicationPreview = async (applicationId) => {
@@ -62,4 +63,9 @@ export const rejectDogBreederApplication = async (applicationId) => {
 
 export const resubmitDogBreederApplication = async (payload) => {
   return editSingleItem(DOG_BREEDER_APPLICATION_RESUBMIT_URL, payload);
+};
+export const getDogBreederApplicationHistory = async (applicationId) => {
+  return getItemList(
+    `${DOG_BREEDER_APPLICATION_STATUS_HISTORY_API_URL}${applicationId}`
+  );
 };
