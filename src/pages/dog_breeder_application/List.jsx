@@ -1,5 +1,5 @@
 import PropTypes from "prop-types";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
@@ -14,16 +14,15 @@ import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import Button from "@mui/material/Button";
-import Tabs from "@mui/material/Tabs";
-import Tab from "@mui/material/Tab";
 import Typography from "@mui/material/Typography";
 import Grid from "@mui/material/Grid2";
 import Divider from "@mui/material/Divider";
 import CircularProgress from "@mui/material/CircularProgress";
 import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
-import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
+import Tabs from "@mui/material/Tabs";
+import Tab from "@mui/material/Tab";
+import Badge from "@mui/material/Badge";
 
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import DownloadIcon from "@mui/icons-material/Download";
@@ -47,295 +46,163 @@ import {
 } from "../../api-client/adminDogBreederApplication";
 
 /* =========================================================
-   COMMON HELPERS
-   ========================================================= */
+   APPLICATION ID
+========================================================= */
 
-const getApplicationId = (row) =>
-  row?.id ??
-  row?.applicationId ??
-  row?.registrationApplicationId ??
-  row?.registration_application_id ??
-  row?.registrationDetails?.id ??
-  row?.registrationDetails?.applicationId ??
-  null;
+const getApplicationId = (row) => {
+  if (!row) {
+    return null;
+  }
 
-const getPayload = (response) =>
-  response?.data?.payLoad ??
-  response?.data?.payload ??
-  response?.payLoad ??
-  response?.payload ??
-  response?.data ??
-  response ??
-  {};
+  const id =
+    row?.id ??
+    row?.applicationId ??
+    row?.registrationApplicationId ??
+    row?.registration_application_id ??
+    row?.registrationDetails?.id ??
+    row?.registrationDetails?.applicationId ??
+    row?.application?.id ??
+    row?.application?.applicationId;
 
-const displayValue = (value) => {
-  if (
-    value === null ||
-    value === undefined ||
-    value === ""
-  ) {
+  return id !== null && id !== undefined
+    ? String(id)
+    : null;
+};
+
+/* =========================================================
+   API PAYLOAD
+========================================================= */
+
+const getPayload = (response) => {
+  return (
+    response?.data?.payLoad ||
+    response?.data?.payload ||
+    response?.data?.data ||
+    response?.payLoad ||
+    response?.payload ||
+    response?.data ||
+    {}
+  );
+};
+
+/* =========================================================
+   VALUE FORMATTER
+========================================================= */
+
+const getValue = (value) => {
+  if (value === null || value === undefined || value === "") {
     return "-";
   }
 
-  if (
-    typeof value === "string" ||
-    typeof value === "number"
-  ) {
-    return String(value);
-  }
-
-  if (typeof value === "boolean") {
-    return value ? "Yes" : "No";
-  }
-
-  if (Array.isArray(value)) {
-    if (value.length === 0) {
-      return "-";
-    }
-
-    return value
-      .map((item) => displayValue(item))
-      .filter((item) => item !== "-")
-      .join(", ");
-  }
-
   if (typeof value === "object") {
-    const preferredKeys = [
-      "name",
-      "label",
-      "displayName",
-      "description",
-      "statusName",
-      "statusCode",
-      "code",
-      "value",
-      "title",
-      "fileName",
-      "applicationNumber",
-      "breederName",
-      "establishmentName",
-      "breedName",
-      "breed",
-    ];
-
-    for (const key of preferredKeys) {
-      const item = value?.[key];
-
-      if (
-        item !== null &&
-        item !== undefined &&
-        item !== "" &&
-        typeof item !== "object"
-      ) {
-        return String(item);
-      }
-    }
-
-    if (
-      value?.name &&
-      typeof value.name === "object"
-    ) {
-      return displayValue(value.name);
-    }
-
-    if (
-      value?.breed &&
-      typeof value.breed === "object"
-    ) {
-      return displayValue(value.breed);
-    }
-
-    if (
-      value?.id !== null &&
-      value?.id !== undefined
-    ) {
-      return String(value.id);
-    }
-
-    try {
-      return JSON.stringify(value);
-    } catch {
-      return "-";
-    }
+    return (
+      value?.name ||
+      value?.label ||
+      value?.value ||
+      value?.code ||
+      JSON.stringify(value)
+    );
   }
 
-  return String(value);
+  return value;
 };
 
-const getArray = (value) =>
-  Array.isArray(value) ? value : [];
+/* =========================================================
+   ARRAY
+========================================================= */
 
-const getDocumentId = (doc) =>
-  doc?.id ??
-  doc?.documentId ??
-  doc?.applicationDocumentId ??
-  doc?.application_document_id ??
-  doc?.applicationDocument?.id ??
-  null;
-
-const getDocumentTypeLabel = (doc) =>
-  doc?.documentTypeName ??
-  doc?.document_type_name ??
-  doc?.applicationDocumentTypeName ??
-  doc?.application_document_type_name ??
-  doc?.applicationDocumentType?.name ??
-  doc?.documentType?.name ??
-  doc?.documentType?.label ??
-  doc?.documentType ??
-  "";
-
-const getDocumentFileName = (doc) =>
-  displayValue(
-    doc?.fileName ??
-      doc?.filename ??
-      doc?.originalFileName ??
-      doc?.original_file_name ??
-      doc?.storedFileName ??
-      doc?.stored_file_name ??
-      doc?.name
-  );
-
-const getDocumentPreviewUrl = (doc) =>
-  doc?.fileUrl ??
-  doc?.filePath ??
-  doc?.url ??
-  (doc?.base64
-    ? doc.base64.startsWith("data:")
-      ? doc.base64
-      : `data:image/jpeg;base64,${doc.base64}`
-    : null);
+const getArray = (value) => {
+  return Array.isArray(value) ? value : [];
+};
 
 /* =========================================================
-   STATUS HELPERS
-   ========================================================= */
+   STATUS NORMALIZER
+========================================================= */
 
 const normalizeStatus = (value) => {
-  if (
-    value === null ||
-    value === undefined
-  ) {
-    return "";
-  }
-
-  if (typeof value === "object") {
-    value =
-      value?.statusCode ??
-      value?.code ??
-      value?.name ??
-      value?.statusName ??
-      value?.label ??
-      value?.value ??
-      "";
-  }
-
-  return String(value)
+  return String(value ?? "")
     .trim()
     .toUpperCase()
     .replace(/[\s-]+/g, "_");
 };
 
-const getStatusValue = (row) => {
-  const status = row?.status;
+/* =========================================================
+   GET EXACT STATUS FROM ROW
+========================================================= */
 
-  if (typeof status === "string") {
-    return status;
+const getRowStatus = (row) => {
+  if (!row) {
+    return "";
   }
 
-  if (
-    status &&
-    typeof status === "object"
-  ) {
-    return (
-      status?.statusCode ??
-      status?.code ??
-      status?.name ??
-      status?.statusName ??
-      status?.label ??
-      status?.value ??
-      ""
-    );
+  const possibleStatuses = [
+    row?.statusCode,
+    row?.statusName,
+    row?.status,
+
+    row?.applicationStatusCode,
+    row?.applicationStatusName,
+    row?.applicationStatus,
+
+    row?.registrationStatusCode,
+    row?.registrationStatusName,
+    row?.registrationStatus,
+
+    row?.status?.statusCode,
+    row?.status?.code,
+    row?.status?.name,
+    row?.status?.statusName,
+
+    row?.applicationStatus?.statusCode,
+    row?.applicationStatus?.code,
+    row?.applicationStatus?.name,
+    row?.applicationStatus?.statusName,
+
+    row?.registrationDetails?.statusCode,
+    row?.registrationDetails?.statusName,
+    row?.registrationDetails?.status,
+
+    row?.registrationDetails?.applicationStatusCode,
+    row?.registrationDetails?.applicationStatusName,
+    row?.registrationDetails?.applicationStatus,
+
+    row?.registrationDetails?.status?.statusCode,
+    row?.registrationDetails?.status?.code,
+    row?.registrationDetails?.status?.name,
+    row?.registrationDetails?.status?.statusName,
+  ];
+
+  for (const value of possibleStatuses) {
+    if (
+      value !== null &&
+      value !== undefined &&
+      typeof value !== "object"
+    ) {
+      const status = normalizeStatus(value);
+
+      if (status) {
+        return status;
+      }
+    }
   }
 
-  return (
-    row?.statusName ??
-    row?.statusCode ??
-    row?.applicationStatusName ??
-    row?.applicationStatusCode ??
-    ""
-  );
-};
-
-const getStatusId = (row) =>
-  row?.status?.id ??
-  row?.statusId ??
-  row?.applicationStatusId ??
-  row?.registrationStatusId ??
-  null;
-
-const getCurrentStatus = (row) => {
-  const status = normalizeStatus(
-    getStatusValue(row)
-  );
-
-  if (status) {
-    return status;
-  }
-
-  const statusId = Number(
-    getStatusId(row)
-  );
-
-  switch (statusId) {
-    case 1:
-      return "DRAFT";
-
-    case 5:
-      return "FORWARDED_TO_CVO";
-
-    default:
-      return "";
-  }
+  return "";
 };
 
 /* =========================================================
-   STATUS CHECKS
-   ========================================================= */
+   ROLE NORMALIZER
+========================================================= */
 
-const isDraft = (row) => {
-  const status = getCurrentStatus(row);
-
-  if (status === "DRAFT") {
-    return true;
-  }
-
-  if (status === "INCOMPLETE") {
-    return true;
-  }
-
-  return Number(getStatusId(row)) === 1;
-};
-
-const isSubmitted = (row) => {
-  const status = getCurrentStatus(row);
-
-  return (
-    status === "APPLICATION_SUBMITTED" ||
-    status === "SUBMITTED" ||
-    status === "RESUBMITTED"
-  );
-};
-
-
-
-/* =========================================================
-   ROLE HELPERS
-   ========================================================= */
-
-const normalizeRole = (role) =>
-  String(role ?? "")
+const normalizeRole = (role) => {
+  return String(role ?? "")
     .trim()
     .toUpperCase()
     .replace(/^ROLE_/, "");
+};
+
+/* =========================================================
+   GET LOGGED-IN ROLES
+========================================================= */
 
 const getLoggedInRoles = () => {
   const user = getUserAttributes();
@@ -347,32 +214,31 @@ const getLoggedInRoles = () => {
   const roleValues = [
     user?.role,
     user?.roleName,
+    user?.authority,
+    user?.authorities,
+
     user?.role?.name,
     user?.role?.roleName,
     user?.role?.authority,
-    user?.authority,
+    user?.role?.code,
   ];
 
   if (Array.isArray(user?.roles)) {
-    roleValues.push(
-      ...user.roles
-    );
+    roleValues.push(...user.roles);
   }
 
-  if (
-    Array.isArray(
-      user?.authorities
-    )
-  ) {
-    roleValues.push(
-      ...user.authorities
-    );
+  if (Array.isArray(user?.authorities)) {
+    roleValues.push(...user.authorities);
   }
 
   return roleValues
     .flatMap((role) => {
       if (typeof role === "string") {
         return [role];
+      }
+
+      if (Array.isArray(role)) {
+        return role;
       }
 
       return [
@@ -387,33 +253,133 @@ const getLoggedInRoles = () => {
 };
 
 /* =========================================================
+   STATUS TABS - ADMIN
+========================================================= */
+
+const ADMIN_STATUS_TABS = [
+  {
+    value: "ALL",
+    label: "ALL",
+  },
+  {
+    value: "SUBMITTED",
+    label: "SUBMITTED",
+  },
+  {
+    value: "FORWARDED_TO_CVO",
+    label: "FORWARDED TO CVO",
+  },
+  {
+    value: "INSPECTION_SCHEDULED",
+    label: "INSPECTION SCHEDULED",
+  },
+  {
+    value: "VERIFIED_BY_CVO",
+    label: "VERIFIED BY CVO",
+  },
+  {
+    value: "REJECTED_BY_CVO",
+    label: "REJECTED BY CVO",
+  },
+  {
+    value: "RESUBMITTED",
+    label: "RESUBMITTED",
+  },
+  {
+    value: "APPLICATION_APPROVED",
+    label: "APPROVED",
+  },
+  {
+    value: "APPLICATION_REJECTED",
+    label: "REJECTED",
+  },
+];
+/* =========================================================
+   STATUS TABS - CVO
+========================================================= */
+
+const CVO_STATUS_TABS = [
+  {
+    value: "ALL",
+    label: "ALL",
+  },
+  {
+    value: "FORWARDED_TO_CVO",
+    label: "FORWARDED TO CVO",
+  },
+  {
+    value: "INSPECTION_SCHEDULED",
+    label: "INSPECTION SCHEDULED",
+  },
+  {
+    value: "VERIFIED_BY_CVO",
+    label: "VERIFIED BY CVO",
+  },
+  {
+    value: "REJECTED_BY_CVO",
+    label: "REJECTED BY CVO",
+  },
+  {
+    value: "RESUBMITTED",
+    label: "RESUBMITTED",
+  },
+];
+
+/* =========================================================
+   STATUS TABS - DOG BREEDER
+========================================================= */
+
+const BREEDER_STATUS_TABS = [
+  {
+    value: "ALL",
+    label: "ALL",
+  },
+  {
+    value: "DRAFT",
+    label: "DRAFT",
+  },
+  {
+    value: "SUBMITTED",
+    label: "SUBMITTED",
+  },
+  {
+    value: "RESUBMITTED",
+    label: "RESUBMITTED",
+  },
+  {
+    value: "APPLICATION_APPROVED",
+    label: "APPROVED",
+  },
+];
+
+/* =========================================================
    PREVIEW ROW
-   ========================================================= */
+========================================================= */
 
-const PreviewRow = ({
-  label,
-  value,
-}) => (
-  <Grid size={{ xs: 12, md: 6 }}>
-    <Typography
-      variant="caption"
-      color="text.secondary"
-    >
-      {label}
-    </Typography>
+const PreviewRow = ({ label, value }) => {
+  return (
+    <Grid size={{ xs: 12, md: 6 }}>
+      <Typography
+        variant="body2"
+        color="text.secondary"
+        sx={{ mb: 0.5 }}
+      >
+        {label}
+      </Typography>
 
-    <Typography
-      sx={{
-        fontWeight: 600,
-        mb: 1,
-        whiteSpace: "pre-wrap",
-        wordBreak: "break-word",
-      }}
-    >
-      {displayValue(value)}
-    </Typography>
-  </Grid>
-);
+      <Typography
+        sx={{
+          fontWeight: 600,
+          mb: 1,
+          whiteSpace: "pre-wrap",
+          wordBreak: "break-word",
+        }}
+      >
+        {getValue(value)}
+      </Typography>
+    </Grid>
+  );
+};
 
 PreviewRow.propTypes = {
   label: PropTypes.string.isRequired,
@@ -422,1112 +388,1168 @@ PreviewRow.propTypes = {
 
 /* =========================================================
    SECTION TITLE
-   ========================================================= */
+========================================================= */
 
-const SectionTitle = ({
-  children,
-}) => (
-  <>
-    <Typography
-      variant="h6"
-      sx={{
-        mt: 3,
-        mb: 1,
-      }}
-    >
-      {children}
-    </Typography>
+const SectionTitle = ({ children }) => {
+  return (
+    <>
+      <Typography
+        variant="h6"
+        sx={{
+          mt: 3,
+          mb: 1,
+        }}
+      >
+        {children}
+      </Typography>
 
-    <Divider sx={{ mb: 2 }} />
-  </>
-);
+      <Divider sx={{ mb: 2 }} />
+    </>
+  );
+};
 
 SectionTitle.propTypes = {
   children: PropTypes.node,
 };
 
 /* =========================================================
-   MAIN LIST
-   ========================================================= */
+   STATUS LABEL
+========================================================= */
+
+const getStatusLabel = (status) => {
+  switch (status) {
+    case "DRAFT":
+      return "Draft";
+
+    case "SUBMITTED":
+      return "Submitted";
+
+    case "FORWARDED_TO_CVO":
+      return "Forwarded to CVO";
+
+    case "INSPECTION_SCHEDULED":
+      return "Inspection Scheduled";
+
+    case "VERIFIED_BY_CVO":
+      return "Verified by CVO";
+
+    case "REJECTED_BY_CVO":
+      return "Rejected by CVO";
+
+    case "RESUBMITTED":
+      return "Resubmitted";
+
+    case "APPLICATION_APPROVED":
+      return "Application Approved";
+
+    case "APPLICATION_REJECTED":
+      return "Application Rejected";
+
+    default:
+      return status || "-";
+  }
+};
+
+/* =========================================================
+   LOCAL DATE
+========================================================= */
+
+const getTodayLocalDate = () => {
+  const date = new Date();
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+};
+
+/* =========================================================
+   MAIN COMPONENT
+========================================================= */
 
 const List = (props) => {
   /* =======================================================
-     PREVIEW STATE
-     ======================================================= */
+     PREVIEW
+  ======================================================= */
 
-  const [
-    previewOpen,
-    setPreviewOpen,
-  ] = useState(false);
-
-  const [
-    previewLoading,
-    setPreviewLoading,
-  ] = useState(false);
-
-  const [
-    previewData,
-    setPreviewData,
-  ] = useState(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewData, setPreviewData] = useState(null);
 
   /* =======================================================
-     FORWARD STATE
-     ======================================================= */
+     FORWARD
+  ======================================================= */
 
-  const [
-    forwardingId,
-    setForwardingId,
-  ] = useState(null);
-
-  const [
-    locallyForwardedIds,
-    setLocallyForwardedIds,
-  ] = useState(new Set());
+  const [forwardingId, setForwardingId] = useState(null);
 
   /* =======================================================
-     INSPECTION STATE
-     ======================================================= */
+     INSPECTION
+  ======================================================= */
 
-  const [
-    scheduleModalOpen,
-    setScheduleModalOpen,
-  ] = useState(false);
+  const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
 
   const [
     selectedRowForInspection,
     setSelectedRowForInspection,
   ] = useState(null);
 
-  const [
-    inspectionDate,
-    setInspectionDate,
-  ] = useState("");
-
-  const [
-    inspectionRemarks,
-    setInspectionRemarks,
-  ] = useState("");
-
-  const [
-    isScheduling,
-    setIsScheduling,
-  ] = useState(false);
-
-  const [
-    scheduledInspectionIds,
-    setScheduledInspectionIds,
-  ] = useState(new Set());
+  const [inspectionDate, setInspectionDate] = useState("");
+  const [inspectionRemarks, setInspectionRemarks] = useState("");
+  const [isScheduling, setIsScheduling] = useState(false);
 
   /* =======================================================
-     REPORT STATE
-     ======================================================= */
+     REPORT
+  ======================================================= */
 
-  const [
-    uploadReportOpen,
-    setUploadReportOpen,
-  ] = useState(false);
+  const [uploadReportOpen, setUploadReportOpen] = useState(false);
 
-  const [
-    selectedApplication,
-    setSelectedApplication,
-  ] = useState(null);
+  const [selectedApplication, setSelectedApplication] =
+    useState(null);
 
-  const [
-    inspectionReport,
-    setInspectionReport,
-  ] = useState(null);
+  const [inspectionReport, setInspectionReport] = useState(null);
+  const [existingReport, setExistingReport] = useState(null);
 
-  const [
-    existingReport,
-    setExistingReport,
-  ] = useState(null);
+  const [remarks, setRemarks] = useState("");
+  const [recommendation, setRecommendation] = useState("");
 
-  const [
-    remarks,
-    setRemarks,
-  ] = useState("");
-
-  const [
-    recommendation,
-    setRecommendation,
-  ] = useState("");
-
-  const [
-    isSubmitting,
-    setIsSubmitting,
-  ] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   /* =======================================================
-     LOCAL STATUS
-     ======================================================= */
+     LOCAL FALLBACK STATUS
+  ======================================================= */
 
-  const [
-    completedInspections,
-    setCompletedInspections,
-  ] = useState({});
+  const [scheduledInspectionIds, setScheduledInspectionIds] =
+    useState(new Set());
 
-  /* =======================================================
-     ROLES
-     ======================================================= */
-
-  const loggedInRoles =
-    getLoggedInRoles();
-
-  const isAdmin =
-    loggedInRoles.includes("ADMIN");
-
-  const isCvo =
-    loggedInRoles.includes("CVO");
+  const [locallyForwardedIds, setLocallyForwardedIds] =
+    useState(new Set());
 
   /* =======================================================
-     ROWS
-     ======================================================= */
+     ROLE
+  ======================================================= */
 
-  const submittedRows =
-    getArray(props.rows).filter(
-      (row) => !isDraft(row)
-    );
+  const loggedInRoles = getLoggedInRoles();
+
+  const isAdmin = loggedInRoles.includes("ADMIN");
+
+  const isCvo = loggedInRoles.includes("CVO");
+
+  const isDogBreeder =
+    loggedInRoles.includes("DOG_BREEDER") ||
+    loggedInRoles.includes("BREEDER");
 
   /* =======================================================
      ACTION VISIBILITY
-     ======================================================= */
+  ======================================================= */
 
   const showForwardAction =
-    typeof props.showForwardAction ===
-    "boolean"
+    props.showForwardAction !== undefined
       ? props.showForwardAction
-      : isAdmin && !isCvo;
+      : isAdmin;
 
   const showScheduleInspectionAction =
-    typeof props.showScheduleInspectionAction ===
-    "boolean"
+    props.showScheduleInspectionAction !== undefined
       ? props.showScheduleInspectionAction
       : isCvo;
 
-  const showActionColumn =
-    showForwardAction ||
-    showScheduleInspectionAction;
-
   const showDecisionColumn =
-    isCvo;
+    props.showDecisionColumn !== undefined
+      ? props.showDecisionColumn
+      : isCvo;
+
+  const showActionColumn =
+    showForwardAction || showScheduleInspectionAction;
 
   /* =======================================================
-     REFRESH
-     ======================================================= */
+     STATUS TABS BASED ON ROLE
+  ======================================================= */
 
-  const refreshList = async () => {
-    if (
-      typeof props.refreshList ===
-      "function"
-    ) {
-      await props.refreshList();
-      return;
+  const statusTabs = useMemo(() => {
+    if (isAdmin) {
+      return ADMIN_STATUS_TABS;
     }
 
-    if (
-      typeof props.handleRefresh ===
-      "function"
-    ) {
-      await props.handleRefresh();
+    if (isCvo) {
+      return CVO_STATUS_TABS;
     }
-  };
+
+    if (isDogBreeder) {
+      return BREEDER_STATUS_TABS;
+    }
+
+    return ADMIN_STATUS_TABS;
+  }, [isAdmin, isCvo, isDogBreeder]);
 
   /* =======================================================
-     GET EFFECTIVE STATUS
-     ======================================================= */
+     SELECTED TAB
+  ======================================================= */
 
-  const getEffectiveStatus = (
-    row
-  ) => {
-    const applicationId =
-      getApplicationId(row);
+  const [selectedStatusTab, setSelectedStatusTab] =
+    useState("ALL");
 
-    if (
-      applicationId &&
-      completedInspections[
-        applicationId
-      ]
-    ) {
-      return completedInspections[
-        applicationId
-      ];
+  const validSelectedTab = statusTabs.some(
+    (tab) => tab.value === selectedStatusTab
+  )
+    ? selectedStatusTab
+    : "ALL";
+
+  /* =======================================================
+     ALL ROWS
+  ======================================================= */
+
+  const allRows = Array.isArray(props.rows)
+    ? props.rows
+    : [];
+
+  /* =======================================================
+     EFFECTIVE STATUS
+  ======================================================= */
+
+  const getEffectiveStatus = (row) => {
+    const applicationId = getApplicationId(row);
+    const serverStatus = getRowStatus(row);
+
+    /*
+     * Backend status always wins.
+     */
+    if (serverStatus) {
+      return serverStatus;
     }
 
+    /*
+     * Local status is only a temporary fallback.
+     */
     if (
       applicationId &&
-      scheduledInspectionIds.has(
-        applicationId
-      )
+      scheduledInspectionIds.has(applicationId)
     ) {
       return "INSPECTION_SCHEDULED";
     }
 
     if (
       applicationId &&
-      locallyForwardedIds.has(
-        applicationId
-      )
+      locallyForwardedIds.has(applicationId)
     ) {
       return "FORWARDED_TO_CVO";
     }
 
-    return getCurrentStatus(row);
+    return "";
   };
 
-  const [activeTab, setActiveTab] = useState("ALL");
+  /* =======================================================
+     FILTERED ROWS
+  ======================================================= */
 
-  const roleTabs = (() => {
-    if (isAdmin) {
-      return [
-        { key: "ALL", label: "All" },
-        { key: "SUBMITTED", label: "Submitted" },
-        { key: "RESUBMITTED", label: "Resubmitted" },
-        { key: "FORWARDED_TO_CVO", label: "Forwarded" },
-        { key: "INSPECTION_SCHEDULED", label: "Inspection Scheduled" },
-        { key: "VERIFIED_BY_CVO", label: "Verified by CVO" },
-        { key: "REJECTED_BY_CVO", label: "Rejected by CVO" },
-        { key: "APPLICATION_APPROVED", label: "Approved" },
-        { key: "APPLICATION_REJECTED", label: "Rejected" },
-      ];
+/* =======================================================
+   FILTERED ROWS
+======================================================= */
+
+const filteredRows = useMemo(() => {
+  /*
+   * Admin and CVO must NEVER see DRAFT applications.
+   * Dog Breeder can see DRAFT applications.
+   */
+  const visibleRows = allRows.filter((row) => {
+    const status = getEffectiveStatus(row);
+
+    if ((isAdmin || isCvo) && status === "DRAFT") {
+      return false;
     }
 
-    if (isCvo) {
-      return [
-        { key: "ALL", label: "All" },
-        { key: "FORWARDED_TO_CVO", label: "Forwarded to CVO" },
-        { key: "INSPECTION_SCHEDULED", label: "Inspection Scheduled" },
-        { key: "VERIFIED_BY_CVO", label: "Verified by CVO" },
-        { key: "REJECTED_BY_CVO", label: "Rejected by CVO" },
-        { key: "RESUBMITTED", label: "Resubmitted" },
-      ];
-    }
-
-    return [
-      { key: "ALL", label: "All" },
-      { key: "APPLICATION_SUBMITTED", label: "Submitted" },
-      { key: "RESUBMITTED", label: "Resubmitted" },
-      { key: "APPLICATION_REJECTED", label: "Rejected" },
-      { key: "APPLICATION_APPROVED", label: "Approved" },
-    ];
-  })();
-
-  const roleStatusCounts = {};
-
-  submittedRows.forEach((row) => {
-    const value = normalizeStatus(getEffectiveStatus(row));
-
-    if (value) {
-      roleStatusCounts[value] = (roleStatusCounts[value] || 0) + 1;
-    }
+    return true;
   });
 
-  const visibleRows =
-    activeTab === "ALL"
-      ? submittedRows
-      : submittedRows.filter((row) => {
-          const value = normalizeStatus(getEffectiveStatus(row));
-          return value === activeTab;
-        });
+  if (validSelectedTab === "ALL") {
+    return visibleRows;
+  }
+
+  return visibleRows.filter(
+    (row) =>
+      getEffectiveStatus(row) === validSelectedTab
+  );
+}, [
+  allRows,
+  validSelectedTab,
+  scheduledInspectionIds,
+  locallyForwardedIds,
+  isAdmin,
+  isCvo,
+]);
+  /* =======================================================
+     STATUS COUNTS
+  ======================================================= */
+
+  const statusCounts = useMemo(() => {
+    const counts = {};
+
+    statusTabs.forEach((tab) => {
+      counts[tab.value] = 0;
+    });
+
+    counts.ALL = allRows.length;
+
+    allRows.forEach((row) => {
+      const status = getEffectiveStatus(row);
+
+      if (
+        Object.prototype.hasOwnProperty.call(
+          counts,
+          status
+        )
+      ) {
+        counts[status] += 1;
+      }
+    });
+
+    return counts;
+  }, [
+    allRows,
+    statusTabs,
+    scheduledInspectionIds,
+    locallyForwardedIds,
+  ]);
+
+  /* =======================================================
+     STATUS TAB CHANGE
+  ======================================================= */
+
+  const handleStatusTabChange = (event, newValue) => {
+    setSelectedStatusTab(newValue);
+  };
+
+  /* =======================================================
+     FORWARD CHECK
+  ======================================================= */
+
+  const isForwardedToCvo = (row) => {
+    return (
+      getEffectiveStatus(row) ===
+      "FORWARDED_TO_CVO"
+    );
+  };
+
+  /* =======================================================
+     REFRESH LIST
+     
+     ONLY REFRESH LOGIC UPDATED
+======================================================= */
+
+  const refreshList = async () => {
+    try {
+      /*
+       * Parent refresh function.
+       * This is the preferred method because the parent
+       * will fetch fresh backend data and update props.rows.
+       */
+      if (typeof props.refreshList === "function") {
+        await props.refreshList();
+
+        /*
+         * Remove temporary local status after fresh
+         * backend data has been loaded.
+         */
+        setScheduledInspectionIds(new Set());
+        setLocallyForwardedIds(new Set());
+
+        return true;
+      }
+
+      /*
+       * Backward-compatible refresh function.
+       */
+      if (typeof props.handleRefresh === "function") {
+        await props.handleRefresh();
+
+        setScheduledInspectionIds(new Set());
+        setLocallyForwardedIds(new Set());
+
+        return true;
+      }
+
+      /*
+       * If the parent does not provide either callback,
+       * reload the page so the backend data is fetched again.
+       */
+      window.location.reload();
+
+      return true;
+    } catch (error) {
+      console.error(
+        "Refresh list error:",
+        error
+      );
+
+      /*
+       * If parent refresh fails, force a complete reload.
+       */
+      window.location.reload();
+
+      return false;
+    }
+  };
 
   /* =======================================================
      PREVIEW
-     ======================================================= */
+  ======================================================= */
 
-  const handlePreviewClick =
-    async (row) => {
-      const applicationId =
-        getApplicationId(row);
+  const handlePreviewClick = async (row) => {
+    const applicationId = getApplicationId(row);
 
-      if (!applicationId) {
-        toast.error(
-          "Application ID missing"
+    if (!applicationId) {
+      toast.error("Application ID missing");
+      return;
+    }
+
+    setPreviewOpen(true);
+    setPreviewData(row);
+
+    try {
+      setPreviewLoading(true);
+
+      const response =
+        await getAdminDogBreederApplicationPreview(
+          applicationId
         );
-        return;
-      }
 
-      setPreviewOpen(true);
-      setPreviewData(row);
+      const payload = getPayload(response);
 
-      try {
-        setPreviewLoading(true);
+      const breeder =
+        payload?.breederDetail ||
+        payload?.breederDetails ||
+        payload?.breeder ||
+        {};
 
-        const response =
-          await getAdminDogBreederApplicationPreview(
-            applicationId
-          );
+      const reg =
+        payload?.registrationDetails ||
+        payload?.registration ||
+        {};
 
-        const payload =
-          getPayload(response);
-
-        if (
-          payload &&
-          typeof payload ===
-            "object"
-        ) {
-          setPreviewData({
-            ...row,
-            ...payload,
-          });
+      const parseEntityValue = (val) => {
+        if (!val) {
+          return "";
         }
-      } catch (error) {
-        console.error(
-          "Dog breeder preview error:",
-          error
-        );
 
-        toast.error(
-          "Preview API failed. Showing available list data."
-        );
-      } finally {
-        setPreviewLoading(false);
-      }
-    };
+        if (typeof val === "object") {
+          return (
+            val?.name ||
+            val?.label ||
+            val?.localBodyTypeName ||
+            val?.localBodyName ||
+            val?.districtName ||
+            val?.value ||
+            ""
+          );
+        }
 
-  const handleClosePreview =
-    () => {
-      setPreviewOpen(false);
-      setPreviewData(null);
-    };
+        return val;
+      };
+
+      const fullAddress = [
+        breeder?.addressLine1 ||
+          payload?.addressLine1 ||
+          row?.addressLine1,
+
+        breeder?.addressLine2 ||
+          payload?.addressLine2 ||
+          row?.addressLine2,
+
+        parseEntityValue(
+          breeder?.city ||
+            payload?.city ||
+            row?.city
+        ),
+
+        breeder?.pincode ||
+          payload?.pincode ||
+          row?.pincode,
+      ]
+        .filter(Boolean)
+        .join(", ");
+
+      setPreviewData({
+        ...row,
+        ...payload,
+
+        applicationNumber:
+          payload?.applicationNumber ||
+          reg?.applicationNumber ||
+          row?.applicationNumber,
+
+        district:
+          parseEntityValue(reg?.district) ||
+          parseEntityValue(payload?.district) ||
+          getValue(row?.district),
+
+        localBodyType:
+          parseEntityValue(
+            reg?.localBodyType
+          ) ||
+          parseEntityValue(
+            payload?.localBodyType
+          ) ||
+          parseEntityValue(
+            row?.localBodyType
+          ),
+
+        localBody:
+          parseEntityValue(
+            reg?.localBody
+          ) ||
+          parseEntityValue(
+            payload?.localBody
+          ) ||
+          parseEntityValue(
+            row?.localBody
+          ),
+
+        establishmentName:
+          reg?.establishmentName ||
+          breeder?.establishmentName ||
+          payload?.establishmentName ||
+          row?.establishmentName,
+
+        applicationStatus:
+          parseEntityValue(reg?.status) ||
+          parseEntityValue(payload?.status) ||
+          getRowStatus(row),
+
+        breederName:
+          breeder?.breederName ||
+          breeder?.name ||
+          payload?.breederName ||
+          row?.breederName,
+
+        mobileNumber:
+          breeder?.contactMobile ||
+          breeder?.mobileNumber ||
+          payload?.mobileNumber ||
+          payload?.contactMobile ||
+          row?.mobileNumber,
+
+        email:
+          breeder?.contactEmail ||
+          breeder?.email ||
+          payload?.email ||
+          payload?.contactEmail ||
+          row?.email,
+
+        address:
+          fullAddress ||
+          getValue(row?.address),
+
+        facilityAddress:
+          breeder?.facilityAddress ||
+          payload?.facilityAddress ||
+          row?.facilityAddress,
+
+        totalArea:
+          payload?.totalArea ||
+          breeder?.totalArea ||
+          row?.totalArea,
+
+        numberOfCages:
+          payload?.numberOfCages ||
+          breeder?.numberOfCages ||
+          row?.numberOfCages,
+
+        veterinaryCareDetails:
+          payload?.veterinaryCareDetails ||
+          breeder?.veterinaryCareDetails ||
+          row?.veterinaryCareDetails,
+      });
+    } catch (error) {
+      console.error(
+        "Dog breeder preview error:",
+        error
+      );
+
+      toast.error(
+        "Preview API failed. Showing available list data."
+      );
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
+
+  /* =======================================================
+     CLOSE PREVIEW
+  ======================================================= */
+
+  const handleClosePreview = () => {
+    if (previewLoading) {
+      return;
+    }
+
+    setPreviewOpen(false);
+    setPreviewData(null);
+  };
 
   /* =======================================================
      DOWNLOAD APPLICATION
-     ======================================================= */
+  ======================================================= */
 
-  const handleDownloadClick =
-    async (row) => {
-      const applicationId =
-        getApplicationId(row);
+  const handleDownloadClick = async (row) => {
+    const applicationId = getApplicationId(row);
 
-      if (!applicationId) {
-        toast.error(
-          "Application ID missing"
-        );
-        return;
-      }
+    if (!applicationId) {
+      toast.error("Application ID missing");
+      return;
+    }
 
-      try {
-        const response =
-          await downloadDogBreederApplication(
-            applicationId
-          );
-
-        const blob =
-          new Blob(
-            [response.data],
-            {
-              type:
-                response.headers?.[
-                  "content-type"
-                ] ||
-                "application/pdf",
-            }
-          );
-
-        const url =
-          URL.createObjectURL(
-            blob
-          );
-
-        const applicationNumber =
-          displayValue(
-            row?.applicationNumber
-          );
-
-        const link =
-          document.createElement(
-            "a"
-          );
-
-        link.href = url;
-
-        link.download =
-          applicationNumber !== "-"
-            ? `${applicationNumber}.pdf`
-            : `dog-breeder-application-${applicationId}.pdf`;
-
-        document.body.appendChild(
-          link
+    try {
+      const response =
+        await downloadDogBreederApplication(
+          applicationId
         );
 
-        link.click();
+      const blob = new Blob([response.data], {
+        type:
+          response?.headers?.["content-type"] ||
+          "application/pdf",
+      });
 
-        document.body.removeChild(
-          link
-        );
+      const url =
+        URL.createObjectURL(blob);
 
-        setTimeout(() => {
-          URL.revokeObjectURL(
-            url
-          );
-        }, 60000);
-      } catch (error) {
-        console.error(
-          "Dog breeder application download error:",
-          error
-        );
+      const link =
+        document.createElement("a");
 
-        toast.error(
-          "Failed to download application"
-        );
-      }
-    };
+      link.href = url;
+
+      link.download =
+        row?.applicationNumber ||
+        `dog-breeder-application-${applicationId}.pdf`;
+
+      document.body.appendChild(link);
+
+      link.click();
+
+      document.body.removeChild(link);
+
+      setTimeout(() => {
+        URL.revokeObjectURL(url);
+      }, 60000);
+    } catch (error) {
+      console.error(
+        "Dog breeder application download error:",
+        error
+      );
+
+      toast.error(
+        "Failed to download application"
+      );
+    }
+  };
 
   /* =======================================================
      OPEN BLOB
-     ======================================================= */
+  ======================================================= */
 
   const openBlob = (
     response,
     fileName,
     isDownload = false,
-    mimeType =
-      "application/octet-stream"
+    mimeType = "application/octet-stream"
   ) => {
-    const blob =
-      new Blob(
-        [response.data],
-        {
-          type:
-            response.headers?.[
-              "content-type"
-            ] ||
-            mimeType,
-        }
-      );
+    if (!response?.data) {
+      toast.error("File data is empty");
+      return;
+    }
+
+    const blob = new Blob([response.data], {
+      type:
+        response?.headers?.["content-type"] ||
+        mimeType ||
+        "application/octet-stream",
+    });
 
     const url =
-      URL.createObjectURL(
-        blob
-      );
+      URL.createObjectURL(blob);
 
     if (isDownload) {
       const link =
-        document.createElement(
-          "a"
-        );
+        document.createElement("a");
 
       link.href = url;
-
-      const safeFileName =
-        displayValue(
-          fileName
-        );
-
       link.download =
-        safeFileName !== "-"
-          ? safeFileName
-          : "document";
+        fileName || "document";
 
-      document.body.appendChild(
-        link
-      );
+      document.body.appendChild(link);
 
       link.click();
 
-      document.body.removeChild(
-        link
-      );
+      document.body.removeChild(link);
     } else {
       window.open(
         url,
-        "_blank",
-        "noopener,noreferrer"
+        "_blank"
       );
     }
 
     setTimeout(() => {
-      URL.revokeObjectURL(
-        url
-      );
+      URL.revokeObjectURL(url);
     }, 60000);
   };
 
   /* =======================================================
      VIEW DOCUMENT
-     ======================================================= */
+  ======================================================= */
 
-  const handleViewDocument =
-    async (
-      documentItem
-    ) => {
-      const documentId =
-        getDocumentId(
-          documentItem
+  const handleViewDocument = async (
+    documentData
+  ) => {
+    if (!documentData?.id) {
+      toast.error(
+        "Document ID missing"
+      );
+      return;
+    }
+
+    try {
+      const response =
+        await viewDogBreederDocument(
+          documentData.id
         );
 
-      if (!documentId) {
-        toast.error(
-          "Document ID missing"
-        );
-        return;
-      }
+      openBlob(
+        response,
+        documentData.fileName ||
+          documentData.name ||
+          "document",
+        false,
+        documentData.mimeType ||
+          "application/pdf"
+      );
+    } catch (error) {
+      console.error(
+        "Document view error:",
+        error
+      );
 
-      try {
-        const response =
-          await viewDogBreederDocument(
-            documentId
-          );
-
-        openBlob(
-          response,
-          documentItem.fileName ||
-            documentItem.name,
-          false,
-          documentItem.mimeType ||
-            "application/pdf"
-        );
-      } catch (error) {
-        console.error(
-          "Document view error:",
-          error
-        );
-
-        toast.error(
-          "Failed to view document"
-        );
-      }
-    };
+      toast.error(
+        "Failed to view document"
+      );
+    }
+  };
 
   /* =======================================================
      DOWNLOAD DOCUMENT
-     ======================================================= */
+  ======================================================= */
 
-  const handleDownloadDocument =
-    async (
-      documentItem
-    ) => {
-      const documentId =
-        getDocumentId(
-          documentItem
+  const handleDownloadDocument = async (
+    documentData
+  ) => {
+    if (!documentData?.id) {
+      toast.error(
+        "Document ID missing"
+      );
+      return;
+    }
+
+    try {
+      const response =
+        await downloadDogBreederDocument(
+          documentData.id
         );
 
-      if (!documentId) {
-        toast.error(
-          "Document ID missing"
-        );
-        return;
-      }
+      openBlob(
+        response,
+        documentData.fileName ||
+          documentData.name ||
+          "document",
+        true,
+        documentData.mimeType ||
+          "application/octet-stream"
+      );
+    } catch (error) {
+      console.error(
+        "Document download error:",
+        error
+      );
 
-      try {
-        const response =
-          await downloadDogBreederDocument(
-            documentId
-          );
-
-        openBlob(
-          response,
-          documentItem.fileName ||
-            documentItem.name,
-          true,
-          documentItem.mimeType ||
-            "application/octet-stream"
-        );
-      } catch (error) {
-        console.error(
-          "Document download error:",
-          error
-        );
-
-        toast.error(
-          "Failed to download document"
-        );
-      }
-    };
+      toast.error(
+        "Failed to download document"
+      );
+    }
+  };
 
   /* =======================================================
-     ADMIN -> FORWARD TO CVO
-     ======================================================= */
+     FORWARD TO CVO
+  ======================================================= */
 
-  const handleForwardClick =
-    async (row) => {
-      const applicationId =
-        getApplicationId(row);
+  const handleForwardClick = async (
+    row
+  ) => {
+    const applicationId =
+      getApplicationId(row);
 
-      if (!applicationId) {
-        toast.error(
-          "Application ID missing"
-        );
-        return;
-      }
+    if (!applicationId) {
+      toast.error(
+        "Application ID missing"
+      );
+      return;
+    }
 
-      const currentStatus =
-        getEffectiveStatus(row);
+    if (isForwardedToCvo(row)) {
+      toast.info(
+        "Application is already forwarded to CVO"
+      );
+      return;
+    }
 
-      if (
-        currentStatus ===
-          "FORWARDED_TO_CVO" ||
-        currentStatus ===
-          "FORWARDED"
-      ) {
-        toast.info(
-          "Application is already forwarded to CVO"
-        );
-        return;
-      }
+    if (
+      !window.confirm(
+        "Are you sure you want to forward this application to CVO?"
+      )
+    ) {
+      return;
+    }
 
-      if (
-        currentStatus ===
-          "INSPECTION_SCHEDULED" ||
-        currentStatus ===
-          "VERIFIED_BY_CVO" ||
-        currentStatus ===
-          "REJECTED_BY_CVO" ||
-        currentStatus ===
-          "APPLICATION_APPROVED" ||
-        currentStatus ===
-          "APPLICATION_REJECTED"
-      ) {
-        toast.info(
-          "Application has already moved to the CVO processing stage"
-        );
-        return;
-      }
+    try {
+      setForwardingId(
+        applicationId
+      );
 
-      if (
-        !isSubmitted(row)
-      ) {
-        toast.info(
-          "Only submitted or resubmitted applications can be forwarded to CVO"
-        );
-        return;
-      }
+      await forwardDogBreederApplication(
+        applicationId
+      );
 
-      if (
-        !window.confirm(
-          "Are you sure you want to forward this application to CVO?"
-        )
-      ) {
-        return;
-      }
+      setLocallyForwardedIds(
+        (previousIds) => {
+          const next =
+            new Set(previousIds);
 
-      try {
-        setForwardingId(
-          applicationId
-        );
+          next.add(applicationId);
 
-        await forwardDogBreederApplication(
-          applicationId
-        );
+          return next;
+        }
+      );
 
-        setLocallyForwardedIds(
-          (previousIds) =>
-            new Set([
-              ...previousIds,
-              applicationId,
-            ])
-        );
+      toast.success(
+        "Application forwarded to CVO successfully"
+      );
 
-        toast.success(
-          "Application forwarded to CVO successfully"
-        );
+      await refreshList();
+    } catch (error) {
+      console.error(
+        "Dog breeder forward to CVO error:",
+        error
+      );
 
-        await refreshList();
-      } catch (error) {
-        console.error(
-          "Dog breeder forward to CVO error:",
-          error
-        );
+      const message =
+        error?.response?.data
+          ?.resultString ||
+        error?.response?.data
+          ?.message ||
+        error?.response?.data
+          ?.error ||
+        error?.message ||
+        "Failed to forward application to CVO";
 
-        toast.error(
-          error?.response?.data
-            ?.message ||
-            "Failed to forward application to CVO"
-        );
-      } finally {
-        setForwardingId(null);
-      }
-    };
+      toast.error(message);
+    } finally {
+      setForwardingId(null);
+    }
+  };
 
   /* =======================================================
      OPEN SCHEDULE MODAL
-     ======================================================= */
+  ======================================================= */
 
-  const handleOpenScheduleModal =
-    (row) => {
-      const currentStatus =
-        getEffectiveStatus(row);
+  const handleOpenScheduleModal = (
+    row
+  ) => {
+    const applicationId =
+      getApplicationId(row);
 
-      if (
-        currentStatus !==
-        "FORWARDED_TO_CVO"
-      ) {
-        toast.info(
-          "Only forwarded applications can be scheduled for inspection"
-        );
-        return;
-      }
-
-      setSelectedRowForInspection(
-        row
+    if (!applicationId) {
+      toast.error(
+        "Application ID missing"
       );
+      return;
+    }
 
-      setInspectionDate("");
-      setInspectionRemarks("");
-
-      setScheduleModalOpen(true);
-    };
+    setSelectedRowForInspection(row);
+    setInspectionDate("");
+    setInspectionRemarks("");
+    setScheduleModalOpen(true);
+  };
 
   /* =======================================================
      CLOSE SCHEDULE MODAL
-     ======================================================= */
+  ======================================================= */
 
-  const handleCloseScheduleModal =
-    () => {
-      if (isScheduling) {
-        return;
-      }
+  const handleCloseScheduleModal = () => {
+    if (isScheduling) {
+      return;
+    }
 
-      setScheduleModalOpen(false);
-
-      setSelectedRowForInspection(
-        null
-      );
-
-      setInspectionDate("");
-      setInspectionRemarks("");
-    };
+    setScheduleModalOpen(false);
+    setSelectedRowForInspection(null);
+    setInspectionDate("");
+    setInspectionRemarks("");
+  };
 
   /* =======================================================
      SAVE INSPECTION
-     ======================================================= */
+  ======================================================= */
 
-  const handleSaveInspection =
-    async () => {
-      if (!inspectionDate) {
-        toast.error(
-          "Please select inspection date"
-        );
-        return;
-      }
+  const handleSaveInspection = async () => {
+    if (!inspectionDate) {
+      toast.error(
+        "Please select inspection date"
+      );
+      return;
+    }
 
-      const applicationId =
-        getApplicationId(
-          selectedRowForInspection
-        );
+    const applicationId =
+      getApplicationId(
+        selectedRowForInspection
+      );
 
-      if (!applicationId) {
-        toast.error(
-          "Application ID missing"
-        );
-        return;
-      }
+    if (!applicationId) {
+      toast.error(
+        "Application ID missing"
+      );
+      return;
+    }
 
-      const currentStatus =
-        getEffectiveStatus(
-          selectedRowForInspection
-        );
+    try {
+      setIsScheduling(true);
 
-      if (
-        currentStatus !==
-        "FORWARDED_TO_CVO"
-      ) {
-        toast.error(
-          "Only forwarded applications can be scheduled"
-        );
-        return;
-      }
+      await saveDogBreederInspection({
+        applicationId,
+        inspectionDate,
+        inspectionRemarks:
+          inspectionRemarks?.trim() ||
+          "",
+      });
 
-      try {
-        setIsScheduling(true);
+      toast.success(
+        "Inspection Scheduled Successfully"
+      );
 
-        await saveDogBreederInspection(
-          {
-            applicationId,
-            inspectionDate,
-            inspectionRemarks,
-          }
-        );
+      setScheduledInspectionIds(
+        (previousIds) => {
+          const next =
+            new Set(previousIds);
 
-        setScheduledInspectionIds(
-          (previous) =>
-            new Set([
-              ...previous,
-              applicationId,
-            ])
-        );
+          next.add(applicationId);
 
-        toast.success(
-          "Inspection Scheduled Successfully"
-        );
+          return next;
+        }
+      );
 
-        setScheduleModalOpen(
-          false
-        );
+      setScheduleModalOpen(false);
+      setSelectedRowForInspection(null);
+      setInspectionDate("");
+      setInspectionRemarks("");
 
-        setSelectedRowForInspection(
-          null
-        );
+      await refreshList();
+    } catch (error) {
+      console.error(
+        "Save inspection error:",
+        error
+      );
 
-        setInspectionDate("");
-        setInspectionRemarks("");
+      const message =
+        error?.response?.data
+          ?.resultString ||
+        error?.response?.data
+          ?.message ||
+        error?.response?.data
+          ?.error ||
+        error?.message ||
+        "Unable to schedule inspection";
 
-        await refreshList();
-      } catch (error) {
-        console.error(
-          "Schedule inspection error:",
-          error
-        );
-
-        toast.error(
-          error?.response?.data
-            ?.message ||
-            "Unable to schedule inspection"
-        );
-      } finally {
-        setIsScheduling(false);
-      }
-    };
+      toast.error(message);
+    } finally {
+      setIsScheduling(false);
+    }
+  };
 
   /* =======================================================
      OPEN UPLOAD REPORT
-     ======================================================= */
+  ======================================================= */
 
-  const handleUploadReportClick =
-    async (row) => {
-      const applicationId =
-        getApplicationId(row);
+ /* =======================================================
+   OPEN UPLOAD REPORT
+======================================================= */
 
-      if (!applicationId) {
-        toast.error(
-          "Application ID missing"
-        );
-        return;
-      }
+const handleUploadReportClick = async (row) => {
+  const applicationId = getApplicationId(row);
 
-      const currentStatus =
-        getEffectiveStatus(row);
+  if (!applicationId) {
+    toast.error("Application ID missing");
+    return;
+  }
 
-      if (
-        currentStatus !==
-        "INSPECTION_SCHEDULED"
-      ) {
-        toast.info(
-          "Please schedule the inspection before uploading the report"
-        );
-        return;
-      }
+  const currentStatus = getEffectiveStatus(row);
 
-      setSelectedApplication(row);
+  if (
+    currentStatus === "VERIFIED_BY_CVO" ||
+    currentStatus === "REJECTED_BY_CVO"
+  ) {
+    toast.info(
+      "Inspection decision is already completed"
+    );
+    return;
+  }
 
-      setInspectionReport(null);
-      setExistingReport(null);
-      setRemarks("");
-      setRecommendation("");
+  if (currentStatus !== "INSPECTION_SCHEDULED") {
+    toast.info(
+      "Please schedule the inspection before uploading the report"
+    );
+    return;
+  }
 
-      try {
-        const response =
-          await getDogBreederInspection(
-            applicationId
-          );
+  /*
+   * Reset UPLOAD REPORT fields.
+   *
+   * These are completely independent from
+   * Schedule Inspection fields.
+   */
+  setSelectedApplication(row);
+  setInspectionReport(null);
+  setExistingReport(null);
 
-        const data =
-          getPayload(response);
+  // IMPORTANT:
+  // Do NOT copy inspectionRemarks here.
+  setRemarks("");
+  setRecommendation("");
 
-        if (
-          data &&
-          typeof data === "object"
-        ) {
-          setExistingReport(
-            data?.inspectionReport ??
-              data?.report ??
-              data?.inspectionReportFile ??
-              null
-          );
+  try {
+    const response =
+      await getDogBreederInspection(applicationId);
 
-          const existingRemarks =
-            displayValue(
-              data?.inspectionRemarks ??
-                data?.remarks
-            );
+    const data = getPayload(response);
 
-          setRemarks(
-            existingRemarks === "-"
-              ? ""
-              : existingRemarks
-          );
-
-          const existingRecommendation =
-            displayValue(
-              data?.recommendation
-            );
-
-          setRecommendation(
-            existingRecommendation ===
-              "-"
-              ? ""
-              : existingRecommendation
-          );
-        }
-      } catch (error) {
-        console.error(
-          "Get inspection error:",
-          error
-        );
-      }
-
-      setUploadReportOpen(true);
-    };
-
-  /* =======================================================
-     CLOSE UPLOAD REPORT
-     ======================================================= */
-
-  const handleCloseUploadReport =
-    () => {
-      if (isSubmitting) {
-        return;
-      }
-
-      setUploadReportOpen(false);
-
-      setSelectedApplication(
-        null
+    if (data) {
+      /*
+       * Existing uploaded inspection report
+       */
+      setExistingReport(
+        data?.inspectionReport ||
+          data?.reportFile ||
+          data?.file ||
+          data?.inspectionReportFile ||
+          null
       );
 
-      setInspectionReport(null);
-      setExistingReport(null);
-      setRemarks("");
-      setRecommendation("");
-    };
+      /*
+       * IMPORTANT:
+       *
+       * Upload Report Remarks must use ONLY
+       * reportRemarks.
+       *
+       * DO NOT use:
+       * data.inspectionRemarks
+       * data.remarks
+       *
+       * because those may contain the Schedule
+       * Inspection remarks.
+       */
+      setRemarks(
+        data?.reportRemarks != null
+          ? data.reportRemarks
+          : ""
+      );
+
+      /*
+       * Recommendation Details is also a
+       * separate field.
+       */
+      setRecommendation(
+        data?.recommendation != null
+          ? data.recommendation
+          : ""
+      );
+    }
+  } catch (error) {
+    console.error(
+      "Get inspection error:",
+      error
+    );
+
+    /*
+     * Keep Upload Report remarks empty
+     * if the inspection API fails.
+     */
+    setRemarks("");
+    setRecommendation("");
+    setExistingReport(null);
+  }
+
+  setUploadReportOpen(true);
+};
+  /* =======================================================
+     CLOSE UPLOAD REPORT
+  ======================================================= */
+
+  const handleCloseUploadReport = () => {
+    if (isSubmitting) {
+      return;
+    }
+
+    setUploadReportOpen(false);
+    setSelectedApplication(null);
+    setInspectionReport(null);
+    setExistingReport(null);
+    setRemarks("");
+    setRecommendation("");
+  };
 
   /* =======================================================
-     CVO VERIFY / REJECT / ADMIN APPROVE / REJECT
-     ======================================================= */
+     SUBMIT DECISION
+  ======================================================= */
 
-  const handleSubmitDecision =
-    async (
-      decisionStatus,
-      targetRow = null
-    ) => {
-      const appRow =
-        targetRow ||
-        selectedApplication;
+  const handleSubmitDecision = async (
+    decisionStatus,
+    targetRow = null
+  ) => {
+    const appRow =
+      targetRow ||
+      selectedApplication;
 
-      const applicationId =
-        getApplicationId(appRow);
+    const applicationId =
+      getApplicationId(appRow);
 
-      if (!applicationId) {
-        toast.error(
-          "Application ID missing"
-        );
-        return;
-      }
+    if (!applicationId) {
+      toast.error(
+        "Application ID missing"
+      );
+      return;
+    }
 
-      /* =====================================================
-         ADMIN FINAL DECISION
-         ===================================================== */
+    /* =====================================================
+       ADMIN FINAL DECISION
+    ===================================================== */
 
-      if (targetRow) {
-        const currentStatus =
-          getEffectiveStatus(
-            targetRow
-          );
-
-        if (
-          currentStatus !==
-          "VERIFIED_BY_CVO"
-        ) {
-          toast.error(
-            "Admin can approve or reject only after CVO verification"
-          );
-          return;
-        }
-
-        try {
-          setIsSubmitting(true);
-
-          if (
-            decisionStatus ===
-            "APPROVED"
-          ) {
-            await approveDogBreederApplication(
-              applicationId
-            );
-          } else if (
-            decisionStatus ===
-            "REJECTED"
-          ) {
-            await rejectDogBreederApplication(
-              applicationId
-            );
-          } else {
-            return;
-          }
-
-          const finalStatus =
-            decisionStatus ===
-            "APPROVED"
-              ? "APPLICATION_APPROVED"
-              : "APPLICATION_REJECTED";
-
-          setCompletedInspections(
-            (previous) => ({
-              ...previous,
-              [applicationId]:
-                finalStatus,
-            })
-          );
-
-          toast.success(
-            decisionStatus ===
-              "APPROVED"
-              ? "Application approved successfully"
-              : "Application rejected successfully"
-          );
-
-          await refreshList();
-        } catch (error) {
-          console.error(
-            "Admin final decision error:",
-            error
-          );
-
-          toast.error(
-            error?.response?.data
-              ?.message ||
-              "Failed to process final application decision"
-          );
-        } finally {
-          setIsSubmitting(false);
-        }
-
-        return;
-      }
-
-      /* =====================================================
-         CVO DECISION
-         ===================================================== */
-
+    if (targetRow) {
       const currentStatus =
         getEffectiveStatus(
-          appRow
+          targetRow
         );
 
       if (
         currentStatus !==
-        "INSPECTION_SCHEDULED"
+        "VERIFIED_BY_CVO"
       ) {
         toast.error(
-          "Inspection must be scheduled before submitting the report"
+          "Application must be verified by CVO before final decision"
         );
         return;
       }
 
       if (
-        !inspectionReport &&
-        !existingReport
+        ![
+          "APPROVED",
+          "REJECTED",
+        ].includes(decisionStatus)
       ) {
         toast.error(
-          "Please select an inspection report file"
-        );
-        return;
-      }
-
-      if (
-        !recommendation.trim()
-      ) {
-        toast.error(
-          "Please enter recommendation details"
+          "Invalid decision"
         );
         return;
       }
@@ -1535,87 +1557,170 @@ const List = (props) => {
       try {
         setIsSubmitting(true);
 
-        const formData =
-          new FormData();
-
-        formData.append(
-          "applicationId",
-          String(applicationId)
-        );
-
-        if (inspectionReport) {
-          formData.append(
-            "reportFile",
-            inspectionReport
+        if (
+          decisionStatus ===
+          "APPROVED"
+        ) {
+          await approveDogBreederApplication(
+            applicationId
+          );
+        } else {
+          await rejectDogBreederApplication(
+            applicationId
           );
         }
 
-        const cleanRemarks =
-          remarks.trim();
-
-        formData.append(
-          "remarks",
-          cleanRemarks
-        );
-
-        const strictRecommendation =
-          decisionStatus ===
-          "APPROVED"
-            ? "APPROVED"
-            : "REJECTED";
-
-        formData.append(
-          "recommendation",
-          strictRecommendation
-        );
-
-        await uploadDogBreederInspectionReport(
-          formData
-        );
-
-        const nextStatus =
-          decisionStatus ===
-          "APPROVED"
-            ? "VERIFIED_BY_CVO"
-            : "REJECTED_BY_CVO";
-
-        setCompletedInspections(
-          (previous) => ({
-            ...previous,
-            [applicationId]:
-              nextStatus,
-          })
-        );
-
         toast.success(
-          decisionStatus ===
-            "APPROVED"
-            ? "Inspection report submitted and application verified by CVO"
-            : "Inspection report submitted and application rejected by CVO"
+          `Application ${decisionStatus.toLowerCase()} successfully`
         );
-
-        handleCloseUploadReport();
 
         await refreshList();
       } catch (error) {
         console.error(
-          "CVO inspection decision error:",
+          "Admin final decision error:",
           error
         );
 
-        toast.error(
+        const message =
+          error?.response?.data
+            ?.resultString ||
           error?.response?.data
             ?.message ||
-            "Failed to submit inspection report"
-        );
+          error?.response?.data
+            ?.error ||
+          error?.message ||
+          "Failed to process application decision";
+
+        toast.error(message);
       } finally {
         setIsSubmitting(false);
       }
-    };
+
+      return;
+    }
+
+    /* =====================================================
+       CVO INSPECTION DECISION
+    ===================================================== */
+
+    if (
+      !inspectionReport &&
+      !existingReport
+    ) {
+      toast.error(
+        "Please select an inspection report file"
+      );
+      return;
+    }
+
+    if (
+      !decisionStatus ||
+      ![
+        "APPROVED",
+        "REJECTED",
+      ].includes(
+        decisionStatus
+      )
+    ) {
+      toast.error(
+        "Invalid decision"
+      );
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+
+      const formData =
+        new FormData();
+
+      formData.append(
+        "applicationId",
+        applicationId
+      );
+
+      if (inspectionReport) {
+        formData.append(
+          "reportFile",
+          inspectionReport
+        );
+      }
+
+      const trimmedRemarks =
+        remarks?.trim() || "";
+
+      const trimmedRecommendation =
+        recommendation?.trim() || "";
+
+      let combinedRemarks =
+        trimmedRemarks;
+
+      if (
+        trimmedRecommendation
+      ) {
+        combinedRemarks =
+          combinedRemarks
+            ? `${combinedRemarks} | Recommendation: ${trimmedRecommendation}`
+            : `Recommendation: ${trimmedRecommendation}`;
+      }
+
+      formData.append(
+        "remarks",
+        combinedRemarks
+      );
+
+      const strictRecommendation =
+        decisionStatus ===
+        "APPROVED"
+          ? "APPROVED"
+          : "REJECTED";
+
+      formData.append(
+        "recommendation",
+        strictRecommendation
+      );
+
+      await uploadDogBreederInspectionReport(
+        formData
+      );
+
+      toast.success(
+        `Inspection report uploaded & ${
+          decisionStatus ===
+          "APPROVED"
+            ? "approved"
+            : "rejected"
+        } successfully`
+      );
+
+      handleCloseUploadReport();
+
+      await refreshList();
+    } catch (error) {
+      console.error(
+        "Error submitting CVO inspection decision:",
+        error
+      );
+
+      const message =
+        error?.response?.data
+          ?.resultString ||
+        error?.response?.data
+          ?.message ||
+        error?.response?.data
+          ?.error ||
+        error?.message ||
+        "Failed to process request";
+
+      toast.error(message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   /* =======================================================
      PREVIEW DATA
-     ======================================================= */
+  ======================================================= */
 
   const registration =
     previewData?.registrationDetails ||
@@ -1624,187 +1729,144 @@ const List = (props) => {
 
   const breeder =
     previewData?.breederDetails ||
-    registration?.breederDetails ||
+    previewData?.breeder ||
     {};
 
   const facility =
     previewData?.facilityDetails ||
-    registration?.facilityDetails ||
+    previewData?.facility ||
     {};
 
-  const breeds =
-    getArray(
-      previewData?.breedDetails
-    ).length > 0
-      ? getArray(
-          previewData?.breedDetails
-        )
-      : getArray(
-          registration?.breedDetails
-        ).length > 0
-      ? getArray(
-          registration?.breedDetails
-        )
-      : getArray(
-          previewData?.breeds
-        ).length > 0
-      ? getArray(
-          previewData?.breeds
-        )
-      : getArray(
-          registration?.breeds
-        );
+  const breeds = getArray(
+    previewData?.breedDetails ||
+      previewData?.breeds ||
+      previewData?.breedDetailsList
+  );
 
-  const getBreedName = (
-    breed
-  ) => {
-    if (!breed) {
-      return "-";
-    }
-
-    return displayValue(
-      breed?.breedName
-    ) !== "-"
-      ? displayValue(
-          breed?.breedName
-        )
-      : displayValue(
-          breed?.name
-        ) !== "-"
-      ? displayValue(
-          breed?.name
-        )
-      : displayValue(
-          breed?.breed?.breedName
-        ) !== "-"
-      ? displayValue(
-          breed?.breed?.breedName
-        )
-      : displayValue(
-          breed?.breed?.name
-        );
-  };
-
-  const getMaleCount = (
-    breed
-  ) =>
-    breed?.maleCount ??
-    breed?.male ??
-    breed?.numberOfMaleDogs ??
-    breed?.maleDogs ??
-    0;
-
-  const getFemaleCount = (
-    breed
-  ) =>
-    breed?.femaleCount ??
-    breed?.female ??
-    breed?.numberOfFemaleDogs ??
-    breed?.femaleDogs ??
-    0;
-
-  const documents =
-    getArray(
-      previewData?.documentDetails
-    ).length > 0
-      ? getArray(
-          previewData?.documentDetails
-        )
-      : getArray(
-          previewData?.documents
-        ).length > 0
-      ? getArray(
-          previewData?.documents
-        )
-      : getArray(
-          previewData?.applicationDocuments
-        ).length > 0
-      ? getArray(
-          previewData?.applicationDocuments
-        )
-      : getArray(
-          previewData?.applicationDocumentList
-        ).length > 0
-      ? getArray(
-          previewData?.applicationDocumentList
-        )
-      : getArray(
-          registration?.documentDetails
-        ).length > 0
-      ? getArray(
-          registration?.documentDetails
-        )
-      : getArray(
-          registration?.documents
-        );
+  const documents = getArray(
+    previewData?.documentDetails ||
+      previewData?.documents ||
+      previewData?.applicationDocuments ||
+      previewData?.applicationDocumentList ||
+      previewData?.registrationDetails
+        ?.documentDetails ||
+      previewData?.registrationDetails
+        ?.documents
+  );
 
   /* =======================================================
-     STATUS LABEL
-     ======================================================= */
+     TABLE COLUMN COUNT
+  ======================================================= */
 
-  const getStatusLabel = (
-    status
-  ) => {
-    switch (status) {
-      case "APPLICATION_SUBMITTED":
-      case "SUBMITTED":
-        return "Submitted";
-
-      case "RESUBMITTED":
-        return "Resubmitted";
-
-      case "FORWARDED_TO_CVO":
-      case "FORWARDED":
-        return "Forwarded to CVO";
-
-      case "INSPECTION_SCHEDULED":
-        return "Inspection Scheduled";
-
-      case "VERIFIED_BY_CVO":
-        return "Verified by CVO";
-
-      case "REJECTED_BY_CVO":
-        return "Rejected by CVO";
-
-      case "APPLICATION_APPROVED":
-      case "APPROVED":
-        return "Application Approved";
-
-      case "APPLICATION_REJECTED":
-      case "REJECTED":
-        return "Application Rejected";
-
-      case "DRAFT":
-        return "Draft";
-
-      default:
-        return displayValue(
-          status
-        );
-    }
-  };
+  const tableColumnCount =
+    (props.tableColumns?.length || 0) +
+    2 +
+    (showActionColumn ? 1 : 0) +
+    (showDecisionColumn ? 1 : 0);
 
   /* =======================================================
      RENDER
-     ======================================================= */
+  ======================================================= */
 
   return (
     <>
-      <Tabs
-        value={activeTab}
-        onChange={(event, newValue) => setActiveTab(newValue)}
-        variant="scrollable"
-        scrollButtons="auto"
-        sx={{ mb: 2 }}
+      {/* ===================================================
+          STATUS TABS
+      =================================================== */}
+
+      <Box
+        sx={{
+          width: "100%",
+          borderBottom:
+            "1px solid #ddd",
+          mb: 2,
+        }}
       >
-        {roleTabs.map((tab) => (
-          <Tab
-            key={tab.key}
-            value={tab.key}
-            label={`${tab.label} (${tab.key === "ALL" ? submittedRows.length : roleStatusCounts[tab.key] || 0})`}
-          />
-        ))}
-      </Tabs>
+        <Tabs
+          value={validSelectedTab}
+          onChange={
+            handleStatusTabChange
+          }
+          variant="scrollable"
+          scrollButtons="auto"
+          allowScrollButtonsMobile
+          sx={{
+            minHeight: 48,
+
+            "& .MuiTab-root": {
+              minHeight: 48,
+              textTransform:
+                "none",
+              fontWeight: 500,
+              fontSize:
+                "0.85rem",
+            },
+
+            "& .Mui-selected": {
+              fontWeight: 700,
+            },
+          }}
+        >
+          {statusTabs.map(
+            (tab) => (
+              <Tab
+                key={tab.value}
+                value={tab.value}
+                label={
+                  <Box
+                    sx={{
+                      display:
+                        "flex",
+                      alignItems:
+                        "center",
+                      gap: 1,
+                    }}
+                  >
+                    <span>
+                      {
+                        tab.label
+                      }
+                    </span>
+
+                    <Badge
+                      badgeContent={
+                        statusCounts[
+                          tab.value
+                        ] || 0
+                      }
+                      color="primary"
+                      max={999}
+                      sx={{
+                        "& .MuiBadge-badge":
+                          {
+                            position:
+                              "relative",
+                            transform:
+                              "none",
+                            top:
+                              "auto",
+                            right:
+                              "auto",
+                            minWidth: 20,
+                            height: 20,
+                            borderRadius:
+                              "10px",
+                            fontSize:
+                              "0.7rem",
+                          },
+                      }}
+                    />
+                  </Box>
+                }
+              />
+            )
+          )}
+        </Tabs>
+      </Box>
+
+      {/* ===================================================
+          TABLE
+      =================================================== */}
 
       <Table
         stickyHeader
@@ -1814,23 +1876,23 @@ const List = (props) => {
       >
         <TableHead>
           <TableRow>
-            {getArray(
-              props.tableColumns
-            ).map(
+            {props.tableColumns.map(
               (
                 column,
                 index
               ) => (
                 <TableCell
                   key={
-                    column?.attr ||
+                    column.attr ||
                     index
                   }
                 >
                   <TableSortLabel
-                    onClick={props.handleSortClick(
-                      column.attr
-                    )}
+                    onClick={() =>
+                      props.handleSortClick(
+                        column.attr
+                      )
+                    }
                     active={
                       column.attr ===
                       props
@@ -1848,9 +1910,9 @@ const List = (props) => {
                         : "asc"
                     }
                   >
-                    {displayValue(
+                    {
                       column.header
-                    )}
+                    }
                   </TableSortLabel>
                 </TableCell>
               )
@@ -1879,7 +1941,7 @@ const List = (props) => {
         </TableHead>
 
         <TableBody>
-          {visibleRows.map(
+          {filteredRows.map(
             (
               row,
               index
@@ -1896,63 +1958,29 @@ const List = (props) => {
 
               const forwarded =
                 currentStatus ===
-                  "FORWARDED_TO_CVO" ||
-                currentStatus ===
-                  "FORWARDED";
+                "FORWARDED_TO_CVO";
 
               const isInspectionScheduled =
                 currentStatus ===
                 "INSPECTION_SCHEDULED";
 
-              const inspectionVerified =
-                currentStatus ===
-                "VERIFIED_BY_CVO";
-
-              const inspectionRejected =
-                currentStatus ===
-                "REJECTED_BY_CVO";
-
               const inspectionCompleted =
-                inspectionVerified ||
-                inspectionRejected;
-
-              const applicationApproved =
                 currentStatus ===
-                  "APPLICATION_APPROVED" ||
+                  "VERIFIED_BY_CVO" ||
                 currentStatus ===
-                  "APPROVED";
-
-              const applicationRejected =
-                currentStatus ===
-                  "APPLICATION_REJECTED" ||
-                currentStatus ===
-                  "REJECTED";
+                  "REJECTED_BY_CVO";
 
               const currentlyForwarding =
                 forwardingId ===
                 applicationId;
 
-              const canAdminForward =
-                isAdmin &&
-                showForwardAction &&
-                isSubmitted(row) &&
-                !forwarded &&
-                !isInspectionScheduled &&
-                !inspectionCompleted &&
-                !applicationApproved &&
-                !applicationRejected;
+              const isFinalApproved =
+                currentStatus ===
+                "APPLICATION_APPROVED";
 
-              const canCvoSchedule =
-                isCvo &&
-                showScheduleInspectionAction &&
-                forwarded &&
-                !isInspectionScheduled &&
-                !inspectionCompleted;
-
-              const canCvoUploadReport =
-                isCvo &&
-                isInspectionScheduled &&
-                !inspectionCompleted;
+              const isFinalRejected =
+                currentStatus ===
+                "APPLICATION_REJECTED";
 
               return (
                 <TableRow
@@ -1961,64 +1989,53 @@ const List = (props) => {
                     index
                   }
                 >
-                  {/* DATA COLUMNS */}
+                  {/* TABLE COLUMNS */}
 
-                  {getArray(
-                    props.tableColumns
-                  ).map(
+                  {props.tableColumns.map(
                     (
                       column,
                       columnIndex
-                    ) => {
-                      let cellValue;
-
-                      if (
-                        typeof column.render ===
-                        "function"
-                      ) {
-                        cellValue =
-                          column.render(
-                            row
-                          );
-                      } else {
-                        cellValue =
-                          row?.[
-                            column.attr
-                          ];
-                      }
-
-                      if (
-                        column.attr ===
-                        "status"
-                      ) {
-                        cellValue =
+                    ) => (
+                      <TableCell
+                        key={
+                          column.attr ||
+                          columnIndex
+                        }
+                      >
+                        {column.attr ===
+                        "status" ? (
                           getStatusLabel(
                             currentStatus
-                          );
-                      }
-
-                      return (
-                        <TableCell
-                          key={
-                            column?.attr ||
-                            columnIndex
-                          }
-                        >
-                          {displayValue(
-                            cellValue
-                          )}
-                        </TableCell>
-                      );
-                    }
+                          )
+                        ) : typeof column.render ===
+                          "function" ? (
+                          column.render(
+                            row
+                          )
+                        ) : (
+                          String(
+                            row?.[
+                              column.attr
+                            ] ?? ""
+                          )
+                        )}
+                      </TableCell>
+                    )
                   )}
 
                   {/* PREVIEW */}
 
                   <TableCell>
-                    {normalizeStatus(
-                      row?.entityType
-                    ) ===
-                    "DOG_BREEDER" ? (
+                    {[
+                      "DOG_BREEDER",
+                      "DOG-BREEDER",
+                      "DOG BREEDER",
+                    ].includes(
+                      String(
+                        row?.entityType ||
+                          ""
+                      ).toUpperCase()
+                    ) ? (
                       <Tooltip
                         title="Preview Dog Breeder Application"
                       >
@@ -2041,10 +2058,16 @@ const List = (props) => {
                   {/* DOWNLOAD */}
 
                   <TableCell>
-                    {normalizeStatus(
-                      row?.entityType
-                    ) ===
-                    "DOG_BREEDER" ? (
+                    {[
+                      "DOG_BREEDER",
+                      "DOG-BREEDER",
+                      "DOG BREEDER",
+                    ].includes(
+                      String(
+                        row?.entityType ||
+                          ""
+                      ).toUpperCase()
+                    ) ? (
                       <Tooltip
                         title="Download Dog Breeder Application"
                       >
@@ -2064,7 +2087,7 @@ const List = (props) => {
                     )}
                   </TableCell>
 
-                  {/* ACTION */}
+                  {/* ACTION COLUMN */}
 
                   {showActionColumn && (
                     <TableCell>
@@ -2073,69 +2096,15 @@ const List = (props) => {
                       {isAdmin &&
                         showForwardAction && (
                           <>
-                            {applicationApproved ? (
-                              <Button
-                                variant="contained"
-                                size="small"
-                                disabled
-                                sx={{
-                                  "&.Mui-disabled":
-                                    {
-                                      backgroundColor:
-                                        "#e8f5e9",
-                                      color:
-                                        "#2e7d32",
-                                      fontWeight:
-                                        "bold",
-                                    },
-                                }}
-                              >
-                                APPROVED
-                              </Button>
-                            ) : applicationRejected ? (
-                              <Button
-                                variant="contained"
-                                size="small"
-                                disabled
-                                sx={{
-                                  "&.Mui-disabled":
-                                    {
-                                      backgroundColor:
-                                        "#ffebee",
-                                      color:
-                                        "#d32f2f",
-                                      fontWeight:
-                                        "bold",
-                                    },
-                                }}
-                              >
-                                REJECTED
-                              </Button>
-                            ) : inspectionRejected ? (
-                              <Button
-                                variant="contained"
-                                size="small"
-                                disabled
-                                sx={{
-                                  "&.Mui-disabled":
-                                    {
-                                      backgroundColor:
-                                        "#ffebee",
-                                      color:
-                                        "#d32f2f",
-                                      fontWeight:
-                                        "bold",
-                                    },
-                                }}
-                              >
-                                REJECTED BY CVO
-                              </Button>
-                            ) : inspectionVerified ? (
+                            {currentStatus ===
+                            "VERIFIED_BY_CVO" ? (
                               <Box
                                 sx={{
                                   display:
                                     "flex",
                                   gap: 1,
+                                  flexWrap:
+                                    "wrap",
                                 }}
                               >
                                 <Button
@@ -2172,7 +2141,7 @@ const List = (props) => {
                                   REJECT
                                 </Button>
                               </Box>
-                            ) : isInspectionScheduled ? (
+                            ) : isFinalRejected ? (
                               <Button
                                 variant="contained"
                                 size="small"
@@ -2181,15 +2150,17 @@ const List = (props) => {
                                   "&.Mui-disabled":
                                     {
                                       backgroundColor:
-                                        "#e0e0e0",
+                                        "#ffebee",
                                       color:
-                                        "#757575",
+                                        "#d32f2f",
+                                      fontWeight:
+                                        "bold",
                                     },
                                 }}
                               >
-                                INSPECTION SCHEDULED
+                                REJECTED
                               </Button>
-                            ) : forwarded ? (
+                            ) : isFinalApproved ? (
                               <Button
                                 variant="contained"
                                 size="small"
@@ -2198,53 +2169,18 @@ const List = (props) => {
                                   "&.Mui-disabled":
                                     {
                                       backgroundColor:
-                                        "#e0e0e0",
+                                        "#e8f5e9",
                                       color:
-                                        "#757575",
+                                        "#2e7d32",
+                                      fontWeight:
+                                        "bold",
                                     },
                                 }}
                               >
-                                FORWARDED TO CVO
+                                APPROVED
                               </Button>
-                            ) : canAdminForward ? (
-                              <Button
-                                variant="contained"
-                                size="small"
-                                color="success"
-                                disabled={
-                                  currentlyForwarding ||
-                                  isSubmitting
-                                }
-                                onClick={() =>
-                                  handleForwardClick(
-                                    row
-                                  )
-                                }
-                              >
-                                {currentlyForwarding
-                                  ? "FORWARDING..."
-                                  : "FORWARD"}
-                              </Button>
-                            ) : (
-                              <Button
-                                variant="contained"
-                                size="small"
-                                disabled
-                              >
-                                {getStatusLabel(
-                                  currentStatus
-                                )}
-                              </Button>
-                            )}
-                          </>
-                        )}
-
-                      {/* CVO ACTION */}
-
-                      {isCvo &&
-                        showScheduleInspectionAction && (
-                          <>
-                            {inspectionRejected ? (
+                            ) : currentStatus ===
+                              "REJECTED_BY_CVO" ? (
                               <Button
                                 variant="contained"
                                 size="small"
@@ -2263,25 +2199,6 @@ const List = (props) => {
                               >
                                 REJECTED BY CVO
                               </Button>
-                            ) : inspectionVerified ? (
-                              <Button
-                                variant="contained"
-                                size="small"
-                                disabled
-                                sx={{
-                                  "&.Mui-disabled":
-                                    {
-                                      backgroundColor:
-                                        "#e8f5e9",
-                                      color:
-                                        "#2e7d32",
-                                      fontWeight:
-                                        "bold",
-                                    },
-                                }}
-                              >
-                                VERIFIED BY CVO
-                              </Button>
                             ) : isInspectionScheduled ? (
                               <Button
                                 variant="contained"
@@ -2297,15 +2214,116 @@ const List = (props) => {
                                     },
                                 }}
                               >
-                                INSPECTION SCHEDULED
+                                INSPECTION
+                                {" "}
+                                SCHEDULED
                               </Button>
-                            ) : canCvoSchedule ? (
+                            ) : forwarded ? (
+                              <Button
+                                variant="contained"
+                                size="small"
+                                disabled
+                                sx={{
+                                  "&.Mui-disabled":
+                                    {
+                                      backgroundColor:
+                                        "#e0e0e0",
+                                      color:
+                                        "#757575",
+                                    },
+                                }}
+                              >
+                                FORWARDED TO CVO
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="contained"
+                                size="small"
+                                color="success"
+                                disabled={
+                                  currentlyForwarding ||
+                                  inspectionCompleted ||
+                                  (
+                                    currentStatus !==
+                                      "SUBMITTED" &&
+                                    currentStatus !==
+                                      "RESUBMITTED"
+                                  )
+                                }
+                                onClick={() =>
+                                  handleForwardClick(
+                                    row
+                                  )
+                                }
+                              >
+                                {currentlyForwarding
+                                  ? "FORWARDING..."
+                                  : "FORWARD"}
+                              </Button>
+                            )}
+                          </>
+                        )}
+
+                      {/* CVO ACTION */}
+
+                      {isCvo &&
+                        showScheduleInspectionAction && (
+                          <>
+                            {isInspectionScheduled ? (
+                              <Button
+                                variant="contained"
+                                size="small"
+                                disabled
+                                sx={{
+                                  "&.Mui-disabled":
+                                    {
+                                      backgroundColor:
+                                        "#e0e0e0",
+                                      color:
+                                        "#757575",
+                                    },
+                                }}
+                              >
+                                INSPECTION
+                                {" "}
+                                SCHEDULED
+                              </Button>
+                            ) : currentStatus ===
+                              "VERIFIED_BY_CVO" ? (
+                              <Button
+                                variant="contained"
+                                size="small"
+                                color="success"
+                                disabled
+                              >
+                                VERIFIED BY CVO
+                              </Button>
+                            ) : currentStatus ===
+                              "REJECTED_BY_CVO" ? (
+                              <Button
+                                variant="contained"
+                                size="small"
+                                color="error"
+                                disabled
+                              >
+                                REJECTED BY CVO
+                              </Button>
+                            ) : (
                               <Button
                                 variant="contained"
                                 size="small"
                                 color="info"
                                 startIcon={
                                   <EventIcon />
+                                }
+                                disabled={
+                                  inspectionCompleted ||
+                                  ![
+                                    "FORWARDED_TO_CVO",
+                                    "RESUBMITTED",
+                                  ].includes(
+                                    currentStatus
+                                  )
                                 }
                                 onClick={() =>
                                   handleOpenScheduleModal(
@@ -2314,16 +2332,6 @@ const List = (props) => {
                                 }
                               >
                                 Schedule Inspection
-                              </Button>
-                            ) : (
-                              <Button
-                                variant="contained"
-                                size="small"
-                                disabled
-                              >
-                                {getStatusLabel(
-                                  currentStatus
-                                )}
                               </Button>
                             )}
                           </>
@@ -2335,62 +2343,51 @@ const List = (props) => {
 
                   {showDecisionColumn && (
                     <TableCell>
-                      {inspectionVerified ? (
+                      {inspectionCompleted ? (
                         <Button
                           variant="contained"
                           size="small"
-                          color="success"
-                          disabled
-                          sx={{
-                            "&.Mui-disabled":
-                              {
-                                color:
-                                  "#ffffff",
-                                backgroundColor:
-                                  "#2e7d32",
-                                opacity: 0.8,
-                              },
-                          }}
-                        >
-                          VERIFIED BY CVO
-                        </Button>
-                      ) : inspectionRejected ? (
-                        <Button
-                          variant="contained"
-                          size="small"
-                          color="error"
-                          disabled
-                          sx={{
-                            "&.Mui-disabled":
-                              {
-                                color:
-                                  "#ffffff",
-                                backgroundColor:
-                                  "#d32f2f",
-                                opacity: 0.8,
-                              },
-                          }}
-                        >
-                          REJECTED BY CVO
-                        </Button>
-                      ) : canCvoUploadReport ? (
-                        <Button
-                          variant="contained"
-                          size="small"
-                          color="primary"
-                          onClick={() =>
-                            handleUploadReportClick(
-                              row
-                            )
+                          color={
+                            currentStatus ===
+                            "VERIFIED_BY_CVO"
+                              ? "success"
+                              : "error"
                           }
+                          disabled
+                          sx={{
+                            "&.Mui-disabled":
+                              {
+                                color:
+                                  "#ffffff",
+                                backgroundColor:
+                                  currentStatus ===
+                                  "VERIFIED_BY_CVO"
+                                    ? "#2e7d32"
+                                    : "#d32f2f",
+                                opacity:
+                                  0.8,
+                              },
+                          }}
                         >
-                          Upload Reports
+                          {currentStatus ===
+                          "VERIFIED_BY_CVO"
+                            ? "VERIFIED BY CVO"
+                            : "REJECTED BY CVO"}
                         </Button>
                       ) : (
                         <Button
                           variant="contained"
                           size="small"
-                          disabled
+                          color="primary"
+                          disabled={
+                            !isCvo ||
+                            !isInspectionScheduled
+                          }
+                          onClick={() =>
+                            handleUploadReportClick(
+                              row
+                            )
+                          }
                         >
                           Upload Reports
                         </Button>
@@ -2402,36 +2399,42 @@ const List = (props) => {
             }
           )}
 
-          {/* EMPTY */}
+          {/* NO DATA */}
 
-          {visibleRows.length ===
-            0 && (
+          {filteredRows.length === 0 && (
             <TableRow>
               <TableCell
                 colSpan={
-                  (props.tableColumns
-                    ?.length || 0) +
-                  2 +
-                  (showActionColumn
-                    ? 1
-                    : 0) +
-                  (showDecisionColumn
-                    ? 1
-                    : 0)
+                  tableColumnCount
                 }
                 align="center"
+                sx={{
+                  py: 4,
+                }}
               >
-                No dog breeder registration
-                applications found
+                <Typography
+                  color="text.secondary"
+                >
+                  No applications found
+                  {" "}
+                  for{" "}
+                  {
+                    statusTabs.find(
+                      (tab) =>
+                        tab.value ===
+                        validSelectedTab
+                    )?.label
+                  }
+                </Typography>
               </TableCell>
             </TableRow>
           )}
         </TableBody>
       </Table>
 
-      {/* =========================================================
+      {/* ===================================================
           SCHEDULE INSPECTION DIALOG
-         ========================================================= */}
+      =================================================== */}
 
       <Dialog
         open={scheduleModalOpen}
@@ -2445,12 +2448,11 @@ const List = (props) => {
           Schedule Inspection
         </DialogTitle>
 
-        <DialogContent
-          dividers
-        >
+        <DialogContent dividers>
           <Box
             sx={{
-              display: "flex",
+              display:
+                "flex",
               flexDirection:
                 "column",
               gap: 2,
@@ -2461,17 +2463,23 @@ const List = (props) => {
               label="Inspection Date"
               type="date"
               fullWidth
+              required
               InputLabelProps={{
                 shrink: true,
               }}
               value={
                 inspectionDate
               }
-              onChange={(e) =>
+              onChange={(event) =>
                 setInspectionDate(
-                  e.target.value
+                  event.target
+                    .value
                 )
               }
+              inputProps={{
+                min:
+                  getTodayLocalDate(),
+              }}
             />
 
             <TextField
@@ -2482,9 +2490,10 @@ const List = (props) => {
               value={
                 inspectionRemarks
               }
-              onChange={(e) =>
+              onChange={(event) =>
                 setInspectionRemarks(
-                  e.target.value
+                  event.target
+                    .value
                 )
               }
             />
@@ -2510,7 +2519,8 @@ const List = (props) => {
               handleSaveInspection
             }
             disabled={
-              isScheduling
+              isScheduling ||
+              !inspectionDate
             }
           >
             {isScheduling
@@ -2520,9 +2530,9 @@ const List = (props) => {
         </DialogActions>
       </Dialog>
 
-      {/* =========================================================
+      {/* ===================================================
           UPLOAD REPORT DIALOG
-         ========================================================= */}
+      =================================================== */}
 
       <Dialog
         open={uploadReportOpen}
@@ -2537,12 +2547,11 @@ const List = (props) => {
           Submit Recommendation
         </DialogTitle>
 
-        <DialogContent
-          dividers
-        >
+        <DialogContent dividers>
           <Box
             sx={{
-              display: "flex",
+              display:
+                "flex",
               flexDirection:
                 "column",
               gap: 2,
@@ -2552,6 +2561,7 @@ const List = (props) => {
             <Button
               variant="outlined"
               component="label"
+              fullWidth
             >
               Select Inspection Report File
 
@@ -2559,36 +2569,43 @@ const List = (props) => {
                 type="file"
                 hidden
                 accept=".pdf,.jpg,.jpeg,.png"
-                onChange={(e) =>
+                onChange={(event) => {
+                  const file =
+                    event.target
+                      .files?.[0] ||
+                    null;
+
                   setInspectionReport(
-                    e.target.files?.[0] ||
-                      null
-                  )
-                }
+                    file
+                  );
+                }}
               />
             </Button>
 
             {inspectionReport && (
               <Typography
                 variant="caption"
+                sx={{
+                  wordBreak:
+                    "break-word",
+                }}
               >
                 Selected file:{" "}
-                {displayValue(
+                {
                   inspectionReport.name
-                )}
+                }
               </Typography>
             )}
 
-            {!inspectionReport &&
-              existingReport && (
-                <Typography
-                  variant="caption"
-                  color="success.main"
-                >
-                  Existing inspection
-                  report is available.
-                </Typography>
-              )}
+            {existingReport && (
+              <Typography
+                variant="caption"
+                color="success.main"
+              >
+                Existing inspection report is
+                already uploaded.
+              </Typography>
+            )}
 
             <TextField
               label="Inspection Remarks"
@@ -2596,9 +2613,10 @@ const List = (props) => {
               rows={3}
               fullWidth
               value={remarks}
-              onChange={(e) =>
+              onChange={(event) =>
                 setRemarks(
-                  e.target.value
+                  event.target
+                    .value
                 )
               }
             />
@@ -2606,15 +2624,15 @@ const List = (props) => {
             <TextField
               label="Recommendation Details"
               multiline
-              rows={3}
+              rows={2}
               fullWidth
-              required
               value={
                 recommendation
               }
-              onChange={(e) =>
+              onChange={(event) =>
                 setRecommendation(
-                  e.target.value
+                  event.target
+                    .value
                 )
               }
             />
@@ -2637,7 +2655,9 @@ const List = (props) => {
             variant="contained"
             color="error"
             disabled={
-              isSubmitting
+              isSubmitting ||
+              (!inspectionReport &&
+                !existingReport)
             }
             onClick={() =>
               handleSubmitDecision(
@@ -2654,7 +2674,9 @@ const List = (props) => {
             variant="contained"
             color="success"
             disabled={
-              isSubmitting
+              isSubmitting ||
+              (!inspectionReport &&
+                !existingReport)
             }
             onClick={() =>
               handleSubmitDecision(
@@ -2669,9 +2691,9 @@ const List = (props) => {
         </DialogActions>
       </Dialog>
 
-      {/* =========================================================
-          PREVIEW DIALOG
-         ========================================================= */}
+      {/* ===================================================
+          APPLICATION PREVIEW DIALOG
+      =================================================== */}
 
       <Dialog
         open={previewOpen}
@@ -2682,20 +2704,17 @@ const List = (props) => {
         fullWidth
       >
         <DialogTitle>
-          Dog Breeder Application
-          Details -{" "}
-          {displayValue(
-            registration?.applicationNumber
-          )}
+          Dog Breeder Application Details -{" "}
+          {registration.applicationNumber ||
+            "-"}
         </DialogTitle>
 
-        <DialogContent
-          dividers
-        >
+        <DialogContent dividers>
           {previewLoading ? (
             <Box
               sx={{
-                display: "flex",
+                display:
+                  "flex",
                 justifyContent:
                   "center",
                 my: 4,
@@ -2705,389 +2724,408 @@ const List = (props) => {
             </Box>
           ) : (
             <>
-              {/* REGISTRATION DETAILS */}
+             {/* REGISTRATION */}
 
-              <SectionTitle>
-                Registration Details
-              </SectionTitle>
+<SectionTitle>
+  Registration Details
+</SectionTitle>
 
-              <Grid
-                container
-                spacing={2}
-              >
+<Grid
+  container
+  spacing={2}
+>
+  <PreviewRow
+    label="Application Number"
+    value={
+      registration.applicationNumber
+    }
+  />
+
+  <PreviewRow
+    label="District"
+    value={
+      registration.districtName ||
+      registration.district
+    }
+  />
+
+  <PreviewRow
+    label="Breeder Name"
+    value={
+      breeder?.breederName ||
+      breeder?.name ||
+      breeder?.breeder_name
+    }
+  />
+
+  <PreviewRow
+    label="Address Line 1"
+    value={
+      breeder?.addressLine1 ||
+      breeder?.address_line1
+    }
+  />
+
+  <PreviewRow
+    label="Address Line 2"
+    value={
+      breeder?.addressLine2 ||
+      breeder?.address_line2
+    }
+  />
+
+  <PreviewRow
+    label="City"
+    value={
+      breeder?.city
+    }
+  />
+
+  <PreviewRow
+    label="Pincode"
+    value={
+      breeder?.pincode
+    }
+  />
+
+  <PreviewRow
+    label="Contact Mobile"
+    value={
+      breeder?.contactMobile ||
+      breeder?.mobileNumber ||
+      breeder?.contact_mobile
+    }
+  />
+
+  <PreviewRow
+    label="Contact Email"
+    value={
+      breeder?.contactEmail ||
+      breeder?.email ||
+      breeder?.contact_email
+    }
+  />
+
+  <PreviewRow
+    label="Facility Details"
+    value={
+      breeder?.facilityDetails ||
+      breeder?.facility_details
+    }
+  />
+
+  <PreviewRow
+    label="Total Dogs Count"
+    value={
+      breeder?.totalDogsCount ??
+      breeder?.total_dogs_count
+    }
+  />
+
+  <PreviewRow
+    label="Application Status"
+    value={getStatusLabel(
+      getRowStatus(previewData)
+    )}
+  />
+</Grid>
+
+              {/* FACILITY */}
+
+<SectionTitle>
+  Facility Details
+</SectionTitle>
+
+<Grid
+  container
+  spacing={2}
+>
+  <PreviewRow
+    label="Accommodation / Infrastructure"
+    value={
+      facility.accommodationInfrastructure ??
+      facility.accommodation_infrastructure ??
+      ""
+    }
+  />
+
+  <PreviewRow
+    label="Working Hours"
+    value={
+      facility.workingHours ??
+      facility.working_hours ??
+      ""
+    }
+  />
+
+  <PreviewRow
+    label="Holiday"
+    value={
+      facility.holiday ?? ""
+    }
+  />
+
+  <PreviewRow
+    label="Ventilation Available"
+    value={
+      facility.ventilationAvailable ??
+      facility.ventilation_available ??
+      false
+        ? "Yes"
+        : "No"
+    }
+  />
+
+
+  <PreviewRow
+    label="Lighting Available"
+    value={
+      facility.lightingAvailable ??
+      facility.lighting_available ??
+      false
+        ? "Yes"
+        : "No"
+    }
+  />
+
+
+  <PreviewRow
+    label="Heating / Cooling Available"
+    value={
+      facility.heatingCoolingAvailable ??
+      facility.heating_cooling_available ??
+      false
+        ? "Yes"
+        : "No"
+    }
+  />
+
+  <PreviewRow
+    label="Food Storage Available"
+    value={
+      facility.foodStorageAvailable ??
+      facility.food_storage_available ??
+      false
+        ? "Yes"
+        : "No"
+    }
+  />
+
+  <PreviewRow
+    label="Cleanliness / Waste Management Available"
+    value={
+      facility.cleanlinessWasteAvailable ??
+      facility.cleanliness_waste_available ??
+      false
+        ? "Yes"
+        : "No"
+    }
+  />
+
+
+  <PreviewRow
+    label="Dead Animal Disposal Available"
+    value={
+      facility.deadAnimalDisposalAvailable ??
+      facility.dead_animal_disposal_available ??
+      false
+        ? "Yes"
+        : "No"
+    }
+  />
+
+
+  <PreviewRow
+    label="Veterinary Support Available"
+    value={
+      facility.veterinarySupportAvailable ??
+      facility.veterinary_support_available ??
+      false
+        ? "Yes"
+        : "No"
+    }
+  />
+
+
+
+  <PreviewRow
+    label="Cage / Enclosure Details"
+    value={
+      facility.cageEnclosureDetails ??
+      facility.cage_enclosure_details ??
+      ""
+    }
+  />
+</Grid>
+            {/* BREEDS */}
+
+{breeds.length > 0 && (
+  <>
+    <SectionTitle>
+      Breed Details
+    </SectionTitle>
+
+    <Grid
+      container
+      spacing={2}
+    >
+      {breeds.map((breed, idx) => {
+        const breedName =
+          breed?.breedName ??
+          breed?.breed_name ??
+          breed?.name ??
+          "-";
+
+        const dogCount =
+          breed?.dogCount ??
+          breed?.dog_count ??
+          0;
+
+        const gender =
+          breed?.gender ??
+          "-";
+
+        const ageDescription =
+          breed?.ageDescription ??
+          breed?.age_description ??
+          "-";
+
+        return (
+          <Grid
+            item
+            xs={12}
+            key={breed?.id ?? idx}
+          >
+            {/* Breed Number */}
+            <Typography
+              variant="subtitle2"
+              sx={{
+                fontWeight: 600,
+                mb: 1,
+              }}
+            >
+              Breed {idx + 1}
+            </Typography>
+
+            {/* Breed Details in One Row */}
+            <Grid
+              container
+              spacing={2}
+            >
+           
                 <PreviewRow
-                  label="Application Number"
-                  value={
-                    registration?.applicationNumber
-                  }
+                  label="Breed Name"
+                  value={breedName}
+                />
+             
+                <PreviewRow
+                  label="Dog Count"
+                  value={dogCount}
+                />
+              
+                <PreviewRow
+                  label="Gender"
+                  value={gender}
                 />
 
                 <PreviewRow
-                  label="District"
-                  value={
-                    registration?.districtName ??
-                    registration?.district
-                  }
+                  label="Age Description"
+                  value={ageDescription}
                 />
-
-                <PreviewRow
-                  label="Local Body Type"
-                  value={
-                    registration?.localBodyTypeName ??
-                    registration?.localBodyType
-                  }
-                />
-
-                <PreviewRow
-                  label="Local Body"
-                  value={
-                    registration?.localBodyName ??
-                    registration?.localBody
-                  }
-                />
-
-                <PreviewRow
-                  label="Establishment Name"
-                  value={
-                    registration?.establishmentName
-                  }
-                />
-
-                <PreviewRow
-                  label="Application Status"
-                  value={
-                    getStatusLabel(
-                      getCurrentStatus(
-                        previewData ||
-                          registration
-                      )
-                    )
-                  }
-                />
-              </Grid>
-
-              {/* BREEDER DETAILS */}
-
-              <SectionTitle>
-                Breeder Details
-              </SectionTitle>
-
-              <Grid
-                container
-                spacing={2}
-              >
-                <PreviewRow
-                  label="Breeder Name"
-                  value={
-                    breeder?.name ??
-                    breeder?.breederName
-                  }
-                />
-
-                <PreviewRow
-                  label="Mobile Number"
-                  value={
-                    breeder?.mobileNumber ??
-                    breeder?.phone
-                  }
-                />
-
-                <PreviewRow
-                  label="Email"
-                  value={
-                    breeder?.email
-                  }
-                />
-
-                <PreviewRow
-                  label="Address"
-                  value={
-                    breeder?.address
-                  }
-                />
-              </Grid>
-
-              {/* FACILITY DETAILS */}
-
-              <SectionTitle>
-                Facility Details
-              </SectionTitle>
-
-              <Grid
-                container
-                spacing={2}
-              >
-                <PreviewRow
-                  label="Facility Address"
-                  value={
-                    facility?.address ??
-                    facility?.facilityAddress
-                  }
-                />
-
-                <PreviewRow
-                  label="Total Area (sq ft)"
-                  value={
-                    facility?.totalArea
-                  }
-                />
-
-                <PreviewRow
-                  label="Number of Cages / Kennels"
-                  value={
-                    facility?.numberOfCages ??
-                    facility?.numberOfKennels
-                  }
-                />
-
-                <PreviewRow
-                  label="Veterinary Care Details"
-                  value={
-                    facility?.veterinaryCareDetails
-                  }
-                />
-              </Grid>
-
-              {/* BREED DETAILS */}
-
-              {breeds.length >
-                0 && (
-                <>
-                  <SectionTitle>
-                    Breed Details
-                  </SectionTitle>
-
-                  <Grid
-                    container
-                    spacing={2}
-                  >
-                    {breeds.map(
-                      (
-                        breed,
-                        idx
-                      ) => (
-                        <PreviewRow
-                          key={
-                            breed?.id ??
-                            idx
-                          }
-                          label={`Breed ${
-                            idx + 1
-                          }`}
-                          value={`${getBreedName(
-                            breed
-                          )} (Male: ${displayValue(
-                            getMaleCount(
-                              breed
-                            )
-                          )}, Female: ${displayValue(
-                            getFemaleCount(
-                              breed
-                            )
-                          )})`}
-                        />
-                      )
-                    )}
-                  </Grid>
-                </>
-              )}
-
+            </Grid>
+          </Grid>
+        );
+      })}
+    </Grid>
+  </>
+)}
               {/* DOCUMENTS */}
 
-              {documents.length >
-                0 && (
+              {documents.length > 0 && (
                 <>
                   <SectionTitle>
                     Uploaded Documents
                   </SectionTitle>
 
-                  <Box
-                    sx={{
-                      display: "grid",
-                      gridTemplateColumns: {
-                        xs: "1fr",
-                        md: "1fr 1fr",
-                      },
-                      gap: 2,
-                    }}
+                  <Table
+                    size="small"
                   >
-                    {documents.map(
-                      (
-                        doc,
-                        idx
-                      ) => {
-                        const documentId =
-                          getDocumentId(
-                            doc
-                          );
-                        const documentType =
-                          getDocumentTypeLabel(
-                            doc
-                          );
-                        const fileName =
-                          getDocumentFileName(
-                            doc
-                          );
-                        const previewUrl =
-                          getDocumentPreviewUrl(
-                            doc
-                          );
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>
+                          Document Type
+                        </TableCell>
 
-                        return (
-                          <Card
+                        <TableCell>
+                          File Name
+                        </TableCell>
+
+                        <TableCell align="right">
+                          Actions
+                        </TableCell>
+                      </TableRow>
+                    </TableHead>
+
+                    <TableBody>
+                      {documents.map(
+                        (
+                          doc,
+                          idx
+                        ) => (
+                          <TableRow
                             key={
-                              documentId ??
+                              doc?.id ||
                               idx
                             }
-                            variant="outlined"
-                            sx={{
-                              border:
-                                "1px solid #000",
-                              borderRadius: 0.5,
-                              height: "100%",
-                              display: "flex",
-                              flexDirection:
-                                "column",
-                              boxShadow: "none",
-                            }}
                           >
-                            <Box
-                              sx={{
-                                height: 135,
-                                backgroundColor:
-                                  "#f5f5f5",
-                                borderBottom:
-                                  "1px solid #d0d0d0",
-                                display: "flex",
-                                alignItems:
-                                  "center",
-                                justifyContent:
-                                  "center",
-                                overflow: "hidden",
-                              }}
-                            >
-                              {previewUrl ? (
-                                <Box
-                                  component="img"
-                                  src={previewUrl}
-                                  alt={fileName}
-                                  sx={{
-                                    width: "100%",
-                                    height: "100%",
-                                    objectFit:
-                                      "contain",
-                                  }}
-                                />
-                              ) : (
-                                <Typography
-                                  variant="body2"
-                                  color="text.secondary"
-                                >
-                                  No Preview Available
-                                </Typography>
-                              )}
-                            </Box>
+                            <TableCell>
+                              {doc?.documentTypeName ||
+                                doc?.documentType?.name ||
+                                doc?.documentType ||
+                                "-"}
+                            </TableCell>
 
-                            <CardContent
-                              sx={{
-                                flexGrow: 1,
-                                display: "flex",
-                                flexDirection:
-                                  "column",
-                                justifyContent:
-                                  "space-between",
-                              }}
-                            >
-                              <Box>
-                                <Typography
-                                  variant="subtitle2"
-                                  fontWeight="bold"
-                                  gutterBottom
-                                >
-                                  {documentType}
-                                </Typography>
+                            <TableCell>
+                              {doc?.fileName ||
+                                doc?.name ||
+                                "-"}
+                            </TableCell>
 
-                                <Typography
-                                  variant="body2"
-                                  sx={{
-                                    mb: 2,
-                                    wordBreak:
-                                      "break-word",
-                                  }}
-                                >
-                                  {fileName}
-                                </Typography>
-                              </Box>
-
-                              <Box
-                                sx={{
-                                  display: "flex",
-                                  gap: 1,
-                                  flexWrap: "wrap",
-                                }}
-                              >
-                                <Button
+                            <TableCell align="right">
+                              <Tooltip title="View Document">
+                                <IconButton
                                   size="small"
-                                  variant="outlined"
-                                  startIcon={
-                                    <VisibilityIcon fontSize="small" />
-                                  }
-                                  disabled={
-                                    !documentId
-                                  }
+                                  color="primary"
                                   onClick={() =>
                                     handleViewDocument(
                                       doc
                                     )
                                   }
                                 >
-                                  View
-                                </Button>
+                                  <VisibilityIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
 
-                                <Button
+                              <Tooltip title="Download Document">
+                                <IconButton
                                   size="small"
-                                  variant="outlined"
-                                  startIcon={
-                                    <DownloadIcon fontSize="small" />
-                                  }
-                                  disabled={
-                                    !documentId
-                                  }
+                                  color="success"
                                   onClick={() =>
                                     handleDownloadDocument(
                                       doc
                                     )
                                   }
                                 >
-                                  Download
-                                </Button>
-                              </Box>
-                            </CardContent>
-                          </Card>
-                        );
-                      }
-                    )}
-                  </Box>
+                                  <DownloadIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            </TableCell>
+                          </TableRow>
+                        )
+                      )}
+                    </TableBody>
+                  </Table>
                 </>
-              )}
-
-              {documents.length ===
-                0 && (
-                <Card
-                  variant="outlined"
-                  sx={{
-                    border:
-                      "1px solid #000",
-                    mt: 2,
-                  }}
-                >
-                  <CardContent>
-                    <Typography>
-                      No supporting documents
-                      uploaded.
-                    </Typography>
-                  </CardContent>
-                </Card>
               )}
             </>
           )}
@@ -3109,7 +3147,7 @@ const List = (props) => {
 
 /* =========================================================
    PROP TYPES
-   ========================================================= */
+========================================================= */
 
 List.propTypes = {
   rows: PropTypes.array,
@@ -3134,11 +3172,37 @@ List.propTypes = {
   showScheduleInspectionAction:
     PropTypes.bool,
 
+  showDecisionColumn:
+    PropTypes.bool,
+
   refreshList:
     PropTypes.func,
 
   handleRefresh:
     PropTypes.func,
+};
+
+/* =========================================================
+   DEFAULT PROPS
+========================================================= */
+
+List.defaultProps = {
+  rows: [],
+
+  showForwardAction:
+    undefined,
+
+  showScheduleInspectionAction:
+    undefined,
+
+  showDecisionColumn:
+    undefined,
+
+  refreshList:
+    undefined,
+
+  handleRefresh:
+    undefined,
 };
 
 export default List;

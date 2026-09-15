@@ -1,4 +1,4 @@
-import { getItemList, getBlobItem, addItem, editSingleItem } from "./apiCall";
+import { getItemList, getBlobItem, addItem } from "./apiCall";
 import { addFormDataItem } from "./apiCall";
 import {
   DOG_BREEDER_APPLICATION_PREVIEW_URL,
@@ -61,8 +61,11 @@ export const rejectDogBreederApplication = async (applicationId) => {
   return addItem(`${DOG_BREEDER_APPLICATION_REJECT_URL}${applicationId}`, {});
 };
 
-export const resubmitDogBreederApplication = async (payload) => {
-  return editSingleItem(DOG_BREEDER_APPLICATION_RESUBMIT_URL, payload);
+export const resubmitDogBreederApplication = async (formData) => {
+  return addFormDataItem(
+    DOG_BREEDER_APPLICATION_RESUBMIT_URL,
+    formData
+  );
 };
 export const getDogBreederApplicationHistory = async (applicationId) => {
   return getItemList(

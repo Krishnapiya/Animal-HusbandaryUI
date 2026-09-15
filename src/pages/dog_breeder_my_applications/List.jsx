@@ -80,18 +80,22 @@ const getRowStatus = (row) => {
     row?.applicationStatusName,
     row?.registrationStatusCode,
     row?.registrationStatusName,
+
     row?.status?.statusCode,
     row?.status?.code,
     row?.status?.name,
     row?.status?.statusName,
+
     row?.applicationStatus?.statusCode,
     row?.applicationStatus?.code,
     row?.applicationStatus?.name,
     row?.applicationStatus?.statusName,
+
     row?.registrationDetails?.statusCode,
     row?.registrationDetails?.statusName,
     row?.registrationDetails?.applicationStatusCode,
     row?.registrationDetails?.applicationStatusName,
+
     row?.registrationDetails?.status?.statusCode,
     row?.registrationDetails?.status?.code,
     row?.registrationDetails?.status?.name,
@@ -99,9 +103,16 @@ const getRowStatus = (row) => {
   ];
 
   for (const value of possibleStatuses) {
-    if (value !== null && value !== undefined && typeof value !== "object") {
+    if (
+      value !== null &&
+      value !== undefined &&
+      typeof value !== "object"
+    ) {
       const status = normalizeStatus(value);
-      if (status) return status;
+
+      if (status) {
+        return status;
+      }
     }
   }
 
@@ -114,7 +125,9 @@ const getRowStatus = (row) => {
 
 const isRejectedByCvo = (row) => {
   if (!row) return false;
+
   const status = getRowStatus(row);
+
   return (
     status === "REJECTED_BY_CVO" ||
     status === "REJECTEDBYCVO" ||
@@ -123,12 +136,29 @@ const isRejectedByCvo = (row) => {
 };
 
 /* =========================================================
-   CHECK APPLICATION REJECTED
+   CHECK APPLICATION REJECTED BY ADMIN
 ========================================================= */
 
 const isApplicationRejected = (row) => {
   if (!row) return false;
-  return getRowStatus(row) === "APPLICATION_REJECTED";
+
+  const status = getRowStatus(row);
+
+  return (
+    status === "APPLICATION_REJECTED" ||
+    status === "APPLICATIONREJECTED"
+  );
+};
+
+/* =========================================================
+   CHECK ELIGIBLE FOR RESUBMIT
+========================================================= */
+
+const isEligibleForResubmit = (row) => {
+  return (
+    isRejectedByCvo(row) ||
+    isApplicationRejected(row)
+  );
 };
 
 /* =========================================================
@@ -137,8 +167,13 @@ const isApplicationRejected = (row) => {
 
 const isApplicationApproved = (row) => {
   if (!row) return false;
+
   const status = getRowStatus(row);
-  return status === "APPLICATION_APPROVED" || status === "APPROVED";
+
+  return (
+    status === "APPLICATION_APPROVED" ||
+    status === "APPROVED"
+  );
 };
 
 /* =========================================================
@@ -149,23 +184,32 @@ const getStatusLabel = (status) => {
   switch (normalizeStatus(status)) {
     case "SUBMITTED":
       return "Submitted";
+
     case "RESUBMITTED":
       return "Resubmitted";
+
     case "APPLICATION_APPROVED":
     case "APPROVED":
       return "Approved";
+
     case "REJECTED_BY_CVO":
       return "Rejected by CVO";
+
     case "APPLICATION_REJECTED":
       return "Application Rejected";
+
     case "DRAFT":
       return "Draft";
+
     case "FORWARDED_TO_CVO":
       return "Forwarded to CVO";
+
     case "INSPECTION_SCHEDULED":
       return "Inspection Scheduled";
+
     case "VERIFIED_BY_CVO":
       return "Verified by CVO";
+
     default:
       return status || "-";
   }
@@ -180,15 +224,20 @@ const getStatusChipColor = (status) => {
     case "APPLICATION_APPROVED":
     case "APPROVED":
       return "success";
+
     case "REJECTED_BY_CVO":
     case "APPLICATION_REJECTED":
       return "error";
+
     case "RESUBMITTED":
       return "info";
+
     case "SUBMITTED":
       return "primary";
+
     case "FORWARDED_TO_CVO":
       return "warning";
+
     default:
       return "default";
   }
@@ -220,13 +269,16 @@ const getApplicationHistory = (row) => {
     row?.statusHistory,
     row?.applicationStatusHistory,
     row?.registrationHistory,
+
     row?.registrationDetails?.history,
     row?.registrationDetails?.applicationHistory,
     row?.registrationDetails?.statusHistory,
   ];
 
   for (const history of possibleHistory) {
-    if (Array.isArray(history)) return history;
+    if (Array.isArray(history)) {
+      return history;
+    }
   }
 
   return [];
@@ -250,8 +302,14 @@ const getHistoryDate = (item) => {
 
   if (!rawDate) return "-";
 
-  const dateObj = typeof rawDate === "number" ? new Date(rawDate) : new Date(String(rawDate));
-  return isNaN(dateObj.getTime()) ? "-" : dateObj.toLocaleString();
+  const dateObj =
+    typeof rawDate === "number"
+      ? new Date(rawDate)
+      : new Date(String(rawDate));
+
+  return isNaN(dateObj.getTime())
+    ? "-"
+    : dateObj.toLocaleString();
 };
 
 const getHistoryStatus = (item) => {
@@ -267,7 +325,11 @@ const getHistoryStatus = (item) => {
     item?.action ??
     "";
 
-  return normalizeStatus(typeof status === "object" ? status?.name : status);
+  return normalizeStatus(
+    typeof status === "object"
+      ? status?.name
+      : status
+  );
 };
 
 const getHistoryRemarks = (item) => {
@@ -306,67 +368,139 @@ const List = (props) => {
   const tableColumns = props.tableColumns || [];
   const rows = props.rows || [];
 
-  const [openResubmitModal, setOpenResubmitModal] = useState(false);
-  const [selectedRow, setSelectedRow] = useState(null);
+  const [openResubmitModal, setOpenResubmitModal] =
+    useState(false);
+
+  const [selectedRow, setSelectedRow] =
+    useState(null);
+
   const [remarks, setRemarks] = useState("");
+
   const [file, setFile] = useState(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [openHistoryModal, setOpenHistoryModal] = useState(false);
-  const [historyRow, setHistoryRow] = useState(null);
-  const [historyList, setHistoryList] = useState([]);
-  const [isHistoryLoading, setIsHistoryLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] =
+    useState(false);
 
-  const [selectedStatusTab, setSelectedStatusTab] = useState("ALL");
+  const [openHistoryModal, setOpenHistoryModal] =
+    useState(false);
+
+  const [historyRow, setHistoryRow] =
+    useState(null);
+
+  const [historyList, setHistoryList] =
+    useState([]);
+
+  const [isHistoryLoading, setIsHistoryLoading] =
+    useState(false);
+
+  const [selectedStatusTab, setSelectedStatusTab] =
+    useState("ALL");
+
+  /* =========================================================
+     FILTER ROWS
+  ========================================================= */
 
   const filteredRows = useMemo(() => {
-    if (selectedStatusTab === "ALL") return rows;
+    if (selectedStatusTab === "ALL") {
+      return rows;
+    }
 
     return rows.filter((row) => {
       const status = getRowStatus(row);
-      if (selectedStatusTab === "SUBMITTED") return status === "SUBMITTED";
-      if (selectedStatusTab === "RESUBMITTED") return status === "RESUBMITTED";
+
+      if (selectedStatusTab === "SUBMITTED") {
+        return status === "SUBMITTED";
+      }
+
+      if (selectedStatusTab === "RESUBMITTED") {
+        return status === "RESUBMITTED";
+      }
+
       if (selectedStatusTab === "REJECTED") {
         return (
           status === "REJECTED_BY_CVO" ||
           status === "REJECTEDBYCVO" ||
           status.includes("REJECTED_BY_CVO") ||
-          status === "APPLICATION_REJECTED"
+          status === "APPLICATION_REJECTED" ||
+          status === "APPLICATIONREJECTED"
         );
       }
-      if (selectedStatusTab === "APPLICATION_APPROVED") {
-        return status === "APPLICATION_APPROVED" || status === "APPROVED";
+
+      if (
+        selectedStatusTab ===
+        "APPLICATION_APPROVED"
+      ) {
+        return (
+          status === "APPLICATION_APPROVED" ||
+          status === "APPROVED"
+        );
       }
+
       return false;
     });
   }, [rows, selectedStatusTab]);
 
+  /* =========================================================
+     STATUS COUNTS
+  ========================================================= */
+
   const statusCounts = useMemo(() => {
-    const counts = { ALL: rows.length, SUBMITTED: 0, RESUBMITTED: 0, REJECTED: 0, APPLICATION_APPROVED: 0 };
+    const counts = {
+      ALL: rows.length,
+      SUBMITTED: 0,
+      RESUBMITTED: 0,
+      REJECTED: 0,
+      APPLICATION_APPROVED: 0,
+    };
+
     rows.forEach((row) => {
       const status = getRowStatus(row);
-      if (status === "SUBMITTED") counts.SUBMITTED += 1;
-      if (status === "RESUBMITTED") counts.RESUBMITTED += 1;
+
+      if (status === "SUBMITTED") {
+        counts.SUBMITTED += 1;
+      }
+
+      if (status === "RESUBMITTED") {
+        counts.RESUBMITTED += 1;
+      }
+
       if (
         status === "REJECTED_BY_CVO" ||
         status === "REJECTEDBYCVO" ||
         status.includes("REJECTED_BY_CVO") ||
-        status === "APPLICATION_REJECTED"
+        status === "APPLICATION_REJECTED" ||
+        status === "APPLICATIONREJECTED"
       ) {
         counts.REJECTED += 1;
       }
-      if (status === "APPLICATION_APPROVED" || status === "APPROVED") counts.APPLICATION_APPROVED += 1;
+
+      if (
+        status === "APPLICATION_APPROVED" ||
+        status === "APPROVED"
+      ) {
+        counts.APPLICATION_APPROVED += 1;
+      }
     });
+
     return counts;
   }, [rows]);
 
-  const handleStatusTabChange = (event, newValue) => {
+  const handleStatusTabChange = (
+    event,
+    newValue
+  ) => {
     setSelectedStatusTab(newValue);
   };
 
+  /* =========================================================
+     OPEN RESUBMIT MODAL
+  ========================================================= */
+
   const handleOpenModal = (row) => {
-    if (!isRejectedByCvo(row)) {
-      toast.info("Only applications rejected by CVO can be resubmitted.");
+    if (!isEligibleForResubmit(row)) {
+      toast.info(
+        "Only rejected applications can be resubmitted."
+      );
       return;
     }
 
@@ -375,6 +509,10 @@ const List = (props) => {
     setFile(null);
     setOpenResubmitModal(true);
   };
+
+  /* =========================================================
+     CLOSE RESUBMIT MODAL
+  ========================================================= */
 
   const handleCloseModal = () => {
     if (isSubmitting) return;
@@ -385,26 +523,55 @@ const List = (props) => {
     setFile(null);
   };
 
+  /* =========================================================
+     FILE CHANGE
+  ========================================================= */
+
   const handleFileChange = (event) => {
-    const selectedFile = event.target.files?.[0] || null;
+    const selectedFile =
+      event.target.files?.[0] || null;
+
     setFile(selectedFile);
   };
 
+  /* =========================================================
+     SUBMIT RESUBMISSION
+  ========================================================= */
+
   const handleSubmitResubmit = async () => {
-    const applicationId = getApplicationId(selectedRow);
+    const applicationId =
+      getApplicationId(selectedRow);
 
     if (!applicationId) {
-      toast.error("Application ID is missing.");
+      toast.error(
+        "Application ID is missing."
+      );
       return;
     }
 
-    if (!isRejectedByCvo(selectedRow)) {
-      toast.error("This application is not eligible for resubmission.");
+    /*
+     * IMPORTANT:
+     * Both CVO rejection and Admin rejection
+     * are allowed to resubmit.
+     */
+    if (!isEligibleForResubmit(selectedRow)) {
+      toast.error(
+        "This application is not eligible for resubmission."
+      );
       return;
     }
 
     if (!remarks.trim()) {
-      toast.error("Please enter remarks.");
+      toast.error(
+        "Please enter remarks."
+      );
+      return;
+    }
+
+    if (!file) {
+      toast.error(
+        "Please upload a supporting document."
+      );
       return;
     }
 
@@ -412,28 +579,47 @@ const List = (props) => {
       setIsSubmitting(true);
 
       const formData = new FormData();
-      formData.append("applicationId", applicationId);
-      formData.append("remarks", remarks.trim());
 
-      if (file) {
-        formData.append("file", file);
-      }
+      formData.append(
+        "file",
+        file
+      );
 
-      await resubmitDogBreederApplication(formData);
+      formData.append(
+        "applicationId",
+        String(applicationId)
+      );
 
-      toast.success("Application resubmitted successfully.");
+      formData.append(
+        "remarks",
+        remarks.trim()
+      );
+
+      await resubmitDogBreederApplication(
+        formData
+      );
+
+      toast.success(
+        "Application resubmitted successfully."
+      );
 
       handleCloseModal();
 
-      if (typeof props.handleRefreshTable === "function") {
+      if (
+        typeof props.handleRefreshTable ===
+        "function"
+      ) {
         await props.handleRefreshTable();
       }
     } catch (error) {
-      console.error("Resubmit application error:", error);
+      console.error(
+        "Resubmit application error:",
+        error
+      );
+
       const message =
         error?.response?.data?.resultString ||
         error?.response?.data?.message ||
-        error?.response?.data?.result?.message ||
         error?.message ||
         "Failed to resubmit application.";
 
@@ -443,35 +629,67 @@ const List = (props) => {
     }
   };
 
+  /* =========================================================
+     OPEN HISTORY
+  ========================================================= */
+
   const handleOpenHistory = async (row) => {
-    const applicationId = getApplicationId(row);
+    const applicationId =
+      getApplicationId(row);
 
     setHistoryRow(row);
     setOpenHistoryModal(true);
     setIsHistoryLoading(true);
 
     if (!applicationId) {
-      setHistoryList(getApplicationHistory(row));
+      setHistoryList(
+        getApplicationHistory(row)
+      );
+
       setIsHistoryLoading(false);
       return;
     }
 
     try {
-      const response = await getDogBreederApplicationHistory(applicationId);
+      const response =
+        await getDogBreederApplicationHistory(
+          applicationId
+        );
 
-      const fetchedHistory = Array.isArray(response)
-        ? response
-        : response?.data || response?.result || response?.history || [];
+      const fetchedHistory =
+        Array.isArray(response)
+          ? response
+          : response?.data ||
+            response?.result ||
+            response?.history ||
+            [];
 
-      setHistoryList(fetchedHistory.length > 0 ? fetchedHistory : getApplicationHistory(row));
+      setHistoryList(
+        fetchedHistory.length > 0
+          ? fetchedHistory
+          : getApplicationHistory(row)
+      );
     } catch (error) {
-      console.error("Fetch application history error:", error);
-      toast.error("Failed to load history from server.");
-      setHistoryList(getApplicationHistory(row));
+      console.error(
+        "Fetch application history error:",
+        error
+      );
+
+      toast.error(
+        "Failed to load history from server."
+      );
+
+      setHistoryList(
+        getApplicationHistory(row)
+      );
     } finally {
       setIsHistoryLoading(false);
     }
   };
+
+  /* =========================================================
+     CLOSE HISTORY
+  ========================================================= */
 
   const handleCloseHistory = () => {
     setOpenHistoryModal(false);
@@ -479,14 +697,24 @@ const List = (props) => {
     setHistoryList([]);
   };
 
-  const tableColumnCount = tableColumns.length + 3;
+  const tableColumnCount =
+    tableColumns.length + 3;
 
   const selectedStatusLabel =
-    BREEDER_STATUS_TABS.find((tab) => tab.value === selectedStatusTab)?.label || "ALL";
+    BREEDER_STATUS_TABS.find(
+      (tab) =>
+        tab.value === selectedStatusTab
+    )?.label || "ALL";
 
-  const historyApplicationId = getApplicationId(historyRow) || "-";
+  const historyApplicationId =
+    getApplicationId(historyRow) || "-";
+
   const historyApplicationNumber =
-    historyRow?.applicationNumber || historyRow?.registrationDetails?.applicationNumber || "-";
+    historyRow?.applicationNumber ||
+    historyRow?.registrationDetails
+      ?.applicationNumber ||
+    "-";
+
   const historyBreederName =
     historyRow?.breederName ||
     historyRow?.breederDetails?.breederName ||
@@ -494,12 +722,22 @@ const List = (props) => {
     historyRow?.dogBreederDetail?.breederName ||
     "-";
 
-  const historyStatus = getRowStatus(historyRow);
+  const historyStatus =
+    getRowStatus(historyRow);
 
   return (
     <>
-      {/* TABS HEADER */}
-      <Box sx={{ width: "100%", borderBottom: "1px solid #ddd", mb: 2 }}>
+      {/* =====================================================
+          TABS HEADER
+      ===================================================== */}
+
+      <Box
+        sx={{
+          width: "100%",
+          borderBottom: "1px solid #ddd",
+          mb: 2,
+        }}
+      >
         <Tabs
           value={selectedStatusTab}
           onChange={handleStatusTabChange}
@@ -508,183 +746,310 @@ const List = (props) => {
           allowScrollButtonsMobile
           sx={{
             minHeight: 48,
+
             "& .MuiTab-root": {
               minHeight: 48,
               textTransform: "none",
               fontWeight: 500,
               fontSize: "0.85rem",
             },
+
             "& .Mui-selected": {
               fontWeight: 700,
             },
           }}
         >
-          {BREEDER_STATUS_TABS.map((tab) => (
-            <Tab
-              key={tab.value}
-              value={tab.value}
-              label={
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <span>{tab.label}</span>
-                  <Badge
-                    badgeContent={statusCounts[tab.value] || 0}
-                    color="primary"
-                    max={999}
+          {BREEDER_STATUS_TABS.map(
+            (tab) => (
+              <Tab
+                key={tab.value}
+                value={tab.value}
+                label={
+                  <Box
                     sx={{
-                      "& .MuiBadge-badge": {
-                        position: "relative",
-                        transform: "none",
-                        top: "auto",
-                        right: "auto",
-                        minWidth: 20,
-                        height: 20,
-                        borderRadius: "10px",
-                        fontSize: "0.7rem",
-                      },
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
                     }}
-                  />
-                </Box>
-              }
-            />
-          ))}
+                  >
+                    <span>
+                      {tab.label}
+                    </span>
+
+                    <Badge
+                      badgeContent={
+                        statusCounts[
+                          tab.value
+                        ] || 0
+                      }
+                      color="primary"
+                      max={999}
+                      sx={{
+                        "& .MuiBadge-badge": {
+                          position:
+                            "relative",
+                          transform:
+                            "none",
+                          top: "auto",
+                          right: "auto",
+                          minWidth: 20,
+                          height: 20,
+                          borderRadius:
+                            "10px",
+                          fontSize:
+                            "0.7rem",
+                        },
+                      }}
+                    />
+                  </Box>
+                }
+              />
+            )
+          )}
         </Tabs>
       </Box>
 
-      {/* MAIN DATA TABLE */}
-      <Table stickyHeader sx={{ minWidth: 900 }}>
+      {/* =====================================================
+          MAIN DATA TABLE
+      ===================================================== */}
+
+      <Table
+        stickyHeader
+        sx={{ minWidth: 900 }}
+      >
         <TableHead>
           <TableRow>
-            {tableColumns.map((col, index) => (
-              <TableCell key={col.attr || index}>
-                <TableSortLabel
-                  onClick={() => {
-                    if (typeof props.handleSortClick === "function") {
-                      props.handleSortClick(col.attr);
-                    }
-                  }}
-                  active={col.attr === props.sortAttributeDirection?.attr}
-                  direction={
-                    col.attr === props.sortAttributeDirection?.attr
-                      ? props.sortAttributeDirection?.direction || "asc"
-                      : "asc"
+            {tableColumns.map(
+              (col, index) => (
+                <TableCell
+                  key={
+                    col.attr || index
                   }
                 >
-                  {col.header}
-                </TableSortLabel>
-              </TableCell>
-            ))}
-            <TableCell align="center">View</TableCell>
-            <TableCell align="center">Action</TableCell>
-            <TableCell align="center">History</TableCell>
+                  <TableSortLabel
+                    onClick={() => {
+                      if (
+                        typeof props.handleSortClick ===
+                        "function"
+                      ) {
+                        props.handleSortClick(
+                          col.attr
+                        );
+                      }
+                    }}
+                    active={
+                      col.attr ===
+                      props
+                        .sortAttributeDirection
+                        ?.attr
+                    }
+                    direction={
+                      col.attr ===
+                      props
+                        .sortAttributeDirection
+                        ?.attr
+                        ? props
+                            .sortAttributeDirection
+                            ?.direction ||
+                          "asc"
+                        : "asc"
+                    }
+                  >
+                    {col.header}
+                  </TableSortLabel>
+                </TableCell>
+              )
+            )}
+
+            <TableCell align="center">
+              View
+            </TableCell>
+
+            <TableCell align="center">
+              Action
+            </TableCell>
+
+            <TableCell align="center">
+              History
+            </TableCell>
           </TableRow>
         </TableHead>
 
         <TableBody>
-          {filteredRows.map((row, index) => {
-            const applicationId = getApplicationId(row);
-            const status = getRowStatus(row);
-            const rejectedByCvo = isRejectedByCvo(row);
-            const applicationRejected = isApplicationRejected(row);
-            const approved = isApplicationApproved(row);
+          {filteredRows.map(
+            (row, index) => {
+              const applicationId =
+                getApplicationId(row);
 
-            return (
-              <TableRow key={applicationId || index}>
-                {tableColumns.map((col, colIndex) => (
-                  <TableCell key={col.attr || colIndex}>
-                    {col.attr === "status" ? (
-                      <Chip
+              const status =
+                getRowStatus(row);
+
+              const rejectedByCvo =
+                isRejectedByCvo(row);
+
+              const applicationRejected =
+                isApplicationRejected(row);
+
+              const approved =
+                isApplicationApproved(row);
+
+              /*
+               * BOTH rejection types are eligible
+               * for resubmission.
+               */
+              const eligibleForResubmit =
+                rejectedByCvo ||
+                applicationRejected;
+
+              return (
+                <TableRow
+                  key={
+                    applicationId ||
+                    index
+                  }
+                >
+                  {tableColumns.map(
+                    (
+                      col,
+                      colIndex
+                    ) => (
+                      <TableCell
+                        key={
+                          col.attr ||
+                          colIndex
+                        }
+                      >
+                        {col.attr ===
+                        "status" ? (
+                          <Chip
+                            size="small"
+                            label={getStatusLabel(
+                              status
+                            )}
+                            color={getStatusChipColor(
+                              status
+                            )}
+                          />
+                        ) : typeof col.render ===
+                          "function" ? (
+                          col.render(row)
+                        ) : (
+                          String(
+                            row[
+                              col.attr
+                            ] ?? ""
+                          )
+                        )}
+                      </TableCell>
+                    )
+                  )}
+
+                  {/* VIEW */}
+                  <TableCell align="center">
+                    <Tooltip title="View Application">
+                      <IconButton
+                        color="primary"
+                        onClick={() => {
+                          if (
+                            typeof props.handleEditClick ===
+                            "function"
+                          ) {
+                            props.handleEditClick(
+                              applicationId,
+                              row
+                            );
+                          }
+                        }}
+                      >
+                        <VisibilityIcon />
+                      </IconButton>
+                    </Tooltip>
+                  </TableCell>
+
+                  {/* =================================================
+                      ACTION
+                  ================================================= */}
+
+                  <TableCell align="center">
+                    {eligibleForResubmit ? (
+                      /*
+                       * APPLICATION_REJECTED
+                       * OR
+                       * REJECTED_BY_CVO
+                       *
+                       * => RESUBMIT
+                       */
+                      <Button
+                        variant="contained"
                         size="small"
-                        label={getStatusLabel(status)}
-                        color={getStatusChipColor(status)}
-                      />
-                    ) : typeof col.render === "function" ? (
-                      col.render(row)
+                        color="warning"
+                        startIcon={
+                          <ReplayIcon />
+                        }
+                        onClick={() =>
+                          handleOpenModal(
+                            row
+                          )
+                        }
+                      >
+                        RESUBMIT
+                      </Button>
+                    ) : approved ? (
+                      <Button
+                        variant="contained"
+                        size="small"
+                        disabled
+                        sx={{
+                          "&.Mui-disabled": {
+                            backgroundColor:
+                              "#e8f5e9",
+                            color:
+                              "#2e7d32",
+                            fontWeight:
+                              "bold",
+                          },
+                        }}
+                      >
+                        APPROVED
+                      </Button>
                     ) : (
-                      String(row[col.attr] ?? "")
+                      "-"
                     )}
                   </TableCell>
-                ))}
 
-                <TableCell align="center">
-                  <Tooltip title="View Application">
-                    <IconButton
-                      color="primary"
-                      onClick={() => {
-                        if (typeof props.handleEditClick === "function") {
-                          props.handleEditClick(applicationId, row);
+                  {/* HISTORY */}
+                  <TableCell align="center">
+                    <Tooltip title="View Application History">
+                      <IconButton
+                        color="secondary"
+                        onClick={() =>
+                          handleOpenHistory(
+                            row
+                          )
                         }
-                      }}
-                    >
-                      <VisibilityIcon />
-                    </IconButton>
-                  </Tooltip>
-                </TableCell>
-
-                <TableCell align="center">
-                  {rejectedByCvo ? (
-                    <Button
-                      variant="contained"
-                      size="small"
-                      color="warning"
-                      startIcon={<ReplayIcon />}
-                      onClick={() => handleOpenModal(row)}
-                    >
-                      RESUBMIT
-                    </Button>
-                  ) : applicationRejected ? (
-                    <Button
-                      variant="contained"
-                      size="small"
-                      disabled
-                      sx={{
-                        "&.Mui-disabled": {
-                          backgroundColor: "#ffebee",
-                          color: "#d32f2f",
-                          fontWeight: "bold",
-                        },
-                      }}
-                    >
-                      REJECTED
-                    </Button>
-                  ) : approved ? (
-                    <Button
-                      variant="contained"
-                      size="small"
-                      disabled
-                      sx={{
-                        "&.Mui-disabled": {
-                          backgroundColor: "#e8f5e9",
-                          color: "#2e7d32",
-                          fontWeight: "bold",
-                        },
-                      }}
-                    >
-                      APPROVED
-                    </Button>
-                  ) : (
-                    "-"
-                  )}
-                </TableCell>
-
-                <TableCell align="center">
-                  <Tooltip title="View Application History">
-                    <IconButton
-                      color="secondary"
-                      onClick={() => handleOpenHistory(row)}
-                    >
-                      <HistoryIcon />
-                    </IconButton>
-                  </Tooltip>
-                </TableCell>
-              </TableRow>
-            );
-          })}
+                      >
+                        <HistoryIcon />
+                      </IconButton>
+                    </Tooltip>
+                  </TableCell>
+                </TableRow>
+              );
+            }
+          )}
 
           {filteredRows.length === 0 && (
             <TableRow>
-              <TableCell colSpan={tableColumnCount} align="center" sx={{ py: 4 }}>
+              <TableCell
+                colSpan={
+                  tableColumnCount
+                }
+                align="center"
+                sx={{ py: 4 }}
+              >
                 <Typography color="text.secondary">
-                  No applications found for {selectedStatusLabel}
+                  No applications found
+                  for{" "}
+                  {selectedStatusLabel}
                 </Typography>
               </TableCell>
             </TableRow>
@@ -692,44 +1057,99 @@ const List = (props) => {
         </TableBody>
       </Table>
 
-      {/* RESUBMIT DIALOG */}
-      <Dialog open={openResubmitModal} onClose={handleCloseModal} maxWidth="sm" fullWidth>
-        <DialogTitle align="center" sx={{ fontWeight: 600 }}>
+      {/* =====================================================
+          RESUBMIT DIALOG
+      ===================================================== */}
+
+      <Dialog
+        open={openResubmitModal}
+        onClose={handleCloseModal}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle
+          align="center"
+          sx={{ fontWeight: 600 }}
+        >
           Resubmit Application
         </DialogTitle>
 
         <DialogContent dividers>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection:
+                "column",
+              gap: 2,
+              pt: 1,
+            }}
+          >
             <Box>
-              <Typography variant="caption" color="text.secondary">
+              <Typography
+                variant="caption"
+                color="text.secondary"
+              >
                 Application Number
               </Typography>
-              <Typography variant="body1" fontWeight={500}>
-                {selectedRow?.applicationNumber ||
-                  selectedRow?.registrationDetails?.applicationNumber ||
+
+              <Typography
+                variant="body1"
+                fontWeight={500}
+              >
+                {selectedRow
+                  ?.applicationNumber ||
+                  selectedRow
+                    ?.registrationDetails
+                    ?.applicationNumber ||
                   "-"}
               </Typography>
             </Box>
 
             <Box>
-              <Typography variant="caption" color="text.secondary">
+              <Typography
+                variant="caption"
+                color="text.secondary"
+              >
                 Breeder Name
               </Typography>
-              <Typography variant="body1" fontWeight={500}>
-                {selectedRow?.breederName ||
-                  selectedRow?.breederDetails?.breederName ||
-                  selectedRow?.breederDetails?.name ||
-                  selectedRow?.dogBreederDetail?.breederName ||
+
+              <Typography
+                variant="body1"
+                fontWeight={500}
+              >
+                {selectedRow
+                  ?.breederName ||
+                  selectedRow
+                    ?.breederDetails
+                    ?.breederName ||
+                  selectedRow
+                    ?.breederDetails
+                    ?.name ||
+                  selectedRow
+                    ?.dogBreederDetail
+                    ?.breederName ||
                   "-"}
               </Typography>
             </Box>
 
             <Box>
-              <Typography variant="caption" color="text.secondary">
+              <Typography
+                variant="caption"
+                color="text.secondary"
+              >
                 Current Status
               </Typography>
-              <Typography variant="body1" fontWeight={600} color="error.main">
-                {getStatusLabel(getRowStatus(selectedRow))}
+
+              <Typography
+                variant="body1"
+                fontWeight={600}
+                color="error.main"
+              >
+                {getStatusLabel(
+                  getRowStatus(
+                    selectedRow
+                  )
+                )}
               </Typography>
             </Box>
 
@@ -741,7 +1161,11 @@ const List = (props) => {
               label="Remarks"
               placeholder="Enter remarks..."
               value={remarks}
-              onChange={(e) => setRemarks(e.target.value)}
+              onChange={(e) =>
+                setRemarks(
+                  e.target.value
+                )
+              }
               disabled={isSubmitting}
             />
 
@@ -749,7 +1173,10 @@ const List = (props) => {
               <Typography
                 variant="caption"
                 color="text.secondary"
-                sx={{ mb: 1, display: "block" }}
+                sx={{
+                  mb: 1,
+                  display: "block",
+                }}
               >
                 Supporting Documents
               </Typography>
@@ -757,20 +1184,30 @@ const List = (props) => {
               <Button
                 variant="contained"
                 component="label"
-                startIcon={<CloudUploadIcon />}
-                disabled={isSubmitting}
+                startIcon={
+                  <CloudUploadIcon />
+                }
+                disabled={
+                  isSubmitting
+                }
               >
                 Upload Documents
+
                 <input
                   type="file"
                   hidden
                   accept=".pdf,.jpg,.jpeg,.png"
-                  onChange={handleFileChange}
+                  onChange={
+                    handleFileChange
+                  }
                 />
               </Button>
 
               {file && (
-                <Typography variant="caption" sx={{ ml: 2 }}>
+                <Typography
+                  variant="caption"
+                  sx={{ ml: 2 }}
+                >
                   {file.name}
                 </Typography>
               )}
@@ -778,24 +1215,52 @@ const List = (props) => {
           </Box>
         </DialogContent>
 
-        <DialogActions sx={{ px: 3, py: 2 }}>
-          <Button onClick={handleCloseModal} disabled={isSubmitting}>
+        <DialogActions
+          sx={{
+            px: 3,
+            py: 2,
+          }}
+        >
+          <Button
+            onClick={
+              handleCloseModal
+            }
+            disabled={
+              isSubmitting
+            }
+          >
             Cancel
           </Button>
 
           <Button
             variant="contained"
             color="primary"
-            onClick={handleSubmitResubmit}
-            disabled={isSubmitting}
+            onClick={
+              handleSubmitResubmit
+            }
+            disabled={
+              isSubmitting
+            }
           >
-            {isSubmitting ? "Submitting..." : "Submit"}
+            {isSubmitting
+              ? "Submitting..."
+              : "Submit"}
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* TABLE-BASED HISTORY DIALOG */}
-      <Dialog open={openHistoryModal} onClose={handleCloseHistory} maxWidth="md" fullWidth>
+      {/* =====================================================
+          HISTORY DIALOG
+      ===================================================== */}
+
+      <Dialog
+        open={openHistoryModal}
+        onClose={
+          handleCloseHistory
+        }
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle
           sx={{
             display: "flex",
@@ -809,51 +1274,96 @@ const List = (props) => {
         </DialogTitle>
 
         <DialogContent dividers>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection:
+                "column",
+              gap: 3,
+            }}
+          >
             <Box
               sx={{
                 display: "grid",
-                gridTemplateColumns: { xs: "1fr 1fr", sm: "1fr 1fr 1fr 1fr" },
+                gridTemplateColumns: {
+                  xs: "1fr 1fr",
+                  sm: "1fr 1fr 1fr 1fr",
+                },
                 gap: 2,
               }}
             >
               <Box>
-                <Typography variant="caption" color="text.secondary">
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                >
                   Application Number
                 </Typography>
-                <Typography variant="body1" fontWeight={600}>
-                  {historyApplicationNumber}
+
+                <Typography
+                  variant="body1"
+                  fontWeight={600}
+                >
+                  {
+                    historyApplicationNumber
+                  }
                 </Typography>
               </Box>
 
               <Box>
-                <Typography variant="caption" color="text.secondary">
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                >
                   Breeder Name
                 </Typography>
-                <Typography variant="body1" fontWeight={600}>
-                  {historyBreederName}
+
+                <Typography
+                  variant="body1"
+                  fontWeight={600}
+                >
+                  {
+                    historyBreederName
+                  }
                 </Typography>
               </Box>
 
               <Box>
-                <Typography variant="caption" color="text.secondary">
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                >
                   Current Status
                 </Typography>
+
                 <Box sx={{ mt: 0.5 }}>
                   <Chip
                     size="small"
-                    label={getStatusLabel(historyStatus)}
-                    color={getStatusChipColor(historyStatus)}
+                    label={getStatusLabel(
+                      historyStatus
+                    )}
+                    color={getStatusChipColor(
+                      historyStatus
+                    )}
                   />
                 </Box>
               </Box>
 
               <Box>
-                <Typography variant="caption" color="text.secondary">
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                >
                   Application ID
                 </Typography>
-                <Typography variant="body1" fontWeight={600}>
-                  {historyApplicationId}
+
+                <Typography
+                  variant="body1"
+                  fontWeight={600}
+                >
+                  {
+                    historyApplicationId
+                  }
                 </Typography>
               </Box>
             </Box>
@@ -861,67 +1371,158 @@ const List = (props) => {
             <Divider />
 
             <Box>
-              <Typography variant="h6" sx={{ fontSize: "1rem", fontWeight: 600, mb: 2 }}>
+              <Typography
+                variant="h6"
+                sx={{
+                  fontSize:
+                    "1rem",
+                  fontWeight: 600,
+                  mb: 2,
+                }}
+              >
                 Status History
               </Typography>
 
               {isHistoryLoading ? (
-                <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-                  <CircularProgress size={32} />
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent:
+                      "center",
+                    py: 4,
+                  }}
+                >
+                  <CircularProgress
+                    size={32}
+                  />
                 </Box>
-              ) : historyList && historyList.length > 0 ? (
+              ) : historyList &&
+                historyList.length >
+                  0 ? (
                 <Table size="small">
                   <TableHead>
                     <TableRow>
-                      <TableCell>#</TableCell>
-                      <TableCell>Status</TableCell>
-                      <TableCell>Remarks / Reason</TableCell>
-                      <TableCell>Updated By</TableCell>
-                      <TableCell>Date &amp; Time</TableCell>
+                      <TableCell>
+                        #
+                      </TableCell>
+
+                      <TableCell>
+                        Status
+                      </TableCell>
+
+                      <TableCell>
+                        Remarks /
+                        Reason
+                      </TableCell>
+
+                      <TableCell>
+                        Updated By
+                      </TableCell>
+
+                      <TableCell>
+                        Date &amp; Time
+                      </TableCell>
                     </TableRow>
                   </TableHead>
+
                   <TableBody>
                     {historyList
                       .slice()
                       .reverse()
-                      .map((item, index) => {
-                        const itemStatus = getHistoryStatus(item);
-                        return (
-                          <TableRow key={item?.id || index}>
-                            <TableCell>{index + 1}</TableCell>
-                            <TableCell>
-                              <Chip
-                                size="small"
-                                label={
-                                  getStatusLabel(itemStatus) !== "-"
-                                    ? getStatusLabel(itemStatus)
-                                    : item?.actionType || "Updated"
-                                }
-                                color={getStatusChipColor(itemStatus)}
-                              />
-                            </TableCell>
-                            <TableCell>{getHistoryRemarks(item)}</TableCell>
-                            <TableCell>{getHistoryUser(item)}</TableCell>
-                            <TableCell>{getHistoryDate(item)}</TableCell>
-                          </TableRow>
-                        );
-                      })}
+                      .map(
+                        (
+                          item,
+                          index
+                        ) => {
+                          const itemStatus =
+                            getHistoryStatus(
+                              item
+                            );
+
+                          return (
+                            <TableRow
+                              key={
+                                item?.id ||
+                                index
+                              }
+                            >
+                              <TableCell>
+                                {index +
+                                  1}
+                              </TableCell>
+
+                              <TableCell>
+                                <Chip
+                                  size="small"
+                                  label={
+                                    getStatusLabel(
+                                      itemStatus
+                                    ) !==
+                                    "-"
+                                      ? getStatusLabel(
+                                          itemStatus
+                                        )
+                                      : item?.actionType ||
+                                        "Updated"
+                                  }
+                                  color={getStatusChipColor(
+                                    itemStatus
+                                  )}
+                                />
+                              </TableCell>
+
+                              <TableCell>
+                                {getHistoryRemarks(
+                                  item
+                                )}
+                              </TableCell>
+
+                              <TableCell>
+                                {getHistoryUser(
+                                  item
+                                )}
+                              </TableCell>
+
+                              <TableCell>
+                                {getHistoryDate(
+                                  item
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        }
+                      )}
                   </TableBody>
                 </Table>
               ) : (
                 <Box
                   sx={{
                     display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
+                    flexDirection:
+                      "column",
+                    alignItems:
+                      "center",
+                    justifyContent:
+                      "center",
                     py: 4,
                     gap: 1,
                   }}
                 >
-                  <HistoryIcon sx={{ fontSize: 48, color: "text.disabled" }} />
-                  <Typography variant="body2" color="text.secondary">
-                    No history available for this application.
+                  <HistoryIcon
+                    sx={{
+                      fontSize: 48,
+                      color:
+                        "text.disabled",
+                    }}
+                  />
+
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                  >
+                    No history available
+                    for this
+                    application.
                   </Typography>
                 </Box>
               )}
@@ -929,8 +1530,19 @@ const List = (props) => {
           </Box>
         </DialogContent>
 
-        <DialogActions sx={{ px: 3, py: 2 }}>
-          <Button onClick={handleCloseHistory} variant="contained" color="primary">
+        <DialogActions
+          sx={{
+            px: 3,
+            py: 2,
+          }}
+        >
+          <Button
+            onClick={
+              handleCloseHistory
+            }
+            variant="contained"
+            color="primary"
+          >
             Close
           </Button>
         </DialogActions>
@@ -943,9 +1555,11 @@ List.propTypes = {
   tableColumns: PropTypes.array,
   rows: PropTypes.array,
   handleSortClick: PropTypes.func,
-  sortAttributeDirection: PropTypes.object,
+  sortAttributeDirection:
+    PropTypes.object,
   handleEditClick: PropTypes.func,
-  handleRefreshTable: PropTypes.func,
+  handleRefreshTable:
+    PropTypes.func,
 };
 
 export default List;
