@@ -76,15 +76,6 @@ const DataTable = (props) => {
     handleRefreshTable,
   } = useFetchTable(props.list_url, props.selectedStatus);
 
-  //------------------------FOR EDIT-----------------------------
-  const [openFormModal, handleOpenFormModal, handleCloseFormModal] = useModal();
-  const [operationType, setOperationType] = useState("");
-  const [rowID, setRowID] = useState("");
-  const [rowData, setRowData] = useState(null);
-
-  const [resubmitApplication, setResubmitApplication] = useState(null);
-const [openResubmitDialog, setOpenResubmitDialog] = useState(false);
-  const handleEditClick = (id,row) => {
   // Notification logic
   const loadUnreadCount = async () => {
     const response = await getUnreadCount();
@@ -279,12 +270,10 @@ const [openResubmitDialog, setOpenResubmitDialog] = useState(false);
               canDelete: props.canDelete,
               dropDownLists: props.dropDownLists,
               handleScheduleInspection: props.handleScheduleInspection,
-               handleUploadReport: props.handleUploadReport,
-               handleStartReview: props.handleStartReview,
-handleScheduleInvestigation: props.handleScheduleInvestigation,
-handleActionTaken: props.handleActionTaken,
-              
               handleUploadReport: props.handleUploadReport,
+              handleStartReview: props.handleStartReview,
+              handleScheduleInvestigation: props.handleScheduleInvestigation,
+              handleActionTaken: props.handleActionTaken,
             })
           )}
         </TableContainer>
@@ -441,13 +430,11 @@ DataTable.propTypes = {
   handleScheduleInspection: PropTypes.func,
   handleUploadReport: PropTypes.func,
   handleApproveClick: PropTypes.func,
-handleRejectClick: PropTypes.func,
-extraParams: PropTypes.object,
-handleStartReview: PropTypes.func,
-handleScheduleInvestigation: PropTypes.func,
-handleActionTaken: PropTypes.func,
   handleRejectClick: PropTypes.func,
   extraParams: PropTypes.object,
+  handleStartReview: PropTypes.func,
+  handleScheduleInvestigation: PropTypes.func,
+  handleActionTaken: PropTypes.func,
 };
 
 export default DataTable;
