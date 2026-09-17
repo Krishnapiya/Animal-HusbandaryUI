@@ -62,8 +62,10 @@ const initialStep2 = {
   veterinarySupportAvailable: false,
 
   accommodationInfrastructure: "",
+  openingTime: "",
+  closingTime: "",
   workingHours: "",
-  holiday: "",
+  holiday: [],
 
   ventilationArrangement: "",
   lightingArrangement: "",
@@ -75,6 +77,34 @@ const initialStep2 = {
 
   cageEnclosureDetails: "",
 };
+
+const splitWorkingHours = (workingHours = "") => {
+  const [openingTime = "", closingTime = ""] = String(workingHours).split(" - ");
+
+  return {
+    openingTime,
+    closingTime,
+  };
+};
+
+const joinWorkingHours = (openingTime, closingTime) =>
+  openingTime && closingTime ? `${openingTime} - ${closingTime}` : "";
+
+const parseHoliday = (holiday) => {
+  if (Array.isArray(holiday)) {
+    return holiday;
+  }
+
+  return holiday
+    ? String(holiday)
+        .split(",")
+        .map((day) => day.trim())
+        .filter(Boolean)
+    : [];
+};
+
+const formatHoliday = (holiday) =>
+  Array.isArray(holiday) ? holiday.join(",") : holiday || "";
 
 const initialStep3 = {
   id: "",
@@ -582,7 +612,9 @@ const [isSubmitting, setIsSubmitting] = useState(false);
           totalDogsCount: detail?.totalDogsCount ?? prev.totalDogsCount,
         }));
 
-setFacilityValues((prev) => ({
+        const savedWorkingHours = splitWorkingHours(facility?.workingHours);
+
+        setFacilityValues((prev) => ({
   ...prev,
   id: facility?.id || prev.id,
   dogBreederDetailId:
@@ -621,11 +653,17 @@ setFacilityValues((prev) => ({
     facility?.accommodationInfrastructure ||
     prev.accommodationInfrastructure,
 
+  openingTime:
+    savedWorkingHours.openingTime || prev.openingTime,
+
+  closingTime:
+    savedWorkingHours.closingTime || prev.closingTime,
+
   workingHours:
     facility?.workingHours || prev.workingHours,
 
   holiday:
-    facility?.holiday || prev.holiday,
+    parseHoliday(facility?.holiday || prev.holiday),
 
   ventilationArrangement:
     facility?.ventilationArrangement ||
@@ -1007,11 +1045,23 @@ const handlePreviewClick = () => {
         "Accommodation infrastructure is required";
     }
 
-    if (!facilityValues.workingHours) {
-      newErrors.workingHours = "Working hours is required";
+    if (!facilityValues.openingTime) {
+      newErrors.openingTime = "Opening time is required";
     }
 
-    if (!facilityValues.holiday) {
+    if (!facilityValues.closingTime) {
+      newErrors.closingTime = "Closing time is required";
+    }
+
+    if (
+      facilityValues.openingTime &&
+      facilityValues.closingTime &&
+      facilityValues.openingTime >= facilityValues.closingTime
+    ) {
+      newErrors.closingTime = "Closing time must be after opening time";
+    }
+
+    if (!parseHoliday(facilityValues.holiday).length) {
       newErrors.holiday = "Holiday is required";
     }
 
@@ -1065,8 +1115,11 @@ const handlePreviewClick = () => {
     accommodationInfrastructure:
         facilityValues.accommodationInfrastructure,
 
-    workingHours: facilityValues.workingHours,
-    holiday: facilityValues.holiday,
+    workingHours: joinWorkingHours(
+        facilityValues.openingTime,
+        facilityValues.closingTime
+    ),
+    holiday: formatHoliday(facilityValues.holiday),
 
     ventilationArrangement:
         facilityValues.ventilationArrangement,
@@ -1113,9 +1166,14 @@ const handlePreviewClick = () => {
 
       const savedData = getResponsePayload(response) || payload;
 
+      const savedWorkingHours = splitWorkingHours(savedData.workingHours);
+
       setFacilityValues((prev) => ({
         ...prev,
         ...savedData,
+        openingTime: savedWorkingHours.openingTime || prev.openingTime,
+        closingTime: savedWorkingHours.closingTime || prev.closingTime,
+        holiday: parseHoliday(savedData.holiday || prev.holiday),
         dogBreederDetailId,
       }));
 
