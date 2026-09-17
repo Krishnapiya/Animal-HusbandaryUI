@@ -1,6 +1,7 @@
 /* eslint-disable */
 import PropTypes from "prop-types";
 import {
+  Alert,
   Box,
   Grid2 as Grid,
   Typography,
@@ -11,13 +12,24 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Button
+  Button,
+  TextField
 } from "@mui/material";
 import SaveIcon from "@mui/icons-material/Save";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 
 import TextInput from "../../components/FormComponents/TextInput";
+
+const weekDays = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
+];
 
 const Step2FacilityInfrastructure = ({
   formValues,
@@ -63,31 +75,77 @@ const Step2FacilityInfrastructure = ({
         </Grid>
 
         <Grid size={{ xs: 12, md: 6 }}>
-          <TextInput
-            label="2. Working hours"
-            name="workingHours"
-            value={values.workingHours || ""}
+          <TextField
+            fullWidth
+            type="time"
+            label="2. Opening time"
+            name="openingTime"
+            value={values.openingTime || ""}
             onChange={onChange}
-            errors={errors}
+            error={Boolean(errors.openingTime)}
+            helperText={errors.openingTime || ""}
+            InputLabelProps={{ shrink: true }}
             required
           />
         </Grid>
 
         <Grid size={{ xs: 12, md: 6 }}>
-          <TextInput
-            label="3. Holiday"
-            name="holiday"
-            value={values.holiday || ""}
+          <TextField
+            fullWidth
+            type="time"
+            label="3. Closing time"
+            name="closingTime"
+            value={values.closingTime || ""}
             onChange={onChange}
-            errors={errors}
+            error={Boolean(errors.closingTime)}
+            helperText={errors.closingTime || ""}
+            InputLabelProps={{ shrink: true }}
             required
           />
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 6 }}>
+          <FormControl fullWidth error={Boolean(errors.holiday)} required>
+            <InputLabel id="dog-breeder-holiday-label">
+              4. Holiday
+            </InputLabel>
+            <Select
+              labelId="dog-breeder-holiday-label"
+              multiple
+              label="4. Holiday"
+              name="holiday"
+              value={Array.isArray(values.holiday) ? values.holiday : []}
+              onChange={(event) => {
+                const value = event.target.value;
+
+                onChange({
+                  target: {
+                    name: "holiday",
+                    value:
+                      typeof value === "string" ? value.split(",") : value,
+                  },
+                });
+              }}
+              renderValue={(selected) => selected.join(", ")}
+            >
+              {weekDays.map((day) => (
+                <MenuItem key={day} value={day}>
+                  {day}
+                </MenuItem>
+              ))}
+            </Select>
+            {errors.holiday && (
+              <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.75 }}>
+                {errors.holiday}
+              </Typography>
+            )}
+          </FormControl>
         </Grid>
 
         <Grid size={{ xs: 12, md: 6 }}>
         <FormControl fullWidth>
   <Typography sx={{ mb: 1, fontWeight: 500 }}>
-    4. Ventilation available
+    5. Ventilation available
   </Typography>
 
   <RadioGroup
@@ -133,7 +191,7 @@ value={String(values.ventilationAvailable ?? false)}
      <Grid size={{ xs: 12, md: 6 }}>
   <FormControl fullWidth>
     <Typography sx={{ mb: 1, fontWeight: 500 }}>
-      5. Lighting available
+      6. Lighting available
     </Typography>
 
     <RadioGroup
@@ -179,7 +237,7 @@ value={String(values.ventilationAvailable ?? false)}
      <Grid size={{ xs: 12, md: 6 }}>
   <FormControl fullWidth>
     <Typography sx={{ mb: 1, fontWeight: 500 }}>
-      6. Heating / Cooling available
+      7. Heating / Cooling available
     </Typography>
 
     <RadioGroup
@@ -225,7 +283,7 @@ value={String(values.ventilationAvailable ?? false)}
       <Grid size={{ xs: 12, md: 6 }}>
   <FormControl fullWidth>
     <Typography sx={{ mb: 1, fontWeight: 500 }}>
-      7. Food storage available
+      8. Food storage available
     </Typography>
 
     <RadioGroup
@@ -271,7 +329,7 @@ value={String(values.ventilationAvailable ?? false)}
         <Grid size={{ xs: 12, md: 6 }}>
   <FormControl fullWidth>
     <Typography sx={{ mb: 1, fontWeight: 500 }}>
-      8. Cleanliness / Waste available
+      9. Cleanliness / Waste available
     </Typography>
 
     <RadioGroup
@@ -317,7 +375,7 @@ value={String(values.ventilationAvailable ?? false)}
       <Grid size={{ xs: 12, md: 6 }}>
   <FormControl fullWidth>
     <Typography sx={{ mb: 1, fontWeight: 500 }}>
-      9. Dead animal disposal available
+      10. Dead animal disposal available
     </Typography>
 
     <RadioGroup
@@ -363,7 +421,7 @@ value={String(values.ventilationAvailable ?? false)}
         <Grid size={{ xs: 12, md: 6 }}>
   <FormControl fullWidth>
     <Typography sx={{ mb: 1, fontWeight: 500 }}>
-      10. Veterinary support available
+      11. Veterinary support available
     </Typography>
 
     <RadioGroup
@@ -408,7 +466,7 @@ value={String(values.ventilationAvailable ?? false)}
 
         <Grid size={{ xs: 12, md: 6 }}>
           <TextInput
-            label="11. Cage / enclosure details"
+            label="12. Cage / enclosure details"
             name="cageEnclosureDetails"
             value={values.cageEnclosureDetails || ""}
             onChange={onChange}

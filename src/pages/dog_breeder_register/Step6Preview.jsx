@@ -29,6 +29,9 @@ const getShortValue = (value) => {
   return value;
 };
 
+const formatHoliday = (holiday) =>
+  Array.isArray(holiday) ? holiday.join(", ") : holiday || "";
+
 const getSavedDocumentId = (file) => {
   return (
     file?.id ||
@@ -387,7 +390,9 @@ const Step6Preview = ({
           number="5"
           label="Working hours and rest day, i.e. day on which establishment shall remain closed"
           value={`${facilityDetails.workingHours || ""} ${
-            facilityDetails.restDay ? `, Rest day: ${facilityDetails.restDay}` : ""
+            formatHoliday(facilityDetails.holiday)
+              ? `, Rest day: ${formatHoliday(facilityDetails.holiday)}`
+              : ""
           }`}
         />
 

@@ -197,8 +197,12 @@ const normalizeRole = (role) => {
   return String(role ?? "")
     .trim()
     .toUpperCase()
-    .replace(/^ROLE_/, "");
+    .replace(/^ROLE_/, "")
+    .replace(/[\s-]+/g, "_");
 };
+
+const hasRole = (roles, acceptedRoles) =>
+  acceptedRoles.some((role) => roles.includes(normalizeRole(role)));
 
 /* =========================================================
    GET LOGGED-IN ROLES
@@ -531,13 +535,16 @@ const List = (props) => {
 
   const loggedInRoles = getLoggedInRoles();
 
-  const isAdmin = loggedInRoles.includes("ADMIN");
+  const isAdmin = hasRole(loggedInRoles, ["ADMIN"]);
 
-  const isCvo = loggedInRoles.includes("CVO");
+  const isCvo = hasRole(loggedInRoles, [
+    "DISTRICT_OFFICER",
+    "DISTRICT OFFICER",
+    "CVO",
+  ]);
 
   const isDogBreeder =
-    loggedInRoles.includes("DOG_BREEDER") ||
-    loggedInRoles.includes("BREEDER");
+    hasRole(loggedInRoles, ["DOG_BREEDER", "BREEDER"]);
 
   /* =======================================================
      ACTION VISIBILITY

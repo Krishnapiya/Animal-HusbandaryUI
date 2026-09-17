@@ -25,7 +25,11 @@ const normalizeRole = (value) =>
   String(value ?? "")
     .trim()
     .toUpperCase()
-    .replace(/^ROLE_/, "");
+    .replace(/^ROLE_/, "")
+    .replace(/[\s-]+/g, "_");
+
+const hasRole = (roles, acceptedRoles) =>
+  acceptedRoles.some((role) => roles.includes(normalizeRole(role)));
 
 const getUserRoles = (user) => {
   const roleValues = [
@@ -73,12 +77,16 @@ const DogBreederApplicationPage = () => {
 
   const userRoles = getUserRoles(loggedInUser);
 
-  const isAdmin = userRoles.includes("ADMIN");
+  const isAdmin = hasRole(userRoles, ["ADMIN"]);
 
-  const isCvo = userRoles.includes("CVO");
+  const isDistrictOfficer = hasRole(userRoles, [
+    "DISTRICT_OFFICER",
+    "DISTRICT OFFICER",
+    "CVO",
+  ]);
 
-  // Allow list access for ADMIN, CVO, or if useCan returns true
-  const canAccessList = isAdmin || isCvo || canList;
+  // Allow list access for ADMIN, District Officer/CVO, or if useCan returns true
+  const canAccessList = isAdmin || isDistrictOfficer || canList;
 
   const tableColumns = [
     {
@@ -113,14 +121,14 @@ const DogBreederApplicationPage = () => {
     },
   ];
 
-  const selectedApiUrl = isCvo
+  const selectedApiUrl = isDistrictOfficer
     ? DOG_BREEDER_APPLICATION_CVO_API_URL
     : DOG_BREEDER_APPLICATION_API_URL;
 
   console.log("Dog Breeder Login", {
     userRoles,
     isAdmin,
-    isCvo,
+    isDistrictOfficer,
     canList,
     canAccessList,
     selectedApiUrl,
@@ -128,7 +136,7 @@ const DogBreederApplicationPage = () => {
 
   return (
     <DataTable
-      key={`${isCvo}-${selectedApiUrl}`}
+      key={`${isDistrictOfficer}-${selectedApiUrl}`}
       api_url={selectedApiUrl}
       list_url={selectedApiUrl}
       alertString="Dog Breeder Registration Application"
@@ -155,7 +163,7 @@ const DogBreederApplicationPage = () => {
 
       <List
         showForwardAction={
-          isAdmin && !isCvo
+          isAdmin && !isDistrictOfficer
         }
       />
     </DataTable>
