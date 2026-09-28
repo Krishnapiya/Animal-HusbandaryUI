@@ -121,3 +121,52 @@ export const getUserAttributes = () => {
   }
 };
 
+export const getTodayLocalDate = () => {
+  try {
+    return new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Kolkata",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(new Date());
+  } catch {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+};
+
+export const normalizeDateToYYYYMMDD = (val) => {
+  if (!val) return "";
+  if (typeof val !== "string") {
+    if (val instanceof Date) {
+      try {
+        return new Intl.DateTimeFormat("en-CA", {
+          timeZone: "Asia/Kolkata",
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+        }).format(val);
+      } catch {
+        const y = val.getFullYear();
+        const m = String(val.getMonth() + 1).padStart(2, "0");
+        const d = String(val.getDate()).padStart(2, "0");
+        return `${y}-${m}-${d}`;
+      }
+    }
+    return String(val);
+  }
+  const trimmed = val.trim();
+  if (/^\d{2}[/-]\d{2}[/-]\d{4}$/.test(trimmed)) {
+    const separator = trimmed.includes("/") ? "/" : "-";
+    const [dd, mm, yyyy] = trimmed.split(separator);
+    return `${yyyy}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}`;
+  }
+  if (trimmed.includes("T")) {
+    return trimmed.split("T")[0];
+  }
+  return trimmed;
+};
+

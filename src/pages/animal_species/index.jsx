@@ -12,10 +12,10 @@ import {
   ANIMAL_SPECIES_LIST_URL,
 } from "../../config/endpoints";
 
-import { ANIMAL_SPECIES_PATH }
-from "../../config/routes";
+import { ANIMAL_SPECIES_PATH } from "../../config/routes";
 
 import useCan from "../../hooks/useCan";
+import useDropDown from "../../hooks/useDropDown";
 
 const AnimalSpeciesMasterPage = () => {
   const { can } = useAuthz();
@@ -27,10 +27,28 @@ const AnimalSpeciesMasterPage = () => {
     canDelete,
   } = useCan(ANIMAL_SPECIES_PATH);
 
+  const dropDownLists = useDropDown([
+    {
+      api_url: "/admin/auth/master/animal-species/list/all",
+      includeToken: true,
+      dropdown: "animalSpecies",
+    },
+  ]);
+
   const tableColumns = [
     {
       attr: "speciesName",
-      header: "Species Name",
+      header: "Name",
+    },
+    {
+      attr: "type",
+      header: "Type",
+      sortable: false,
+    },
+    {
+      attr: "parentSpecies",
+      header: "Parent Species",
+      sortable: false,
     },
     {
       attr: "isActive",
@@ -44,6 +62,7 @@ const AnimalSpeciesMasterPage = () => {
       list_url={ANIMAL_SPECIES_LIST_URL}
       alertString="Animal Species"
       tableColumns={tableColumns}
+      dropDownLists={dropDownLists}
       includeFilter={canList}
       disableAdd={!canSave}
       pageTitle="Animal Species"

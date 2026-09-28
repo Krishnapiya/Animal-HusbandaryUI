@@ -260,7 +260,16 @@ maxWidth: "210mm",
                 <Typography fontWeight="bold" variant="body2">
                   Application Type
                 </Typography>
-                <Typography>{getValue(formValues.applicationType)}</Typography>
+                <Typography>
+                  {getValue(
+                    formValues.applicationType ||
+                      (formValues.applicationKind === "RESUBMITTED"
+                        ? "Resubmitted Application"
+                        : formValues.applicationKind === "NEW"
+                        ? "New Application"
+                        : formValues.applicationKind)
+                  )}
+                </Typography>
               </Grid>
               <Grid item xs={6}>
                 <Typography fontWeight="bold" variant="body2">

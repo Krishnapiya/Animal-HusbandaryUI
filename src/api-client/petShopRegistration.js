@@ -25,7 +25,12 @@ export const getPetShopFacility = async (petShopDetailId) => {
     return addItem( "/petshop/auth/awb/pet-shop-proposed-animal/save", { payLoad: payload,  } );};
 
     export const getAnimalSpeciesDropdown = async () => {
-  return getItemList( "/admin/auth/master/animal-species/list/all",{dropDown: true,  pageNo: 0, pageSize: 500, } );};
+  return getItemList("/admin/auth/master/animal-species/list/all", { pageNo: 0, pageSize: 500 });
+};
+
+export const getAnimalSpeciesBreeds = async (speciesId) => {
+  return getItemList(`/admin/auth/master/animal-species/${speciesId}/breeds`);
+};
 
 export const getPetShopProposedAnimals = async (applicationId) => {
   return getItemList( `/petshop/auth/awb/pet-shop-proposed-animal/draft/${applicationId}` );};
