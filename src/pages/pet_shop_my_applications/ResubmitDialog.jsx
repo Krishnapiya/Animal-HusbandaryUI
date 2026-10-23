@@ -1,9 +1,10 @@
 import PropTypes from "prop-types";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "material-react-toastify";
 import {
     uploadResubmissionDocument,
     resubmitApplication,
+    getPetShopInspection,
 } from "../../api-client/petShopRegistration";
 
 import {
@@ -31,6 +32,41 @@ const ResubmitDialog = ({ open, onClose, application }) => {
   const [remarks, setRemarks] = useState("");
 const [documents, setDocuments] = useState([]);
 const [, setUploading] = useState(false);
+const [rejectionReason, setRejectionReason] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!open || !application?.id) {
+      setRejectionReason("");
+      return undefined;
+    }
+
+    const loadRejectionReason = async () => {
+      const response = await getPetShopInspection(application.id);
+
+      if (cancelled || !response?.isSuccess) {
+        return;
+      }
+
+      const inspection =
+        response.data?.payLoad ??
+        response.data?.payload ??
+        response.data;
+
+      if (
+        String(inspection?.recommendation || "").toUpperCase() === "REJECTED"
+      ) {
+        setRejectionReason(inspection.inspectionRemarks || "");
+      }
+    };
+
+    loadRejectionReason();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, application?.id]);
 
   const handleClose = () => {
     setRemarks("");
@@ -166,7 +202,7 @@ const handleFileUpload = async (event) => {
           </Typography>
 
           {/* Rejection Remarks */}
-          {application?.remarks && (
+          {(rejectionReason || application?.remarks) && (
             <Paper
               variant="outlined"
               sx={{
@@ -180,11 +216,11 @@ const handleFileUpload = async (event) => {
                 color="error"
                 gutterBottom
               >
-                Rejection Remarks
+                Reason for rejection
               </Typography>
 
               <Typography>
-                {application.remarks}
+                {rejectionReason || application.remarks}
               </Typography>
             </Paper>
           )}

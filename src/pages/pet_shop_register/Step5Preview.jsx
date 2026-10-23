@@ -1,9 +1,9 @@
+import { useEffect, useState } from "react";
 import {
   Box,
   Button,
   Card,
   CardContent,
-  CardMedia,
   Grid,
   Paper,
   Table,
@@ -18,6 +18,8 @@ import DownloadIcon from "@mui/icons-material/Download";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import PropTypes from "prop-types";
+import { BASE_API_URL } from "../../api-client/apiCall";
+import { fetchApplicationDocumentBlob } from "../../api-client/petShopRegistration";
 
 const getFormattedValue = (value) => {
   if (value === null || value === undefined || value === "") {
@@ -60,6 +62,53 @@ const isImageFile = (fileName) =>
 
 const isPdfFile = (fileName) => /\.pdf$/i.test(String(fileName || ""));
 
+const DOCUMENT_TYPE_NAMES = {
+  1: "Identity Proof",
+  2: "Address Proof",
+  3: "Shop Photograph",
+  4: "Infrastructure Photograph",
+  5: "Affidavit",
+  9: "Applicant Signature",
+};
+
+const SIGNATURE_DOCUMENT_TYPE_ID = 9;
+
+const getDocumentTypeId = (document) =>
+  Number(
+    document?.documentTypeId ??
+      document?.documentType?.id ??
+      document?.documentTypeMaster?.id
+  );
+
+const getDocumentLabel = (document) => {
+  const typeName =
+    document?.documentTypeName ||
+    document?.documentType?.name ||
+    document?.label;
+
+  if (typeof typeName === "string" && typeName.trim()) {
+    return typeName.trim();
+  }
+
+  const typeId = getDocumentTypeId(document);
+
+  if (DOCUMENT_TYPE_NAMES[typeId]) {
+    return DOCUMENT_TYPE_NAMES[typeId];
+  }
+
+  return "Document";
+};
+
+const isSignatureDocument = (document) => {
+  const typeId = getDocumentTypeId(document);
+  const typeName = getDocumentLabel(document).toLowerCase();
+
+  return (
+    typeId === SIGNATURE_DOCUMENT_TYPE_ID ||
+    typeName.includes("signature")
+  );
+};
+
 const getDocumentName = (document) => {
   if (document?.file instanceof File) {
     return document.file.name;
@@ -73,8 +122,14 @@ const getDocumentName = (document) => {
   if (document?.filePath) {
     return document.filePath.split("/").pop();
   }
-  return "Identity Proof";
+  return "Document";
 };
+
+const encodeDocumentFilePath = (filePath) =>
+  String(filePath)
+    .split("/")
+    .map((segment) => encodeURIComponent(segment))
+    .join("/");
 
 const getDocumentViewUrl = (document) => {
   if (document?.file instanceof File) {
@@ -82,22 +137,190 @@ const getDocumentViewUrl = (document) => {
   }
 
   if (document?.filePath) {
-    return `http://localhost:8083/petshop/auth/application-document/view/${document.filePath}`;
+    const baseUrl = String(BASE_API_URL || "").replace(/\/?$/, "/");
+    return `${baseUrl}petshop/auth/application-document/view/${encodeDocumentFilePath(document.filePath)}`;
   }
 
   return "";
 };
 
-const getDocumentDownloadUrl = (document) => {
+const SupportingDocumentCard = ({ document }) => {
+  const [previewUrl, setPreviewUrl] = useState("");
+  const fileName = getDocumentName(document);
+  const mimeType = String(document?.mimeType || document?.file?.type || "");
+  const isImage = mimeType.startsWith("image/") || isImageFile(fileName);
+  const isPdf = mimeType.includes("pdf") || isPdfFile(fileName);
+  const hasFile = document?.file instanceof File || Boolean(document?.filePath);
+
+  useEffect(() => {
+    let cancelled = false;
+    let objectUrl = "";
+
+    const loadPreview = async () => {
+      if (document?.file instanceof File && (isImage || isPdf)) {
+        objectUrl = URL.createObjectURL(document.file);
+
+        if (!cancelled) {
+          setPreviewUrl(objectUrl);
+        }
+
+        return;
+      }
+
+      if (!document?.filePath || (!isImage && !isPdf)) {
+        setPreviewUrl("");
+        return;
+      }
+
+      try {
+        const blob = await fetchApplicationDocumentBlob(document.filePath);
+
+        if (cancelled || !blob || blob.size === 0) {
+          return;
+        }
+
+        objectUrl = URL.createObjectURL(blob);
+
+        if (!cancelled) {
+          setPreviewUrl(objectUrl);
+        }
+      } catch (error) {
+        console.error("Failed to load document preview", error);
+
+        if (!cancelled) {
+          setPreviewUrl("");
+        }
+      }
+    };
+
+    loadPreview();
+
+    return () => {
+      cancelled = true;
+
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
+  }, [document, isImage, isPdf]);
+
+  const openPreview = () => {
+    if (previewUrl) {
+      window.open(previewUrl, "_blank", "noopener,noreferrer");
+    }
+  };
+
+  return (
+    <Card
+      sx={{
+        height: "100%",
+        border: "1px solid #000",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      {previewUrl && isImage ? (
+        <Box
+          component="img"
+          src={previewUrl}
+          alt={fileName}
+          sx={{
+            height: 180,
+            width: "100%",
+            objectFit: "contain",
+            backgroundColor: "#f5f5f5",
+          }}
+        />
+      ) : previewUrl && isPdf ? (
+        <Box
+          component="iframe"
+          title={fileName}
+          src={previewUrl}
+          sx={{
+            height: 180,
+            width: "100%",
+            border: 0,
+            backgroundColor: "#f5f5f5",
+          }}
+        />
+      ) : (
+        <Box
+          sx={{
+            height: 180,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: "#f5f5f5",
+          }}
+        >
+          {isPdf ? (
+            <PictureAsPdfIcon sx={{ fontSize: 48 }} />
+          ) : (
+            <Typography>{hasFile ? "No preview available" : "Not Uploaded"}</Typography>
+          )}
+        </Box>
+      )}
+
+      <CardContent sx={{ flexGrow: 1 }}>
+        <Typography fontWeight="bold" gutterBottom>
+          {getDocumentLabel(document)}
+        </Typography>
+        <Typography sx={{ mb: 2, wordBreak: "break-word" }}>
+          {hasFile ? fileName : "Not Uploaded"}
+        </Typography>
+        <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+          <Button
+            size="small"
+            variant="outlined"
+            startIcon={<VisibilityIcon />}
+            onClick={openPreview}
+            disabled={!previewUrl}
+          >
+            View
+          </Button>
+          <Button
+            size="small"
+            variant="outlined"
+            startIcon={<DownloadIcon />}
+            onClick={() => downloadDocumentFile(document)}
+            disabled={!hasFile}
+          >
+            Download
+          </Button>
+        </Box>
+      </CardContent>
+    </Card>
+  );
+};
+
+SupportingDocumentCard.propTypes = {
+  document: PropTypes.object,
+};
+
+const downloadDocumentFile = async (document) => {
+  const fileName = getDocumentName(document);
+
   if (document?.file instanceof File) {
-    return getDocumentViewUrl(document);
+    const objectUrl = URL.createObjectURL(document.file);
+    const link = window.document.createElement("a");
+    link.href = objectUrl;
+    link.download = fileName;
+    link.click();
+    URL.revokeObjectURL(objectUrl);
+    return;
   }
 
-  if (document?.filePath) {
-    return `http://localhost:8083/petshop/auth/application-document/view/${document.filePath}`;
+  if (!document?.filePath) {
+    return;
   }
 
-  return "";
+  const blob = await fetchApplicationDocumentBlob(document.filePath);
+  const objectUrl = URL.createObjectURL(blob);
+  const link = window.document.createElement("a");
+  link.href = objectUrl;
+  link.download = fileName;
+  link.click();
+  URL.revokeObjectURL(objectUrl);
 };
 
 const Step5Preview = ({
@@ -150,6 +373,75 @@ const Step5Preview = ({
           .filter(Boolean)
           .join(", ")
       : getFormattedValue(facilityForm.restDay);
+
+  const signatureDocument = supportingDocuments.find(isSignatureDocument);
+  const signatureFile =
+    signatureDocument?.file instanceof File ? signatureDocument.file : null;
+  const signatureFilePath = signatureDocument?.filePath || "";
+  const signatureFileName =
+    signatureDocument?.fileName ||
+    signatureDocument?.filename ||
+    signatureFile?.name ||
+    signatureFilePath;
+  const [signaturePreviewUrl, setSignaturePreviewUrl] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    let objectUrl = "";
+
+    const loadSignature = async () => {
+      if (signatureFile) {
+        objectUrl = URL.createObjectURL(signatureFile);
+
+        if (!cancelled) {
+          setSignaturePreviewUrl(objectUrl);
+        }
+
+        return;
+      }
+
+      const looksLikeImage =
+        isImageFile(signatureFileName) || isImageFile(signatureFilePath);
+
+      if (signatureFilePath && looksLikeImage) {
+        try {
+          const blob = await fetchApplicationDocumentBlob(signatureFilePath);
+
+          if (cancelled) {
+            return;
+          }
+
+          objectUrl = URL.createObjectURL(blob);
+          setSignaturePreviewUrl(objectUrl);
+          return;
+        } catch (error) {
+          console.error("Failed to load signature image", error);
+
+          if (!cancelled) {
+            setSignaturePreviewUrl(
+              getDocumentViewUrl({ filePath: signatureFilePath })
+            );
+          }
+
+          return;
+        }
+      }
+
+      if (!cancelled) {
+        setSignaturePreviewUrl("");
+      }
+    };
+
+    loadSignature();
+
+    return () => {
+      cancelled = true;
+
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
+  }, [signatureFile, signatureFilePath, signatureFileName]);
 
   return (
     <Card
@@ -685,7 +977,27 @@ maxWidth: "210mm",
             </Grid>
             <Grid item xs={4}>
               <Typography fontWeight="bold">Signature of Applicant</Typography>
-              <Box sx={{ borderBottom: "1px solid #000", minHeight: 40 }} />
+              <Box
+                sx={{
+                  borderBottom: "1px solid #000",
+                  minHeight: 70,
+                  display: "flex",
+                  alignItems: "flex-end",
+                }}
+              >
+                {signaturePreviewUrl ? (
+                  <Box
+                    component="img"
+                    src={signaturePreviewUrl}
+                    alt="Applicant Signature"
+                    sx={{
+                      width: 160,
+                      height: 60,
+                      objectFit: "contain",
+                    }}
+                  />
+                ) : null}
+              </Box>
             </Grid>
           </Grid>
         </Box>
@@ -823,107 +1135,11 @@ maxWidth: "210mm",
 
           <Grid container spacing={2}>
             {supportingDocuments.length > 0 ? (
-              supportingDocuments.map((document, index) => {
-                const fileName = getDocumentName(document);
-                const viewUrl = getDocumentViewUrl(document);
-                const downloadUrl = getDocumentDownloadUrl(document);
-                const hasFile =
-                  (document?.file instanceof File) || Boolean(document?.filePath);
-
-                const imagePreview =
-                  document?.file instanceof File &&
-                  isImageFile(document.file.name)
-                    ? viewUrl
-                    : document?.filePath && isImageFile(document.filePath)
-                    ? viewUrl
-                    : null;
-
-                const isPdf =
-                  (document?.file instanceof File &&
-                    isPdfFile(document.file.name)) ||
-                  (document?.filePath && isPdfFile(document.filePath));
-
-                return (
-                  <Grid item xs={12} md={6} key={index}>
-                    <Card
-                      sx={{
-                        height: "100%",
-                        border: "1px solid #000",
-                        display: "flex",
-                        flexDirection: "column",
-                        justifyContent: "space-between",
-                      }}
-                    >
-                      {imagePreview ? (
-                        <CardMedia
-                          component="img"
-                          image={imagePreview}
-                          alt={fileName}
-                          sx={{
-                            height: 180,
-                            objectFit: "contain",
-                            backgroundColor: "#f5f5f5",
-                          }}
-                        />
-                      ) : (
-                        <Box
-                          sx={{
-                            height: 180,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            backgroundColor: "#f5f5f5",
-                          }}
-                        >
-                          {isPdf ? (
-                            <PictureAsPdfIcon sx={{ fontSize: 48 }} />
-                          ) : (
-                            <Typography>Not Uploaded</Typography>
-                          )}
-                        </Box>
-                      )}
-
-                      <CardContent sx={{ flexGrow: 1 }}>
-                        <Typography fontWeight="bold" gutterBottom>
-                          {document?.documentTypeName ||
- document?.documentType ||
- document?.label ||
- "Identity Proof"}
-                        </Typography>
-                        <Typography sx={{ mb: 2 }}>
-                          {hasFile ? fileName : "Not Uploaded"}
-                        </Typography>
-
-                        <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-                          <Button
-                            size="small"
-                            variant="outlined"
-                            startIcon={<VisibilityIcon />}
-                            href={hasFile ? viewUrl : undefined}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            disabled={!hasFile}
-                          >
-                            View
-                          </Button>
-                          <Button
-                            size="small"
-                            variant="outlined"
-                            startIcon={<DownloadIcon />}
-                            href={hasFile ? downloadUrl : undefined}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            download={hasFile}
-                            disabled={!hasFile}
-                          >
-                            Download
-                          </Button>
-                        </Box>
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                );
-              })
+              supportingDocuments.map((document, index) => (
+                <Grid item xs={12} md={6} key={index}>
+                  <SupportingDocumentCard document={document} />
+                </Grid>
+              ))
             ) : (
               <Grid item xs={12}>
                 <Card sx={{ border: "1px solid #000" }}>

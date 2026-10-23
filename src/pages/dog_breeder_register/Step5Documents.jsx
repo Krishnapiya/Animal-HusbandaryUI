@@ -20,12 +20,12 @@ import { toast } from "material-react-toastify";
 import { viewApplicationDocument } from "../../api-client/applicationDocument";
 
 export const dogBreederDocumentList = [
-  { id: 22, name: "Identity Proof", mandatory: true },
-  { id: 23, name: "Address Proof", mandatory: true },
-  { id: 24, name: "Establishment Photograph", mandatory: true },
-  { id: 25, name: "Infrastructure Photograph", mandatory: true },
-  { id: 26, name: "Affidavit", mandatory: true },
-  { id: 21, name: "Applicant Signature", mandatory: true },
+  { id: 9, name: "Identity Proof", mandatory: true },
+  { id: 10, name: "Address Proof", mandatory: true },
+  { id: 11, name: "Establishment Photograph", mandatory: true },
+  { id: 12, name: "Infrastructure Photograph", mandatory: true },
+  { id: 13, name: "Affidavit", mandatory: true },
+  { id: 14, name: "Applicant Signature", mandatory: true },
 ];
 
 const MAX_FILE_SIZE = 6 * 1024 * 1024; // 6 MB
@@ -236,7 +236,7 @@ const Step5Documents = ({
       return;
     }
 
-    if (documentId === 21 && !selectedFile.type.startsWith("image/")) {
+    if (documentId === 14 && !selectedFile.type.startsWith("image/")) {
       toast.error("Please upload a JPG or PNG format signature.");
       event.target.value = "";
       return;
@@ -312,7 +312,7 @@ const Step5Documents = ({
           {dogBreederDocumentList.map((document) => {
             const docObj = getDocumentFile(document.id);
             const fileName = docObj?.fileName || docObj?.name || "";
-            const isSignature = document.id === 21;
+            const isSignature = document.id === 14;
             const savedDraft = isSavedDocument(document.id);
 
             return (

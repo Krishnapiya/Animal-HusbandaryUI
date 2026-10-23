@@ -142,8 +142,18 @@ const Step5Documents = ({
             const currentId = Number(item?.id ?? 0);
 
             if (!existing || currentId >= existingId) {
+              const documentType = documentList.find(
+                (entry) => Number(entry.id) === Number(documentTypeId)
+              );
+
               acc[documentTypeId] = {
                 ...item,
+                documentTypeId: Number(documentTypeId),
+                documentTypeName:
+                  item.documentTypeName ||
+                  item.documentType?.name ||
+                  documentType?.name ||
+                  "",
                 name: item.fileName || item.name || "",
                 isDraft: true,
               };
@@ -204,10 +214,16 @@ const Step5Documents = ({
     return;
   }
 
+  const documentType = documentList.find(
+    (entry) => Number(entry.id) === Number(documentId)
+  );
+
   setDocuments((prev) => ({
     ...prev,
     [documentId]: {
       ...(prev[documentId] || {}),
+      documentTypeId: Number(documentId),
+      documentTypeName: documentType?.name || "",
       file,
       name: file.name,
       fileName: file.name,
@@ -258,12 +274,24 @@ const Step5Documents = ({
 
         const savedDocument = getPayload(response);
 
+        const documentType = documentList.find(
+          (entry) => Number(entry.id) === Number(documentId)
+        );
+
         setDocuments((prev) => ({
           ...prev,
           [documentId]: {
             ...document,
             ...savedDocument,
             id: savedDocument.id ?? document.id,
+            documentTypeId: Number(
+              savedDocument?.documentTypeId || documentId
+            ),
+            documentTypeName:
+              savedDocument?.documentTypeName ||
+              document.documentTypeName ||
+              documentType?.name ||
+              "",
             file: null,
             name: savedDocument?.fileName || file.name,
             fileName: savedDocument?.fileName || file.name,

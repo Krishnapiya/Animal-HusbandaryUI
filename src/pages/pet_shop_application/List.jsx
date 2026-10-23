@@ -12,9 +12,15 @@ import Button from "@mui/material/Button";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
+import Box from "@mui/material/Box";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import InspectionReportSection from "./InspectionReportSection";
 
 const List = (props) => {
   const [historyApplicationId, setHistoryApplicationId] = useState("");
+  const [reportApplicationId, setReportApplicationId] = useState("");
 
   return (
     <>
@@ -123,12 +129,18 @@ if (
       status === "rejected by cvo"
     ) {
       return (
-        <>
+        <Box display="flex" gap={1} justifyContent="center" flexWrap="wrap">
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={() => setReportApplicationId(row.id)}
+          >
+            VIEW REPORT
+          </Button>
           <Button
             variant="contained"
             color="success"
             size="small"
-            sx={{ mr: 1 }}
             onClick={() => props.handleApproveClick(row.id)}
           >
             APPROVE
@@ -142,7 +154,7 @@ if (
           >
             REJECT
           </Button>
-        </>
+        </Box>
       );
     }
 
@@ -184,6 +196,17 @@ if (
         applicationId={historyApplicationId}
         setApplicationId={setHistoryApplicationId}
       />
+      <Dialog
+        open={Boolean(reportApplicationId)}
+        onClose={() => setReportApplicationId("")}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Inspection Report</DialogTitle>
+        <DialogContent>
+          <InspectionReportSection applicationId={reportApplicationId} />
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

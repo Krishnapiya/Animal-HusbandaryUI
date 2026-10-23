@@ -170,7 +170,12 @@ const PetShopStatusHistoryDialog = (props) => {
                   </Typography>
                   {item.remarks ? (
                     <Typography variant="body2" sx={{ mt: 1 }}>
-                      Remarks: {item.remarks}
+                      {String(item.toStatus || item.actionType || "")
+                        .toUpperCase()
+                        .includes("REJECT")
+                        ? "Reason for rejection: "
+                        : "Remarks: "}
+                      {item.remarks}
                     </Typography>
                   ) : null}
                 </Paper>

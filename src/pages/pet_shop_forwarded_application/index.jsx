@@ -15,6 +15,7 @@ import {
 } from "../../config/routes";
 import useCan from "../../hooks/useCan";
 import { useState } from "react";
+import { toast } from "material-react-toastify";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import Tabs from "@mui/material/Tabs";
@@ -30,6 +31,7 @@ const [selectedApplicationId, setSelectedApplicationId] = useState(null);
 const [openReportDialog, setOpenReportDialog] = useState(false);
 const [selectedReportApplicationId, setSelectedReportApplicationId] =
   useState(null);
+const [listRefreshKey, setListRefreshKey] = useState(0);
 
 const handleScheduleInspection = (id) => {
   setSelectedApplicationId(id);
@@ -42,17 +44,27 @@ const handleCloseScheduleDialog = () => {
 };
 const handleInspectionSubmit = async (inspectionData) => {
   try {
-    await scheduleInspection({
+    const response = await scheduleInspection({
       applicationId: inspectionData.applicationId,
       inspectionDate: inspectionData.inspectionDate,
       inspectionRemarks: inspectionData.remarks,
     });
 
-    handleCloseScheduleDialog();
+    if (!response?.isSuccess) {
+      toast.error(
+        response?.data?.message ||
+          response?.data?.detail ||
+          "Unable to schedule inspection"
+      );
+      return;
+    }
 
-    window.location.reload();
+    toast.success("Inspection scheduled");
+    handleCloseScheduleDialog();
+    setListRefreshKey((current) => current + 1);
   } catch (error) {
     console.error(error);
+    toast.error("Unable to schedule inspection");
   }
 };
 const handleUploadReport = (id) => {
@@ -75,8 +87,7 @@ const handleReportSubmit = async (reportData) => {
     });
 
     handleCloseReportDialog();
-
-    window.location.reload();
+    setListRefreshKey((current) => current + 1);
   } catch (error) {
     console.error(error);
   }
@@ -148,6 +159,7 @@ return (
       api_url={PET_SHOP_REGISTRATION_APPLICATION_API_URL}
       list_url={PET_SHOP_FORWARDED_APPLICATION_LIST_URL}
       selectedStatus={selectedStatus}
+      refreshKey={listRefreshKey}
       alertString="Pet Shop Registration"
       tableColumns={tableColumns}
       includeFilter={canList}

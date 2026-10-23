@@ -11,6 +11,7 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import DownloadIcon from "@mui/icons-material/Download";
 
 import Step5Preview from "../pet_shop_register/Step5Preview";
+import InspectionReportSection from "./InspectionReportSection";
 import { getHeader } from "../../utils";
 import { PET_SHOP_REGISTRATION_APPLICATION_VIEW_URL } from "../../config/endpoints";
 
@@ -111,7 +112,7 @@ const preparePreviewData = (application) => {
   };
 };
 
-const Form = ({ rowID, onClose }) => {
+const Form = ({ rowID, onClose, handleCloseFormModal }) => {
   const [application, setApplication] = useState(null);
   const [loading, setLoading] = useState(false);
   const previewRef = useRef(null);
@@ -186,9 +187,11 @@ const handleDownloadPdf = async () => {
   }
 };
 
+  const closeView = onClose || handleCloseFormModal;
+
   const handleBack = () => {
-    if (onClose) {
-      onClose();
+    if (closeView) {
+      closeView();
     }
   };
 
@@ -206,7 +209,10 @@ const handleDownloadPdf = async () => {
             <Typography>No application found.</Typography>
           </Box>
         ) : (
-          <Step5Preview {...previewData} />
+          <>
+            <Step5Preview {...previewData} />
+            <InspectionReportSection applicationId={rowID} />
+          </>
         )}
       </Box>
 
@@ -221,9 +227,9 @@ const handleDownloadPdf = async () => {
           startIcon={<ArrowBackIcon />}
           variant="outlined"
           onClick={handleBack}
-          disabled={!onClose}
+          disabled={!closeView}
         >
-          Back
+          Close
         </Button>
 
         <Button
@@ -242,6 +248,7 @@ const handleDownloadPdf = async () => {
 Form.propTypes = {
   rowID: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   onClose: PropTypes.func,
+  handleCloseFormModal: PropTypes.func,
 };
 
 export default Form;

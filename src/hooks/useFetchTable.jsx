@@ -8,7 +8,8 @@ const BASE_API_URL = import.meta.env.VITE_APP_BASE_API_URL;
 
 const useFetchTable = (
   apiURL,
-  selectedStatus = ""
+  selectedStatus = "",
+  refreshKey = 0
 ) => {
   const [rows, setRows] = useState([]);
   const [totalRows, setTotalRows] = useState(0);
@@ -164,6 +165,7 @@ useEffect(() => {
   searchParams,
   apiURL,
   selectedStatus,
+  refreshKey,
 ]);
 useEffect(() => {
     fetchData();

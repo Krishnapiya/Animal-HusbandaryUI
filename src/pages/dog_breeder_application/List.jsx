@@ -17,13 +17,9 @@ import Button from "@mui/material/Button";
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 import Typography from "@mui/material/Typography";
-import Grid from "@mui/material/Grid2";
-import Divider from "@mui/material/Divider";
 import CircularProgress from "@mui/material/CircularProgress";
 import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
-import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
 
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import DownloadIcon from "@mui/icons-material/Download";
@@ -32,12 +28,12 @@ import EventIcon from "@mui/icons-material/Event";
 import { toast } from "material-react-toastify";
 
 import { getUserAttributes } from "../../utils";
+import InspectionReportDialog from "./InspectionReportDialog";
+import Step6Preview from "../dog_breeder_register/Step6Preview";
 
 import {
   getAdminDogBreederApplicationPreview,
   downloadDogBreederApplication,
-  viewDogBreederDocument,
-  downloadDogBreederDocument,
   forwardDogBreederApplication,
   saveDogBreederInspection,
   uploadDogBreederInspectionReport,
@@ -164,46 +160,6 @@ const displayValue = (value) => {
 
 const getArray = (value) =>
   Array.isArray(value) ? value : [];
-
-const getDocumentId = (doc) =>
-  doc?.id ??
-  doc?.documentId ??
-  doc?.applicationDocumentId ??
-  doc?.application_document_id ??
-  doc?.applicationDocument?.id ??
-  null;
-
-const getDocumentTypeLabel = (doc) =>
-  doc?.documentTypeName ??
-  doc?.document_type_name ??
-  doc?.applicationDocumentTypeName ??
-  doc?.application_document_type_name ??
-  doc?.applicationDocumentType?.name ??
-  doc?.documentType?.name ??
-  doc?.documentType?.label ??
-  doc?.documentType ??
-  "";
-
-const getDocumentFileName = (doc) =>
-  displayValue(
-    doc?.fileName ??
-      doc?.filename ??
-      doc?.originalFileName ??
-      doc?.original_file_name ??
-      doc?.storedFileName ??
-      doc?.stored_file_name ??
-      doc?.name
-  );
-
-const getDocumentPreviewUrl = (doc) =>
-  doc?.fileUrl ??
-  doc?.filePath ??
-  doc?.url ??
-  (doc?.base64
-    ? doc.base64.startsWith("data:")
-      ? doc.base64
-      : `data:image/jpeg;base64,${doc.base64}`
-    : null);
 
 /* =========================================================
    STATUS HELPERS
@@ -387,66 +343,6 @@ const getLoggedInRoles = () => {
 };
 
 /* =========================================================
-   PREVIEW ROW
-   ========================================================= */
-
-const PreviewRow = ({
-  label,
-  value,
-}) => (
-  <Grid size={{ xs: 12, md: 6 }}>
-    <Typography
-      variant="caption"
-      color="text.secondary"
-    >
-      {label}
-    </Typography>
-
-    <Typography
-      sx={{
-        fontWeight: 600,
-        mb: 1,
-        whiteSpace: "pre-wrap",
-        wordBreak: "break-word",
-      }}
-    >
-      {displayValue(value)}
-    </Typography>
-  </Grid>
-);
-
-PreviewRow.propTypes = {
-  label: PropTypes.string.isRequired,
-  value: PropTypes.any,
-};
-
-/* =========================================================
-   SECTION TITLE
-   ========================================================= */
-
-const SectionTitle = ({
-  children,
-}) => (
-  <>
-    <Typography
-      variant="h6"
-      sx={{
-        mt: 3,
-        mb: 1,
-      }}
-    >
-      {children}
-    </Typography>
-
-    <Divider sx={{ mb: 2 }} />
-  </>
-);
-
-SectionTitle.propTypes = {
-  children: PropTypes.node,
-};
-
-/* =========================================================
    MAIN LIST
    ========================================================= */
 
@@ -514,6 +410,11 @@ const List = (props) => {
   ] = useState(false);
 
   const [
+    reportApplicationId,
+    setReportApplicationId,
+  ] = useState(null);
+
+  const [
     scheduledInspectionIds,
     setScheduledInspectionIds,
   ] = useState(new Set());
@@ -577,7 +478,8 @@ const List = (props) => {
     loggedInRoles.includes("ADMIN");
 
   const isCvo =
-    loggedInRoles.includes("CVO");
+    loggedInRoles.includes("CVO") ||
+    loggedInRoles.includes("DISTRICT_OFFICER");
 
   /* =======================================================
      ROWS
@@ -811,15 +713,29 @@ const List = (props) => {
             applicationId
           );
 
+        const contentType =
+          response.headers?.[
+            "content-type"
+          ] || "application/zip";
+
+        const disposition =
+          response.headers?.[
+            "content-disposition"
+          ] || "";
+
+        const fileNameMatch =
+          disposition.match(
+            /filename="?([^"]+)"?/i
+          );
+
+        const isPdf =
+          contentType.includes("pdf");
+
         const blob =
           new Blob(
             [response.data],
             {
-              type:
-                response.headers?.[
-                  "content-type"
-                ] ||
-                "application/pdf",
+              type: contentType,
             }
           );
 
@@ -833,6 +749,10 @@ const List = (props) => {
             row?.applicationNumber
           );
 
+        const extension = isPdf
+          ? "pdf"
+          : "zip";
+
         const link =
           document.createElement(
             "a"
@@ -841,9 +761,10 @@ const List = (props) => {
         link.href = url;
 
         link.download =
-          applicationNumber !== "-"
-            ? `${applicationNumber}.pdf`
-            : `dog-breeder-application-${applicationId}.pdf`;
+          fileNameMatch?.[1] ||
+          (applicationNumber !== "-"
+            ? `${applicationNumber}.${extension}`
+            : `dog-breeder-application-${applicationId}.${extension}`);
 
         document.body.appendChild(
           link
@@ -868,168 +789,6 @@ const List = (props) => {
 
         toast.error(
           "Failed to download application"
-        );
-      }
-    };
-
-  /* =======================================================
-     OPEN BLOB
-     ======================================================= */
-
-  const openBlob = (
-    response,
-    fileName,
-    isDownload = false,
-    mimeType =
-      "application/octet-stream"
-  ) => {
-    const blob =
-      new Blob(
-        [response.data],
-        {
-          type:
-            response.headers?.[
-              "content-type"
-            ] ||
-            mimeType,
-        }
-      );
-
-    const url =
-      URL.createObjectURL(
-        blob
-      );
-
-    if (isDownload) {
-      const link =
-        document.createElement(
-          "a"
-        );
-
-      link.href = url;
-
-      const safeFileName =
-        displayValue(
-          fileName
-        );
-
-      link.download =
-        safeFileName !== "-"
-          ? safeFileName
-          : "document";
-
-      document.body.appendChild(
-        link
-      );
-
-      link.click();
-
-      document.body.removeChild(
-        link
-      );
-    } else {
-      window.open(
-        url,
-        "_blank",
-        "noopener,noreferrer"
-      );
-    }
-
-    setTimeout(() => {
-      URL.revokeObjectURL(
-        url
-      );
-    }, 60000);
-  };
-
-  /* =======================================================
-     VIEW DOCUMENT
-     ======================================================= */
-
-  const handleViewDocument =
-    async (
-      documentItem
-    ) => {
-      const documentId =
-        getDocumentId(
-          documentItem
-        );
-
-      if (!documentId) {
-        toast.error(
-          "Document ID missing"
-        );
-        return;
-      }
-
-      try {
-        const response =
-          await viewDogBreederDocument(
-            documentId
-          );
-
-        openBlob(
-          response,
-          documentItem.fileName ||
-            documentItem.name,
-          false,
-          documentItem.mimeType ||
-            "application/pdf"
-        );
-      } catch (error) {
-        console.error(
-          "Document view error:",
-          error
-        );
-
-        toast.error(
-          "Failed to view document"
-        );
-      }
-    };
-
-  /* =======================================================
-     DOWNLOAD DOCUMENT
-     ======================================================= */
-
-  const handleDownloadDocument =
-    async (
-      documentItem
-    ) => {
-      const documentId =
-        getDocumentId(
-          documentItem
-        );
-
-      if (!documentId) {
-        toast.error(
-          "Document ID missing"
-        );
-        return;
-      }
-
-      try {
-        const response =
-          await downloadDogBreederDocument(
-            documentId
-          );
-
-        openBlob(
-          response,
-          documentItem.fileName ||
-            documentItem.name,
-          true,
-          documentItem.mimeType ||
-            "application/octet-stream"
-        );
-      } catch (error) {
-        console.error(
-          "Document download error:",
-          error
-        );
-
-        toast.error(
-          "Failed to download document"
         );
       }
     };
@@ -1628,8 +1387,17 @@ const List = (props) => {
     {};
 
   const facility =
-    previewData?.facilityDetails ||
-    registration?.facilityDetails ||
+    previewData?.facilityDetails &&
+    typeof previewData.facilityDetails === "object"
+      ? previewData.facilityDetails
+      : registration?.facilityDetails &&
+          typeof registration.facilityDetails === "object"
+        ? registration.facilityDetails
+        : {};
+
+  const declaration =
+    previewData?.declarationDetails ||
+    registration?.declarationDetails ||
     {};
 
   const breeds =
@@ -1654,54 +1422,6 @@ const List = (props) => {
       : getArray(
           registration?.breeds
         );
-
-  const getBreedName = (
-    breed
-  ) => {
-    if (!breed) {
-      return "-";
-    }
-
-    return displayValue(
-      breed?.breedName
-    ) !== "-"
-      ? displayValue(
-          breed?.breedName
-        )
-      : displayValue(
-          breed?.name
-        ) !== "-"
-      ? displayValue(
-          breed?.name
-        )
-      : displayValue(
-          breed?.breed?.breedName
-        ) !== "-"
-      ? displayValue(
-          breed?.breed?.breedName
-        )
-      : displayValue(
-          breed?.breed?.name
-        );
-  };
-
-  const getMaleCount = (
-    breed
-  ) =>
-    breed?.maleCount ??
-    breed?.male ??
-    breed?.numberOfMaleDogs ??
-    breed?.maleDogs ??
-    0;
-
-  const getFemaleCount = (
-    breed
-  ) =>
-    breed?.femaleCount ??
-    breed?.female ??
-    breed?.numberOfFemaleDogs ??
-    breed?.femaleDogs ??
-    0;
 
   const documents =
     getArray(
@@ -2074,70 +1794,113 @@ const List = (props) => {
                         showForwardAction && (
                           <>
                             {applicationApproved ? (
-                              <Button
-                                variant="contained"
-                                size="small"
-                                disabled
-                                sx={{
-                                  "&.Mui-disabled":
-                                    {
-                                      backgroundColor:
-                                        "#e8f5e9",
-                                      color:
-                                        "#2e7d32",
-                                      fontWeight:
-                                        "bold",
-                                    },
-                                }}
-                              >
-                                APPROVED
-                              </Button>
+                              <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                                <Button
+                                  variant="outlined"
+                                  size="small"
+                                  onClick={() =>
+                                    setReportApplicationId(getApplicationId(row))
+                                  }
+                                >
+                                  VIEW REPORT
+                                </Button>
+                                <Button
+                                  variant="contained"
+                                  size="small"
+                                  disabled
+                                  sx={{
+                                    "&.Mui-disabled":
+                                      {
+                                        backgroundColor:
+                                          "#e8f5e9",
+                                        color:
+                                          "#2e7d32",
+                                        fontWeight:
+                                          "bold",
+                                      },
+                                  }}
+                                >
+                                  APPROVED
+                                </Button>
+                              </Box>
                             ) : applicationRejected ? (
-                              <Button
-                                variant="contained"
-                                size="small"
-                                disabled
-                                sx={{
-                                  "&.Mui-disabled":
-                                    {
-                                      backgroundColor:
-                                        "#ffebee",
-                                      color:
-                                        "#d32f2f",
-                                      fontWeight:
-                                        "bold",
-                                    },
-                                }}
-                              >
-                                REJECTED
-                              </Button>
+                              <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                                <Button
+                                  variant="outlined"
+                                  size="small"
+                                  onClick={() =>
+                                    setReportApplicationId(getApplicationId(row))
+                                  }
+                                >
+                                  VIEW REPORT
+                                </Button>
+                                <Button
+                                  variant="contained"
+                                  size="small"
+                                  disabled
+                                  sx={{
+                                    "&.Mui-disabled":
+                                      {
+                                        backgroundColor:
+                                          "#ffebee",
+                                        color:
+                                          "#d32f2f",
+                                        fontWeight:
+                                          "bold",
+                                      },
+                                  }}
+                                >
+                                  REJECTED
+                                </Button>
+                              </Box>
                             ) : inspectionRejected ? (
-                              <Button
-                                variant="contained"
-                                size="small"
-                                disabled
-                                sx={{
-                                  "&.Mui-disabled":
-                                    {
-                                      backgroundColor:
-                                        "#ffebee",
-                                      color:
-                                        "#d32f2f",
-                                      fontWeight:
-                                        "bold",
-                                    },
-                                }}
-                              >
-                                REJECTED BY CVO
-                              </Button>
+                              <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                                <Button
+                                  variant="outlined"
+                                  size="small"
+                                  onClick={() =>
+                                    setReportApplicationId(getApplicationId(row))
+                                  }
+                                >
+                                  VIEW REPORT
+                                </Button>
+                                <Button
+                                  variant="contained"
+                                  size="small"
+                                  disabled
+                                  sx={{
+                                    "&.Mui-disabled":
+                                      {
+                                        backgroundColor:
+                                          "#ffebee",
+                                        color:
+                                          "#d32f2f",
+                                        fontWeight:
+                                          "bold",
+                                      },
+                                  }}
+                                >
+                                  REJECTED BY CVO
+                                </Button>
+                              </Box>
                             ) : inspectionVerified ? (
                               <Box
                                 sx={{
                                   display:
                                     "flex",
                                   gap: 1,
+                                  flexWrap: "wrap",
                                 }}
                               >
+                                <Button
+                                  variant="outlined"
+                                  size="small"
+                                  onClick={() =>
+                                    setReportApplicationId(getApplicationId(row))
+                                  }
+                                >
+                                  VIEW REPORT
+                                </Button>
                                 <Button
                                   variant="contained"
                                   size="small"
@@ -2678,7 +2441,7 @@ const List = (props) => {
         onClose={
           handleClosePreview
         }
-        maxWidth="md"
+        maxWidth="lg"
         fullWidth
       >
         <DialogTitle>
@@ -2696,400 +2459,20 @@ const List = (props) => {
             <Box
               sx={{
                 display: "flex",
-                justifyContent:
-                  "center",
+                justifyContent: "center",
                 my: 4,
               }}
             >
               <CircularProgress />
             </Box>
           ) : (
-            <>
-              {/* REGISTRATION DETAILS */}
-
-              <SectionTitle>
-                Registration Details
-              </SectionTitle>
-
-              <Grid
-                container
-                spacing={2}
-              >
-                <PreviewRow
-                  label="Application Number"
-                  value={
-                    registration?.applicationNumber
-                  }
-                />
-
-                <PreviewRow
-                  label="District"
-                  value={
-                    registration?.districtName ??
-                    registration?.district
-                  }
-                />
-
-                <PreviewRow
-                  label="Local Body Type"
-                  value={
-                    registration?.localBodyTypeName ??
-                    registration?.localBodyType
-                  }
-                />
-
-                <PreviewRow
-                  label="Local Body"
-                  value={
-                    registration?.localBodyName ??
-                    registration?.localBody
-                  }
-                />
-
-                <PreviewRow
-                  label="Establishment Name"
-                  value={
-                    registration?.establishmentName
-                  }
-                />
-
-                <PreviewRow
-                  label="Application Status"
-                  value={
-                    getStatusLabel(
-                      getCurrentStatus(
-                        previewData ||
-                          registration
-                      )
-                    )
-                  }
-                />
-              </Grid>
-
-              {/* BREEDER DETAILS */}
-
-              <SectionTitle>
-                Breeder Details
-              </SectionTitle>
-
-              <Grid
-                container
-                spacing={2}
-              >
-                <PreviewRow
-                  label="Breeder Name"
-                  value={
-                    breeder?.name ??
-                    breeder?.breederName
-                  }
-                />
-
-                <PreviewRow
-                  label="Mobile Number"
-                  value={
-                    breeder?.mobileNumber ??
-                    breeder?.phone
-                  }
-                />
-
-                <PreviewRow
-                  label="Email"
-                  value={
-                    breeder?.email
-                  }
-                />
-
-                <PreviewRow
-                  label="Address"
-                  value={
-                    breeder?.address
-                  }
-                />
-              </Grid>
-
-              {/* FACILITY DETAILS */}
-
-              <SectionTitle>
-                Facility Details
-              </SectionTitle>
-
-              <Grid
-                container
-                spacing={2}
-              >
-                <PreviewRow
-                  label="Facility Address"
-                  value={
-                    facility?.address ??
-                    facility?.facilityAddress
-                  }
-                />
-
-                <PreviewRow
-                  label="Total Area (sq ft)"
-                  value={
-                    facility?.totalArea
-                  }
-                />
-
-                <PreviewRow
-                  label="Number of Cages / Kennels"
-                  value={
-                    facility?.numberOfCages ??
-                    facility?.numberOfKennels
-                  }
-                />
-
-                <PreviewRow
-                  label="Veterinary Care Details"
-                  value={
-                    facility?.veterinaryCareDetails
-                  }
-                />
-              </Grid>
-
-              {/* BREED DETAILS */}
-
-              {breeds.length >
-                0 && (
-                <>
-                  <SectionTitle>
-                    Breed Details
-                  </SectionTitle>
-
-                  <Grid
-                    container
-                    spacing={2}
-                  >
-                    {breeds.map(
-                      (
-                        breed,
-                        idx
-                      ) => (
-                        <PreviewRow
-                          key={
-                            breed?.id ??
-                            idx
-                          }
-                          label={`Breed ${
-                            idx + 1
-                          }`}
-                          value={`${getBreedName(
-                            breed
-                          )} (Male: ${displayValue(
-                            getMaleCount(
-                              breed
-                            )
-                          )}, Female: ${displayValue(
-                            getFemaleCount(
-                              breed
-                            )
-                          )})`}
-                        />
-                      )
-                    )}
-                  </Grid>
-                </>
-              )}
-
-              {/* DOCUMENTS */}
-
-              {documents.length >
-                0 && (
-                <>
-                  <SectionTitle>
-                    Uploaded Documents
-                  </SectionTitle>
-
-                  <Box
-                    sx={{
-                      display: "grid",
-                      gridTemplateColumns: {
-                        xs: "1fr",
-                        md: "1fr 1fr",
-                      },
-                      gap: 2,
-                    }}
-                  >
-                    {documents.map(
-                      (
-                        doc,
-                        idx
-                      ) => {
-                        const documentId =
-                          getDocumentId(
-                            doc
-                          );
-                        const documentType =
-                          getDocumentTypeLabel(
-                            doc
-                          );
-                        const fileName =
-                          getDocumentFileName(
-                            doc
-                          );
-                        const previewUrl =
-                          getDocumentPreviewUrl(
-                            doc
-                          );
-
-                        return (
-                          <Card
-                            key={
-                              documentId ??
-                              idx
-                            }
-                            variant="outlined"
-                            sx={{
-                              border:
-                                "1px solid #000",
-                              borderRadius: 0.5,
-                              height: "100%",
-                              display: "flex",
-                              flexDirection:
-                                "column",
-                              boxShadow: "none",
-                            }}
-                          >
-                            <Box
-                              sx={{
-                                height: 135,
-                                backgroundColor:
-                                  "#f5f5f5",
-                                borderBottom:
-                                  "1px solid #d0d0d0",
-                                display: "flex",
-                                alignItems:
-                                  "center",
-                                justifyContent:
-                                  "center",
-                                overflow: "hidden",
-                              }}
-                            >
-                              {previewUrl ? (
-                                <Box
-                                  component="img"
-                                  src={previewUrl}
-                                  alt={fileName}
-                                  sx={{
-                                    width: "100%",
-                                    height: "100%",
-                                    objectFit:
-                                      "contain",
-                                  }}
-                                />
-                              ) : (
-                                <Typography
-                                  variant="body2"
-                                  color="text.secondary"
-                                >
-                                  No Preview Available
-                                </Typography>
-                              )}
-                            </Box>
-
-                            <CardContent
-                              sx={{
-                                flexGrow: 1,
-                                display: "flex",
-                                flexDirection:
-                                  "column",
-                                justifyContent:
-                                  "space-between",
-                              }}
-                            >
-                              <Box>
-                                <Typography
-                                  variant="subtitle2"
-                                  fontWeight="bold"
-                                  gutterBottom
-                                >
-                                  {documentType}
-                                </Typography>
-
-                                <Typography
-                                  variant="body2"
-                                  sx={{
-                                    mb: 2,
-                                    wordBreak:
-                                      "break-word",
-                                  }}
-                                >
-                                  {fileName}
-                                </Typography>
-                              </Box>
-
-                              <Box
-                                sx={{
-                                  display: "flex",
-                                  gap: 1,
-                                  flexWrap: "wrap",
-                                }}
-                              >
-                                <Button
-                                  size="small"
-                                  variant="outlined"
-                                  startIcon={
-                                    <VisibilityIcon fontSize="small" />
-                                  }
-                                  disabled={
-                                    !documentId
-                                  }
-                                  onClick={() =>
-                                    handleViewDocument(
-                                      doc
-                                    )
-                                  }
-                                >
-                                  View
-                                </Button>
-
-                                <Button
-                                  size="small"
-                                  variant="outlined"
-                                  startIcon={
-                                    <DownloadIcon fontSize="small" />
-                                  }
-                                  disabled={
-                                    !documentId
-                                  }
-                                  onClick={() =>
-                                    handleDownloadDocument(
-                                      doc
-                                    )
-                                  }
-                                >
-                                  Download
-                                </Button>
-                              </Box>
-                            </CardContent>
-                          </Card>
-                        );
-                      }
-                    )}
-                  </Box>
-                </>
-              )}
-
-              {documents.length ===
-                0 && (
-                <Card
-                  variant="outlined"
-                  sx={{
-                    border:
-                      "1px solid #000",
-                    mt: 2,
-                  }}
-                >
-                  <CardContent>
-                    <Typography>
-                      No supporting documents
-                      uploaded.
-                    </Typography>
-                  </CardContent>
-                </Card>
-              )}
-            </>
+            <Step6Preview
+              breederDetails={breeder}
+              facilityDetails={facility}
+              breedDetails={breeds}
+              declarationDetails={declaration}
+              documents={documents}
+            />
           )}
         </DialogContent>
 
@@ -3103,6 +2486,10 @@ const List = (props) => {
           </Button>
         </DialogActions>
       </Dialog>
+      <InspectionReportDialog
+        applicationId={reportApplicationId}
+        onClose={() => setReportApplicationId(null)}
+      />
     </>
   );
 };

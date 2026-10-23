@@ -71,6 +71,30 @@ export const updateApplicationDeclaration = (payload) =>
   );
 };
 
+export const getPetShopInspection = (applicationId) =>
+  getItemList(
+    `${REGISTRATION_INSPECTION_API_URL}application/${applicationId}`
+  );
+
+export const fetchInspectionReportBlob = async (applicationId) => {
+  const response = await axios({
+    method: "GET",
+    baseURL: BASE_API_URL,
+    url: `${REGISTRATION_INSPECTION_API_URL}report/${applicationId}`,
+    headers: getHeader() || {},
+    responseType: "blob",
+  });
+
+  const blob = response.data;
+
+  if (blob?.type?.includes("application/json")) {
+    const errorText = await blob.text();
+    throw new Error(errorText || "Failed to load inspection report");
+  }
+
+  return blob;
+};
+
 export const uploadInspectionReport = ({
   applicationId,
   reportFile,
@@ -180,12 +204,16 @@ export const approveApplication = (id) =>
     headers: getHeader(),
   });
 
-export const rejectApplication = (id) =>
+export const rejectApplication = (id, remarks) =>
   callApi({
     method: "POST",
     baseURL: BASE_API_URL,
     url: `/petshop/auth/registration-application/reject/${id}`,
-    headers: getHeader(),
+    data: { remarks },
+    headers: {
+      "Content-Type": "application/json",
+      ...(getHeader() || {}),
+    },
   });
 export const downloadPetShopRegistrationApplication = async (
   applicationId

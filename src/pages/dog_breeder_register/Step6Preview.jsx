@@ -2,16 +2,32 @@ import { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
   Box,
+  Button,
   Card,
   CardContent,
   Divider,
+  Grid,
   Typography,
-  
 } from "@mui/material";
+import DownloadIcon from "@mui/icons-material/Download";
+import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 
-import { viewApplicationDocument } from "../../api-client/applicationDocument";
+import {
+  downloadApplicationDocument,
+  viewApplicationDocument,
+} from "../../api-client/applicationDocument";
 
-const SIGNATURE_DOCUMENT_TYPE_ID = "8"; // Applicant Signature document_type id
+const DOCUMENT_TYPE_NAMES = {
+  9: "Identity Proof",
+  10: "Address Proof",
+  11: "Establishment Photograph",
+  12: "Infrastructure Photograph",
+  13: "Affidavit",
+  14: "Applicant Signature",
+};
+
+const SIGNATURE_DOCUMENT_TYPE_ID = "14"; // Applicant Signature document_type id
 
 const getValue = (value) => {
   if (value === null || value === undefined || value === "") {
@@ -97,6 +113,251 @@ const getSignatureDocument = (documents) => {
       documentName.includes("signature")
     );
   });
+};
+
+const describeArrangement = (available, arrangement) => {
+  if (arrangement) {
+    if (available === true) {
+      return `Yes. ${arrangement}`;
+    }
+
+    if (available === false) {
+      return `No. ${arrangement}`;
+    }
+
+    return arrangement;
+  }
+
+  if (available === true) {
+    return "Yes";
+  }
+
+  if (available === false) {
+    return "No";
+  }
+
+  return "";
+};
+
+const isImageName = (value) => /\.(png|jpe?g|gif|webp)$/i.test(String(value || ""));
+
+const isPdfName = (value) => /\.pdf$/i.test(String(value || ""));
+
+const getDocumentTypeLabel = (document) => {
+  const named =
+    document?.documentTypeName ||
+    document?.documentType?.name ||
+    document?.documentType?.documentTypeName ||
+    document?.label;
+
+  if (typeof named === "string" && named.trim() && named !== "[object Object]") {
+    return named.trim();
+  }
+
+  const typeId = Number(
+    document?.documentTypeId ||
+      document?.documentType?.id ||
+      document?.document_type_id
+  );
+
+  return DOCUMENT_TYPE_NAMES[typeId] || "Document";
+};
+
+const getDocumentFileLabel = (document) =>
+  document?.fileName ||
+  document?.filename ||
+  document?.originalFileName ||
+  document?.name ||
+  document?.filePath?.split("/").pop() ||
+  "Document";
+
+const UploadedDocumentCard = ({ document }) => {
+  const [previewUrl, setPreviewUrl] = useState("");
+  const documentId = getSavedDocumentId(document);
+  const fileName = getDocumentFileLabel(document);
+  const mimeType = String(document?.mimeType || document?.type || "");
+  const isImage = mimeType.startsWith("image/") || isImageName(fileName);
+  const isPdf = mimeType.includes("pdf") || isPdfName(fileName);
+
+  useEffect(() => {
+    let cancelled = false;
+    let objectUrl = "";
+
+    const loadPreview = async () => {
+      const selectedFile = document?.file instanceof File ? document.file : null;
+
+      if (selectedFile && (selectedFile.type.startsWith("image/") || selectedFile.type.includes("pdf"))) {
+        objectUrl = URL.createObjectURL(selectedFile);
+
+        if (!cancelled) {
+          setPreviewUrl(objectUrl);
+        }
+
+        return;
+      }
+
+      if (!documentId || (!isImage && !isPdf)) {
+        setPreviewUrl("");
+        return;
+      }
+
+      try {
+        const response = await viewApplicationDocument(documentId);
+        const payload = response?.data;
+
+        if (cancelled || !payload || payload.size === 0) {
+          return;
+        }
+
+        const blob = payload instanceof Blob
+          ? payload
+          : new Blob([payload], { type: isPdf ? "application/pdf" : "image/jpeg" });
+
+        objectUrl = URL.createObjectURL(blob);
+
+        if (!cancelled) {
+          setPreviewUrl(objectUrl);
+        }
+      } catch (error) {
+        console.error("Document preview failed", error);
+
+        if (!cancelled) {
+          setPreviewUrl("");
+        }
+      }
+    };
+
+    loadPreview();
+
+    return () => {
+      cancelled = true;
+
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
+  }, [document, documentId, isImage, isPdf]);
+
+  const openPreview = () => {
+    if (previewUrl) {
+      window.open(previewUrl, "_blank", "noopener,noreferrer");
+    }
+  };
+
+  const downloadFile = async () => {
+    if (document?.file instanceof File) {
+      const objectUrl = URL.createObjectURL(document.file);
+      const link = window.document.createElement("a");
+      link.href = objectUrl;
+      link.download = fileName;
+      link.click();
+      URL.revokeObjectURL(objectUrl);
+      return;
+    }
+
+    if (!documentId) {
+      return;
+    }
+
+    const response = await downloadApplicationDocument(documentId);
+    const payload = response?.data;
+
+    if (!payload) {
+      return;
+    }
+
+    const blob = payload instanceof Blob ? payload : new Blob([payload]);
+    const objectUrl = URL.createObjectURL(blob);
+    const link = window.document.createElement("a");
+    link.href = objectUrl;
+    link.download = fileName;
+    link.click();
+    URL.revokeObjectURL(objectUrl);
+  };
+
+  return (
+    <Card
+      sx={{
+        height: "100%",
+        border: "1px solid #000",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      {previewUrl && isImage ? (
+        <Box
+          component="img"
+          src={previewUrl}
+          alt={fileName}
+          sx={{
+            height: 180,
+            width: "100%",
+            objectFit: "contain",
+            backgroundColor: "#f5f5f5",
+          }}
+        />
+      ) : previewUrl && isPdf ? (
+        <Box
+          component="iframe"
+          title={fileName}
+          src={previewUrl}
+          sx={{
+            height: 180,
+            width: "100%",
+            border: 0,
+            backgroundColor: "#f5f5f5",
+          }}
+        />
+      ) : (
+        <Box
+          sx={{
+            height: 180,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: "#f5f5f5",
+          }}
+        >
+          {isPdf ? (
+            <PictureAsPdfIcon sx={{ fontSize: 48 }} />
+          ) : (
+            <Typography>No preview available</Typography>
+          )}
+        </Box>
+      )}
+
+      <CardContent sx={{ flexGrow: 1 }}>
+        <Typography fontWeight="bold" gutterBottom>
+          {getDocumentTypeLabel(document)}
+        </Typography>
+        <Typography sx={{ mb: 2, wordBreak: "break-word" }}>{fileName}</Typography>
+        <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+          <Button
+            size="small"
+            variant="outlined"
+            startIcon={<VisibilityIcon />}
+            onClick={openPreview}
+            disabled={!previewUrl && !documentId}
+          >
+            View
+          </Button>
+          <Button
+            size="small"
+            variant="outlined"
+            startIcon={<DownloadIcon />}
+            onClick={downloadFile}
+            disabled={!documentId && !(document?.file instanceof File)}
+          >
+            Download
+          </Button>
+        </Box>
+      </CardContent>
+    </Card>
+  );
+};
+
+UploadedDocumentCard.propTypes = {
+  document: PropTypes.object,
 };
 
 const FieldLine = ({ number, label, value }) => (
@@ -257,18 +518,64 @@ const Step6Preview = ({
           .join(", ")
       : "";
 
+  const documentList = normalizeDocuments(previewDocuments);
+  const restDay = facilityDetails.restDay || facilityDetails.holiday || "";
+
   return (
     <Card
       variant="outlined"
       sx={{
-        maxWidth: 900,
+        width: "100%",
+        maxWidth: "210mm",
         mx: "auto",
         backgroundColor: "#ffffff",
         border: "1px solid #d1d5db",
+        position: "relative",
+        overflow: "hidden",
+        boxShadow: 3,
       }}
     >
+      <Box
+        sx={{
+          position: "absolute",
+          top: "40%",
+          left: "50%",
+          transform: "translate(-50%, -50%) rotate(-30deg)",
+          textAlign: "center",
+          width: "100%",
+          pointerEvents: "none",
+          zIndex: 0,
+        }}
+      >
+        <Typography
+          sx={{
+            fontSize: { xs: 36, md: 64 },
+            fontWeight: 700,
+            color: "rgba(0,0,0,0.06)",
+            whiteSpace: "nowrap",
+            letterSpacing: 4,
+            lineHeight: 1,
+          }}
+        >
+          KERALA STATE
+        </Typography>
+        <Typography
+          sx={{
+            fontSize: { xs: 36, md: 64 },
+            fontWeight: 700,
+            color: "rgba(0,0,0,0.06)",
+            whiteSpace: "nowrap",
+            letterSpacing: 4,
+            lineHeight: 1,
+          }}
+        >
+          ANIMAL WELFARE BOARD
+        </Typography>
+      </Box>
       <CardContent
         sx={{
+          position: "relative",
+          zIndex: 1,
           p: { xs: 2, md: 5 },
           fontFamily: "Times New Roman, serif",
           color: "#111827",
@@ -387,50 +694,71 @@ const Step6Preview = ({
           number="5"
           label="Working hours and rest day, i.e. day on which establishment shall remain closed"
           value={`${facilityDetails.workingHours || ""} ${
-            facilityDetails.restDay ? `, Rest day: ${facilityDetails.restDay}` : ""
+            restDay ? `, Rest day: ${restDay}` : ""
           }`}
         />
 
         <FieldLine
           number="6"
           label="Ventilation arrangement"
-          value={facilityDetails.ventilationArrangement}
+          value={describeArrangement(
+            facilityDetails.ventilationAvailable,
+            facilityDetails.ventilationArrangement
+          )}
         />
 
         <FieldLine
           number="7"
           label="Lighting arrangement"
-          value={facilityDetails.lightingArrangement}
+          value={describeArrangement(
+            facilityDetails.lightingAvailable,
+            facilityDetails.lightingArrangement
+          )}
         />
 
         <FieldLine
           number="8"
           label="Heating or cooling arrangement, and manner in which comfortable temperature will be maintained for all pet animals"
-          value={facilityDetails.heatingCoolingArrangement}
+          value={describeArrangement(
+            facilityDetails.heatingCoolingAvailable,
+            facilityDetails.heatingCoolingArrangement
+          )}
         />
 
         <FieldLine
           number="9"
           label="Arrangements for food storage"
-          value={facilityDetails.foodStorageArrangement}
+          value={describeArrangement(
+            facilityDetails.foodStorageAvailable,
+            facilityDetails.foodStorageArrangement
+          )}
         />
 
         <FieldLine
           number="10"
           label="Cleanliness, how proposed to be maintained, and arrangements for removal of animal excreta and waste"
-          value={facilityDetails.cleanlinessWasteArrangement}
+          value={describeArrangement(
+            facilityDetails.cleanlinessWasteAvailable,
+            facilityDetails.cleanlinessWasteArrangement
+          )}
         />
 
         <FieldLine
           number="11"
           label="Arrangement for disposal of animal that die"
-          value={facilityDetails.deadAnimalDisposalArrangement}
+          value={describeArrangement(
+            facilityDetails.deadAnimalDisposalAvailable,
+            facilityDetails.deadAnimalDisposalArrangement
+          )}
         />
 
         <FieldLine
           number="12"
           label="Arrangement for medical and veterinary support"
-          value={facilityDetails.veterinarySupportArrangement}
+          value={describeArrangement(
+            facilityDetails.veterinarySupportAvailable,
+            facilityDetails.veterinarySupportArrangement
+          )}
         />
 
         <FieldLine
@@ -543,7 +871,28 @@ const Step6Preview = ({
   Thiruvananthapuram Dist, 695001
 </Typography>
 
-        
+        <Divider sx={{ my: 3 }} />
+
+        <Typography sx={{ fontWeight: 700, fontSize: 15, mb: 2 }}>
+          Supporting documents
+        </Typography>
+
+        {documentList.length > 0 ? (
+          <Grid container spacing={2}>
+            {documentList.map((document, index) => (
+              <Grid
+                item
+                xs={12}
+                md={6}
+                key={getSavedDocumentId(document) || index}
+              >
+                <UploadedDocumentCard document={document} />
+              </Grid>
+            ))}
+          </Grid>
+        ) : (
+          <Typography sx={{ fontSize: 15 }}>No supporting documents uploaded.</Typography>
+        )}
       </CardContent>
     </Card>
     

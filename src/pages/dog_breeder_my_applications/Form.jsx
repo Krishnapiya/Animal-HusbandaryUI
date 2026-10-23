@@ -26,7 +26,9 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import DownloadIcon from "@mui/icons-material/Download";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
+import { toast } from "material-react-toastify";
 import { getHeader } from "../../utils";
+import { downloadDogBreederMyApplication } from "../../api-client/adminDogBreederApplication";
 
 import {
   getApplicationDocumentsByApplicationId,
@@ -50,32 +52,32 @@ const BASE_API_URL =
 
 export const dogBreederDocumentList = [
   {
-    id: 22,
+    id: 9,
     name: "Identity Proof",
     mandatory: true,
   },
   {
-    id: 23,
+    id: 10,
     name: "Address Proof",
     mandatory: true,
   },
   {
-    id: 24,
+    id: 11,
     name: "Establishment Photograph",
     mandatory: true,
   },
   {
-    id: 25,
+    id: 12,
     name: "Infrastructure Photograph",
     mandatory: true,
   },
   {
-    id: 26,
+    id: 13,
     name: "Affidavit",
     mandatory: true,
   },
   {
-    id: 21,
+    id: 14,
     name: "Applicant Signature",
     mandatory: true,
   },
@@ -1525,17 +1527,56 @@ const DocumentCard = ({
   const fileName =
     getDocumentFileName(doc);
 
-  const previewUrl =
-    doc?.fileUrl ||
-    doc?.filePath ||
-    doc?.url ||
-    (doc?.base64
-      ? String(
-          doc.base64
-        ).startsWith("data:")
-        ? doc.base64
-        : `data:image/jpeg;base64,${doc.base64}`
-      : null);
+  const [previewUrl, setPreviewUrl] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    let objectUrl = "";
+
+    const looksLikeImage =
+      String(doc?.mimeType || "").startsWith("image/") ||
+      /\.(png|jpe?g|gif|webp)$/i.test(fileName);
+
+    const loadPreview = async () => {
+      if (!docId || !looksLikeImage) {
+        setPreviewUrl("");
+        return;
+      }
+
+      try {
+        const url = buildApiUrl(
+          BASE_API_URL,
+          DOG_BREEDER_DOCUMENT_VIEW_URL,
+          docId
+        );
+        const response = await axios.get(url, {
+          headers: getHeader() || {},
+          responseType: "blob",
+        });
+
+        if (cancelled || !response?.data) {
+          return;
+        }
+
+        objectUrl = URL.createObjectURL(response.data);
+        setPreviewUrl(objectUrl);
+      } catch (error) {
+        console.error("Failed to load document image", error);
+        if (!cancelled) {
+          setPreviewUrl("");
+        }
+      }
+    };
+
+    loadPreview();
+
+    return () => {
+      cancelled = true;
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
+  }, [docId, fileName, doc?.mimeType]);
 
   if (!documentName) {
     return null;
@@ -1715,8 +1756,76 @@ const Form = ({
   const [loading, setLoading] =
     useState(false);
 
+  const [isDownloading, setIsDownloading] =
+    useState(false);
+
+  const [signaturePreviewUrl, setSignaturePreviewUrl] =
+    useState("");
+
   const [errorMsg, setErrorMsg] =
     useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    let objectUrl = "";
+
+    const signatureDocument = (loadedDocuments || []).find((document) => {
+      const typeId = String(
+        document?.documentTypeId ||
+          document?.documentType?.id ||
+          ""
+      );
+      const typeName = String(
+        document?.documentTypeName ||
+          document?.documentType?.name ||
+          ""
+      ).toLowerCase();
+
+      return typeId === "14" || typeName.includes("signature");
+    });
+
+    const signatureId = getDocumentId(signatureDocument);
+
+    const loadSignature = async () => {
+      if (!signatureId) {
+        setSignaturePreviewUrl("");
+        return;
+      }
+
+      try {
+        const url = buildApiUrl(
+          BASE_API_URL,
+          DOG_BREEDER_DOCUMENT_VIEW_URL,
+          signatureId
+        );
+        const response = await axios.get(url, {
+          headers: getHeader() || {},
+          responseType: "blob",
+        });
+
+        if (cancelled || !response?.data) {
+          return;
+        }
+
+        objectUrl = URL.createObjectURL(response.data);
+        setSignaturePreviewUrl(objectUrl);
+      } catch (error) {
+        console.error("Failed to load signature image", error);
+        if (!cancelled) {
+          setSignaturePreviewUrl("");
+        }
+      }
+    };
+
+    loadSignature();
+
+    return () => {
+      cancelled = true;
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
+  }, [loadedDocuments]);
 
   /* =======================================================
      LOAD APPLICATION
@@ -3445,16 +3554,32 @@ const Form = ({
                   }
                 />
 
-                <Field
-                  label="Signature of Applicant"
-                  value={
-                    resolved.declaration
-                      ?.signature ||
-                    resolved.declaration
-                      ?.applicantSignature ||
-                    resolved.name
-                  }
-                />
+                <Box>
+                  <Typography
+                    variant="caption"
+                    sx={{ fontWeight: 700 }}
+                  >
+                    Signature of Applicant
+                  </Typography>
+                  {signaturePreviewUrl ? (
+                    <Box
+                      component="img"
+                      src={signaturePreviewUrl}
+                      alt="Applicant Signature"
+                      sx={{
+                        display: "block",
+                        width: 160,
+                        height: 60,
+                        objectFit: "contain",
+                        mt: 0.5,
+                      }}
+                    />
+                  ) : (
+                    <Typography variant="body2">
+                      -
+                    </Typography>
+                  )}
+                </Box>
               </Box>
             </Section>
 
@@ -3764,11 +3889,30 @@ const Form = ({
           startIcon={
             <DownloadIcon />
           }
-          onClick={() =>
-            window.print()
-          }
+          onClick={async () => {
+            if (!rowID) {
+              toast.error("Application ID is missing");
+              return;
+            }
+
+            setIsDownloading(true);
+
+            const response =
+              await downloadDogBreederMyApplication(rowID);
+
+            setIsDownloading(false);
+
+            if (response.isSuccess) {
+              toast.success("Application package downloaded.");
+            } else {
+              toast.error(
+                response.message ||
+                  "Failed to download application."
+              );
+            }
+          }}
           disabled={
-            !data || loading
+            !data || loading || isDownloading
           }
           sx={{
             borderRadius: 1,
@@ -3780,7 +3924,9 @@ const Form = ({
             px: 2.5,
           }}
         >
-          DOWNLOAD PDF
+          {isDownloading
+            ? "DOWNLOADING..."
+            : "DOWNLOAD APPLICATION"}
         </Button>
       </DialogActions>
     </Box>

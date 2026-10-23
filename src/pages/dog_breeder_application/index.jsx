@@ -75,7 +75,9 @@ const DogBreederApplicationPage = () => {
 
   const isAdmin = userRoles.includes("ADMIN");
 
-  const isCvo = userRoles.includes("CVO");
+  const isCvo =
+    userRoles.includes("CVO") ||
+    userRoles.includes("DISTRICT_OFFICER");
 
   // Allow list access for ADMIN, CVO, or if useCan returns true
   const canAccessList = isAdmin || isCvo || canList;
