@@ -275,6 +275,16 @@ export const CITIZEN_COMPLAINT_API_URL =
 "/citizen/auth/complaint-registration/";
 export const CITIZEN_COMPLAINT_LIST_URL =
   "/citizen/auth/complaint-registration/list/all";
+export const CITIZEN_COMPLAINT_INSPECTION_REPORT_UPLOAD_URL =
+  "/citizen/auth/complaint-investigation/upload/";
+export const CITIZEN_COMPLAINT_APPROVE_URL =
+  "/citizen/auth/complaint-registration/approve/";
+export const CITIZEN_COMPLAINT_REJECT_URL =
+  "/citizen/auth/complaint-registration/reject/";
+export const COMPLAINT_REGISTRATION_STATUS_HISTORY_API_URL =
+  "/citizen/auth/complaint-registration-status-history/complaint/";
+export const CITIZEN_COMPLAINT_STATUS_HISTORY_API_URL =
+  "/citizen/auth/complaint-status-history/complaint/";
 
   // =====================================================
 // CITIZEN COMPLAINT DOCUMENT
@@ -303,7 +313,7 @@ export const CITIZEN_COMPLAINT_DOCUMENT_VIEW_URL =
   "/dogbreeder/auth/registration-application/reject/";
 
   export const DOG_BREEDER_APPLICATION_RESUBMIT_URL =
-  "/dogbreeder/auth/registration-application/resubmit";
+  "/dogbreeder/auth/awb/resubmission/upload";
 
   export const DOG_BREEDER_APPLICATION_STATUS_HISTORY_API_URL =
     "/dogbreeder/auth/application-status-history/application/";

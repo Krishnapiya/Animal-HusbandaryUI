@@ -911,6 +911,7 @@ const List = (props) => {
 List.propTypes = {
   rows: PropTypes.array,
   tableColumns: PropTypes.array,
+  handleViewClick: PropTypes.func,
   handleEditClick: PropTypes.func,
   handleSortClick: PropTypes.func,
   sortAttributeDirection: PropTypes.object,

@@ -50,79 +50,84 @@ const List = (props) => {
         </TableHead>
 
         <TableBody>
-          {props.rows.map((row, index) => (
-            <TableRow key={index}>
-              {props.tableColumns.map((col, colIndex) => (
-                <TableCell key={colIndex}>
-                  {typeof col.render === "function"
-                    ? col.render(row)
-                    : String(row[col.attr])}
+          {props.rows.map((row, index) => {
+            const status = normalizeStatusName(
+              row?.status ||
+                row?.statusName ||
+                row?.statusCode ||
+                row?.currentStatus ||
+                row?.applicationStatus ||
+                row?.applicationStatusName ||
+                row?.approvalStatus
+            );
+
+            return (
+              <TableRow key={index}>
+                {props.tableColumns.map((col, colIndex) => (
+                  <TableCell key={colIndex}>
+                    {typeof col.render === "function"
+                      ? col.render(row)
+                      : String(row[col.attr])}
+                  </TableCell>
+                ))}
+
+                <TableCell align="center">
+                  <Tooltip title="View Application">
+                    <IconButton onClick={() => props.handleEditClick(row.id)}>
+                      <VisibilityIcon />
+                    </IconButton>
+                  </Tooltip>
                 </TableCell>
-              ))}
+                <TableCell align="center">
+                  <Tooltip title="View Status History">
+                    <IconButton onClick={() => setHistoryApplicationId(row.id)}>
+                      <HistoryIcon color="primary" />
+                    </IconButton>
+                  </Tooltip>
+                </TableCell>
 
-              {/* View */}
-<TableCell align="center">
-    <Tooltip title="View Application">
-        <IconButton
-            onClick={() => props.handleEditClick(row.id)}
-        >
-            <VisibilityIcon />
-        </IconButton>
-    </Tooltip>
-</TableCell>
-<TableCell align="center">
-  <Tooltip title="View Status History">
-    <IconButton
-      onClick={() => setHistoryApplicationId(row.id)}
-    >
-      <HistoryIcon color="primary" />
-    </IconButton>
-  </Tooltip>
-</TableCell>
+                <TableCell align="center">
+                  {(() => {
+                    if (
+                      matchesStatus(status, "submitted", "resubmitted")
+                    ) {
+                      return (
+                        <Button
+                          variant="contained"
+                          color="success"
+                          size="small"
+                          onClick={() => props.handleForwardClick(row.id)}
+                        >
+                          FORWARD
+                        </Button>
+                      );
+                    }
 
-{/* Actions */}
-<TableCell align="center">
-  {(() => {
-    const status = row.status?.name?.toLowerCase();
-
-if (
-  status === "submitted" ||
-  status === "resubmitted"
-) {
-  return (
-    <Button
-      variant="contained"
-      color="success"
-      size="small"
-      onClick={() => props.handleForwardClick(row.id)}
-    >
-      FORWARD
-    </Button>
-  );
-}
-
-    if (
-      status === "forwarded to cvo" ||
-      status === "inspection scheduled"
-    ) {
-      return (
-       <Button
-  variant="contained"
-  size="small"
-  disabled
-  sx={{
-    "&.Mui-disabled": {
-      backgroundColor: "#e0e0e0",
-      color: "#757575",
-      opacity: 0.7,
-      boxShadow: "none",
-    },
-  }}
->
-  FORWARDED TO CVO
-</Button>
-      );
-    }
+                    if (
+                      matchesStatus(
+                        status,
+                        "forwarded to cvo",
+                        "inspection scheduled"
+                      )
+                    ) {
+                      return (
+                        <Button
+                          variant="contained"
+                          size="small"
+                          disabled
+                          sx={{
+                            "&.Mui-disabled": {
+                              backgroundColor: "#e0e0e0",
+                              color: "#757575",
+                              opacity: 0.7,
+                              boxShadow: "none",
+                            },
+                          }}
+                        >
+                          FORWARDED TO CVO
+                        </Button>
+                      );
+                    }
 
     if (
       status === "verified by cvo" ||
@@ -158,37 +163,38 @@ if (
       );
     }
 
-    if (status === "application approved") {
-      return (
-        <Button
-          variant="contained"
-          color="success"
-          size="small"
-          disabled
-        >
-          APPROVED
-        </Button>
-      );
-    }
+                    if (status === "application approved") {
+                      return (
+                        <Button
+                          variant="contained"
+                          color="success"
+                          size="small"
+                          disabled
+                        >
+                          APPROVED
+                        </Button>
+                      );
+                    }
 
-    if (status === "application rejected") {
-      return (
-        <Button
-          variant="contained"
-          color="error"
-          size="small"
-          disabled
-        >
-          REJECTED
-        </Button>
-      );
-    }
+                    if (status === "application rejected") {
+                      return (
+                        <Button
+                          variant="contained"
+                          color="error"
+                          size="small"
+                          disabled
+                        >
+                          REJECTED
+                        </Button>
+                      );
+                    }
 
-    return null;
-  })()}
-</TableCell>
-            </TableRow>
-          ))}
+                    return null;
+                  })()}
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
 

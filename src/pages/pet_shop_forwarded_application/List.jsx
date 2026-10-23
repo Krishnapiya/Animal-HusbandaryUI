@@ -14,6 +14,37 @@ import EventIcon from "@mui/icons-material/Event";
 import { useState } from "react";
 import HistoryIcon from "@mui/icons-material/History";
 import PetShopStatusHistoryDialog from "../../components/PetShopStatusHistoryDialog";
+const normalizeStatusName = (value) => {
+  const raw =
+    typeof value === "string"
+      ? value
+      : value?.name ||
+        value?.status ||
+        value?.statusName ||
+        value?.statusCode ||
+        value?.currentStatus ||
+        value?.applicationStatus ||
+        value?.applicationStatusName ||
+        value?.approvalStatus ||
+        value?.value ||
+        value?.code ||
+        "";
+
+  return String(raw)
+    .trim()
+    .replace(/[_\s-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .toLowerCase();
+};
+
+const matchesStatus = (value, ...expected) => {
+  const normalized = normalizeStatusName(value);
+  return expected.some((status) => {
+    const expectedNormalized = normalizeStatusName(status);
+    return normalized === expectedNormalized || normalized.includes(expectedNormalized);
+  });
+};
+
 const List = (props) => {
 const [historyApplicationId, setHistoryApplicationId] = useState("");
   return (
@@ -48,111 +79,151 @@ const [historyApplicationId, setHistoryApplicationId] = useState("");
         </TableHead>
 
         <TableBody>
-          {props.rows.map((row, index) => (
-            <TableRow key={index}>
-              {props.tableColumns.map((col, colIndex) => (
-                <TableCell key={colIndex}>
-                  {typeof col.render === "function"
-                    ? col.render(row)
-                    : String(row[col.attr])}
+          {props.rows.map((row, index) => {
+            const statusName = normalizeStatusName(
+              row?.status ||
+                row?.statusName ||
+                row?.statusCode ||
+                row?.currentStatus ||
+                row?.applicationStatus ||
+                row?.applicationStatusName ||
+                row?.approvalStatus
+            );
+            const isInspectionScheduled = matchesStatus(
+              statusName,
+              "inspection scheduled",
+              "INSPECTION_SCHEDULED"
+            );
+            const isVerifiedByCvo = matchesStatus(
+              statusName,
+              "verified by cvo",
+              "VERIFIED_BY_CVO"
+            );
+            const isRejectedByCvo = matchesStatus(
+              statusName,
+              "rejected by cvo",
+              "REJECTED_BY_CVO",
+              "rejected",
+              "application rejected"
+            );
+            const isCompleted = isVerifiedByCvo || isRejectedByCvo;
+
+            return (
+              <TableRow key={index}>
+                {props.tableColumns.map((col, colIndex) => (
+                  <TableCell key={colIndex}>
+                    {typeof col.render === "function"
+                      ? col.render(row)
+                      : String(row[col.attr])}
+                  </TableCell>
+                ))}
+
+                <TableCell align="center">
+                  <Tooltip title="View Application">
+                    <IconButton onClick={() => props.handleEditClick(row.id)}>
+                      <VisibilityIcon />
+                    </IconButton>
+                  </Tooltip>
                 </TableCell>
-              ))}
+                <TableCell align="center">
+                  <Tooltip title="View Status History">
+                    <IconButton onClick={() => setHistoryApplicationId(row.id)}>
+                      <HistoryIcon color="primary" />
+                    </IconButton>
+                  </Tooltip>
+                </TableCell>
 
-              {/* View */}
-<TableCell align="center">
-    <Tooltip title="View Application">
-        <IconButton
-            onClick={() => props.handleEditClick(row.id)}
-        >
-            <VisibilityIcon />
-        </IconButton>
-    </Tooltip>
-</TableCell>
-<TableCell align="center">
-  <Tooltip title="View Status History">
-    <IconButton
-      onClick={() => setHistoryApplicationId(row.id)}
-    >
-      <HistoryIcon color="primary" />
-    </IconButton>
-  </Tooltip>
-</TableCell>
+                <TableCell align="center">
+                  {(() => {
+                    if (isCompleted) {
+                      return (
+                        <Button
+                          variant="contained"
+                          color={isVerifiedByCvo ? "success" : "error"}
+                          size="small"
+                          startIcon={<EventIcon />}
+                          disabled
+                        >
+                          {isVerifiedByCvo ? "Verified" : "Rejected"}
+                        </Button>
+                      );
+                    }
 
-<>
-{/* Actions */}
-<TableCell align="center">
-  {(() => {
-   const inspectionScheduled =
-  row.status?.name === "Inspection Scheduled" ||
-  row.status?.name === "Verified by CVO" ||
-  row.status?.name === "Rejected by CVO" ||
-  row.status?.name === "Application Approved" ||
-  row.status?.name === "Application Rejected";
+                    if (isInspectionScheduled) {
+                      return (
+                        <Button
+                          variant="contained"
+                          color="warning"
+                          size="small"
+                          startIcon={<EventIcon />}
+                          disabled
+                        >
+                          Scheduled
+                        </Button>
+                      );
+                    }
 
-    return (
-      <Button
-        variant="contained"
-        color={inspectionScheduled ? "success" : "warning"}
-        size="small"
-        startIcon={<EventIcon />}
-        disabled={inspectionScheduled}
-        onClick={() => props.handleScheduleInspection(row.id)}
-      >
-        {inspectionScheduled ? "Scheduled" : "Schedule Inspection"}
-      </Button>
-    );
-  })()}
-</TableCell>
+                    return (
+                      <Button
+                        variant="contained"
+                        color="warning"
+                        size="small"
+                        startIcon={<EventIcon />}
+                        onClick={() => props.handleScheduleInspection(row.id)}
+                      >
+                        Schedule Inspection
+                      </Button>
+                    );
+                  })()}
+                </TableCell>
 
-{/* Report */}
-{/* Decision */}
-<TableCell align="center">
-  {row.status?.name === "Inspection Scheduled" ? (
-  <Button
-    variant="contained"
-    color="info"
-    size="small"
-    onClick={() => props.handleUploadReport(row.id)}
-  >
-    Upload Report
-  </Button>
-) : row.status?.name === "Verified by CVO" ? (
-  <Button
-    variant="contained"
-    size="small"
-    disabled
-    sx={{
-      "&.Mui-disabled": {
-        backgroundColor: "#2e7d32",
-        color: "#fff",
-        opacity: 1,
-      },
-    }}
-  >
-    ✓ Verified by CVO
-  </Button>
-) : row.status?.name === "Rejected by CVO" ? (
-  <Button
-    variant="contained"
-    size="small"
-    disabled
-    sx={{
-      "&.Mui-disabled": {
-        backgroundColor: "#d32f2f",
-        color: "#fff",
-        opacity: 1,
-      },
-    }}
-  >
-    ✗ Rejected by CVO
-  </Button>
-) : (
-  "-"
-)}
-</TableCell>
-</>
-            </TableRow>
-          ))}
+                <TableCell align="center">
+                  {isInspectionScheduled ? (
+                    <Button
+                      variant="contained"
+                      color="info"
+                      size="small"
+                      onClick={() => props.handleUploadReport(row.id)}
+                    >
+                      Upload Report
+                    </Button>
+                  ) : isVerifiedByCvo ? (
+                    <Button
+                      variant="contained"
+                      size="small"
+                      disabled
+                      sx={{
+                        "&.Mui-disabled": {
+                          backgroundColor: "#2e7d32",
+                          color: "#fff",
+                          opacity: 1,
+                        },
+                      }}
+                    >
+                      ✓ Verified by CVO
+                    </Button>
+                  ) : isRejectedByCvo ? (
+                    <Button
+                      variant="contained"
+                      size="small"
+                      disabled
+                      sx={{
+                        "&.Mui-disabled": {
+                          backgroundColor: "#d32f2f",
+                          color: "#fff",
+                          opacity: 1,
+                        },
+                      }}
+                    >
+                      ✗ Rejected by CVO
+                    </Button>
+                  ) : (
+                    "-"
+                  )}
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
  <PetShopStatusHistoryDialog

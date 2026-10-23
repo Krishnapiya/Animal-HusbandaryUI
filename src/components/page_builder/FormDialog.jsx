@@ -45,6 +45,7 @@ const FormDialog = (props) => {
             rowID: props.rowID,
             rowData: props.rowData,
             setRowID: props.setRowID,
+            onClose: props.handleCloseFormModal,
             handleCloseFormModal: props.handleCloseFormModal,
             handleRefreshTable: props.handleRefreshTable,
             alertString: props.alertString,

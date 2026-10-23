@@ -42,8 +42,10 @@ import {
    CITIZEN_COMPLAINT_APPLICATION_PATH,
    CITIZEN_COMPLAINT_FORWARDED_PATH,
 } from "./config/routes";
+import CitizenComplaintForwardedApplicationPage  from "./pages/citizen_complaint_forwarded_application";
 import CitizenComplaintRegistrationPage from "./pages/citizen_complaint_registration";
 import CitizenRegisterPage from "./pages/CitizenRegisterPage";
+import CitizenComplaintApplicationPage from "./pages/citizen_complaint_application";
 import PetShopMyApplicationPage from "./pages/pet_shop_my_applications";
 import PetShopForwardedApplicationPage from "./pages/pet_shop_forwarded_application";
 import PetShopApplicationPage from "./pages/pet_shop_application";
@@ -81,6 +83,25 @@ import DogBreederBreedPage from "./pages/dog_breeder_breed";
 import PaymentTransactionPage from "./pages/payment_transaction";
 import DogBreederMyApplicationPage from "./pages/dog_breeder_my_applications";
 
+const CitizenComplaintForwardedApplicationPageWithPermission = () =>
+  createElement(
+    PermissionGate,
+    {
+      menuKey: CITIZEN_COMPLAINT_FORWARDED_APPLICATION_PATH,
+      action: "list",
+    },
+    createElement(CitizenComplaintForwardedApplicationPage)
+  );
+
+const CitizenComplaintApplicationPageWithPermission = () =>
+  createElement(
+    PermissionGate,
+    {
+      menuKey: CITIZEN_COMPLAINT_APPLICATION_PATH,
+      action: "list",
+    },
+    createElement(CitizenComplaintApplicationPage)
+  );
 const CitizenComplaintRegistrationPageWithPermission = () =>
   createElement(
     PermissionGate,
@@ -333,6 +354,15 @@ export const router = createBrowserRouter([
             path: "/",
             Component: MainLayout,
             children: [
+              {
+  path: CITIZEN_COMPLAINT_FORWARDED_APPLICATION_PATH,
+  Component:
+    CitizenComplaintForwardedApplicationPageWithPermission,
+},
+              {
+                path: CITIZEN_COMPLAINT_APPLICATION_PATH,
+                Component: CitizenComplaintApplicationPageWithPermission,
+              },
               {
                 path: ROOT_PATH,
                 Component: DashboardPage,

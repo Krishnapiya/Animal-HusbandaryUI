@@ -24,6 +24,12 @@ const normalizeList = (response) => {
   return [];
 };
 
+const normalizePermissionKey = (value) =>
+  String(value ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[ /\s_]+/g, "-");
+
 /** Lowercase menu and action keys so UI checks match backend @RequirePermission (e.g. designation vs Designation). */
 const normalizePermissionMap = (raw) => {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
@@ -36,9 +42,9 @@ const normalizePermissionMap = (raw) => {
     }
     const inner = {};
     for (const [actionKey, allowed] of Object.entries(actions)) {
-      inner[String(actionKey).toLowerCase()] = allowed;
+      inner[normalizePermissionKey(actionKey)] = allowed;
     }
-    out[String(menuKey).toLowerCase()] = inner;
+    out[normalizePermissionKey(menuKey)] = inner;
   }
   return out;
 };
@@ -59,7 +65,7 @@ const toToolpadNav = (items) =>
 const moduleKey = (m) => String(m?.segment ?? m?.slug ?? m?.title ?? "");
 
 const menuPermissionKey = (item) =>
-  String(item?.slug || item?.segment || "").toLowerCase();
+  normalizePermissionKey(item?.slug || item?.segment || "");
 
 const parseJwtPayload = (token) => {
   if (!token || typeof token !== "string") {
@@ -295,10 +301,10 @@ export const AuthzProvider = ({ children }) => {
       return true;
     }
     if (!menuKey || !action) return false;
-    const mk = String(menuKey).toLowerCase();
+    const mk = normalizePermissionKey(menuKey);
     const menuPermissions = permissionMap?.[mk];
     if (!menuPermissions) return false;
-    return Boolean(menuPermissions?.[String(action).toLowerCase()]);
+    return Boolean(menuPermissions?.[normalizePermissionKey(action)]);
   }, [permissionMap]);
 
   const value = useMemo(
