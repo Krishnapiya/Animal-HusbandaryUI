@@ -79,6 +79,11 @@ export const updateApplicationDeclaration = (payload) =>
   );
 };
 
+export const getPetShopInspection = (applicationId) =>
+  getItemList(
+    `${REGISTRATION_INSPECTION_API_URL}application/${applicationId}`
+  );
+
 export const uploadInspectionReport = ({
   applicationId,
   reportFile,
@@ -95,12 +100,6 @@ export const uploadInspectionReport = ({
   return addFormDataItem(
     `${REGISTRATION_INSPECTION_API_URL}upload-report`,
     formData
-  );
-};
-
-export const getPetShopInspection = async (applicationId) => {
-  return getItemList(
-    `${REGISTRATION_INSPECTION_API_URL}application/${applicationId}`
   );
 };
 
@@ -274,12 +273,16 @@ export const approveApplication = (id) =>
     headers: getHeader(),
   });
 
-export const rejectApplication = (id) =>
+export const rejectApplication = (id, remarks) =>
   callApi({
     method: "POST",
     baseURL: BASE_API_URL,
     url: `/petshop/auth/registration-application/reject/${id}`,
-    headers: getHeader(),
+    data: { remarks },
+    headers: {
+      "Content-Type": "application/json",
+      ...(getHeader() || {}),
+    },
   });
 export const downloadPetShopRegistrationApplication = async (
   applicationId

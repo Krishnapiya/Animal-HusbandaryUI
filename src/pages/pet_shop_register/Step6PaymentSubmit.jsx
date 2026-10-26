@@ -187,7 +187,13 @@ const Step6PaymentSubmit = ({
               facilityForm={facilityForm}
               animals={animals}
               declaration={declaration}
-              supportingDocuments={Object.values(documents || {})}
+              supportingDocuments={Object.entries(documents || {}).map(
+                ([documentTypeId, document]) => ({
+                  ...document,
+                  documentTypeId:
+                    document?.documentTypeId ?? Number(documentTypeId),
+                })
+              )}
             />
 
             <Box

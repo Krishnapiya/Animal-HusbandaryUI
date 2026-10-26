@@ -12,6 +12,7 @@ import Button from "@mui/material/Button";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
+import Box from "@mui/material/Box";
 import AssignmentIcon from "@mui/icons-material/Assignment";
 import PetShopInspectionReportDialog from "../../components/PetShopInspectionReportDialog";
 
@@ -193,12 +194,11 @@ const List = (props) => {
                       )
                     ) {
                       return (
-                        <>
+                        <Box display="flex" gap={1} justifyContent="center" flexWrap="wrap">
                           <Button
                             variant="outlined"
                             color="info"
                             size="small"
-                            sx={{ mr: 1 }}
                             onClick={() => handleOpenReportModal(row)}
                           >
                             VIEW REPORT
@@ -208,7 +208,6 @@ const List = (props) => {
                             variant="contained"
                             color="success"
                             size="small"
-                            sx={{ mr: 1 }}
                             onClick={() => props.handleApproveClick(row.id)}
                           >
                             APPROVE
@@ -222,7 +221,7 @@ const List = (props) => {
                           >
                             REJECT
                           </Button>
-                        </>
+                        </Box>
                       );
                     }
 
@@ -265,7 +264,6 @@ const List = (props) => {
         applicationId={historyApplicationId}
         setApplicationId={setHistoryApplicationId}
       />
-
       <PetShopInspectionReportDialog
         open={reportDialogOpen}
         onClose={() => {

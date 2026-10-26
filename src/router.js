@@ -36,10 +36,11 @@ import {
   PET_SHOP_APPLICATION_PATH,
    PET_SHOP_FORWARDED_APPLICATION_PATH,
    PET_SHOP_MY_APPLICATION_PATH,
+   PET_SHOP_MY_APPLICATION_ROUTE,
    DOG_BREEDER_MY_APPLICATION_PATH,
    CITIZEN_COMPLAINT_REGISTRATION_PATH,
    CITIZEN_COMPLAINT_APPLICATION_PATH,
-   CITIZEN_COMPLAINT_FORWARDED_APPLICATION_PATH,
+   CITIZEN_COMPLAINT_FORWARDED_PATH,
 } from "./config/routes";
 import CitizenComplaintForwardedApplicationPage  from "./pages/citizen_complaint_forwarded_application";
 import CitizenComplaintRegistrationPage from "./pages/citizen_complaint_registration";
@@ -62,6 +63,7 @@ import PetShopOwnerRegisterPage from "./pages/PetShopOwnerRegisterPage";
 import PetShopRegisterPage from "./pages/pet_shop_register";
 import PermissionedRbacAdmin from "./pages/rbac_admin/PermissionedRbacAdmin";
 import TestPage from "./pages/test_page";
+import DashboardPage from "./pages/dashboard";
 import SampleDepartmentPage from "./pages/sample_department";
 import DesignationPage from "./pages/designation";
 import PaymentModePage from "./pages/payment_mode";
@@ -85,7 +87,7 @@ const CitizenComplaintForwardedApplicationPageWithPermission = () =>
   createElement(
     PermissionGate,
     {
-      menuKey: CITIZEN_COMPLAINT_FORWARDED_APPLICATION_PATH,
+      menuKey: CITIZEN_COMPLAINT_FORWARDED_PATH,
       action: "list",
     },
     createElement(CitizenComplaintForwardedApplicationPage)
@@ -105,6 +107,17 @@ const CitizenComplaintRegistrationPageWithPermission = () =>
     PermissionGate,
     {
       menuKey: CITIZEN_COMPLAINT_REGISTRATION_PATH,
+      action: "list",
+    },
+    createElement(CitizenComplaintRegistrationPage)
+  );
+
+
+const CitizenComplaintForwardedPageWithPermission = () =>
+  createElement(
+    PermissionGate,
+    {
+      menuKey: CITIZEN_COMPLAINT_FORWARDED_PATH,
       action: "list",
     },
     createElement(CitizenComplaintRegistrationPage)
@@ -176,7 +189,7 @@ const ApplicationWorkflowPageWithPermission = () =>
 const PetShopRegisterPageWithPermission = () =>
   createElement(
     PermissionGate,
-    { menuKey: PET_SHOP_REGISTER_PATH, action: "save" },
+    { menuKey: "pet-shop/register", action: "save" },
     createElement(PetShopRegisterPage)
   );
 
@@ -333,7 +346,7 @@ export const router = createBrowserRouter([
             Component: MainLayout,
             children: [
               {
-  path: CITIZEN_COMPLAINT_FORWARDED_APPLICATION_PATH,
+  path: CITIZEN_COMPLAINT_FORWARDED_PATH,
   Component:
     CitizenComplaintForwardedApplicationPageWithPermission,
 },
@@ -343,14 +356,14 @@ export const router = createBrowserRouter([
               },
               {
                 path: ROOT_PATH,
-                Component: TestPage,
+                Component: DashboardPage,
               },
               {
                 path: ANIMAL_SPECIES_PATH,
                 Component: AnimalSpeciesPageWithPermission
               },
               {
-                path: PET_SHOP_MY_APPLICATION_PATH,
+                path: PET_SHOP_MY_APPLICATION_ROUTE,
                 Component: PetShopMyApplicationPageWithPermission,
               },
               {
@@ -466,6 +479,14 @@ export const router = createBrowserRouter([
     path: CITIZEN_COMPLAINT_REGISTRATION_PATH,
     Component: CitizenComplaintRegistrationPageWithPermission,
 },
+              {
+                path: CITIZEN_COMPLAINT_APPLICATION_PATH,
+                Component: CitizenComplaintApplicationPageWithPermission,
+              },
+              {
+                path: CITIZEN_COMPLAINT_FORWARDED_PATH,
+                Component: CitizenComplaintForwardedPageWithPermission,
+              },
              
               {
                 path: "forbidden",

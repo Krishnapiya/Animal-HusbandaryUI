@@ -20,8 +20,8 @@ export const BRAND_TEXT = {
   government: "Government of Kerala",
   department: "Department of Animal Husbandry",
   board: "Kerala State Animal Welfare Board",
-  portalTitle: "Online Registration Portal",
-  portalShort: "AWB Online Portal",
+  portalTitle: "Animal Welfare Management System",
+  portalShort: "Animal Welfare Management System",
   footer: "Department of Animal Husbandry, Government of Kerala",
   developer: "Design & Developed by Software Group, Keltron",
 };

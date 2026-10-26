@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "react-router-dom";
 
 import DataTable from "../../components/page_builder/DataTable";
 import FormDialog from "../../components/page_builder/FormDialog";
@@ -17,17 +18,35 @@ import {
 } from "../../config/endpoints";
 
 import {
+  CITIZEN_COMPLAINT_APPLICATION_PATH,
+  CITIZEN_COMPLAINT_FORWARDED_PATH,
   CITIZEN_COMPLAINT_REGISTRATION_PATH,
 } from "../../config/routes";
+
+const menuKeyForPath = (pathname) => {
+  const path = String(pathname || "").toLowerCase();
+
+  if (path.includes(CITIZEN_COMPLAINT_FORWARDED_PATH)) {
+    return CITIZEN_COMPLAINT_FORWARDED_PATH;
+  }
+
+  if (path.includes(CITIZEN_COMPLAINT_APPLICATION_PATH)) {
+    return CITIZEN_COMPLAINT_APPLICATION_PATH;
+  }
+
+  return CITIZEN_COMPLAINT_REGISTRATION_PATH;
+};
 
 const CitizenComplaintRegistrationPage = () => {
   const [viewComplaintId, setViewComplaintId] = useState(null);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
 
+  const { pathname } = useLocation();
+  const menuKey = menuKeyForPath(pathname);
+
   const { can } = useAuthz();
 
-  const { canList, canAdd, canEdit, canDelete } =
-    useCan(CITIZEN_COMPLAINT_REGISTRATION_PATH);
+  const { canList, canAdd, canSave, canEdit, canDelete } = useCan(menuKey);
 
   const handleViewClick = (id) => {
     setViewComplaintId(id);
@@ -70,15 +89,12 @@ const CitizenComplaintRegistrationPage = () => {
         alertString="Citizen Complaint"
         tableColumns={tableColumns}
         includeFilter={true}
-        pageTitle="Complaint Registration"
+        pageTitle="Citizen Complaint Registration"
         canList={canList}
-        canAdd={canAdd}
+        canAdd={canAdd ?? canSave}
         canEdit={canEdit}
         canDelete={canDelete}
-        canExport={can(
-          CITIZEN_COMPLAINT_REGISTRATION_PATH,
-          "export"
-        )}
+        canExport={can(menuKey, "export")}
         handleViewClick={handleViewClick}
       >
         <Filter />

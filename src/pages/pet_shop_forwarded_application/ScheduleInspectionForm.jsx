@@ -100,6 +100,7 @@ const handleSchedule = () => {
         </Button>
 
         <Button
+          type="button"
           variant="contained"
           onClick={handleSchedule}
         >

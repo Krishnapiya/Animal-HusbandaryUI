@@ -1,20 +1,18 @@
-/* eslint-disable */
 import { useState } from "react";
 import {
   Button,
-  CssBaseline,
   TextField,
   Box,
   Typography,
   Card,
   CardContent,
-  CardHeader,
-  Link,
   Divider,
 } from "@mui/material";
 import LoginIcon from "@mui/icons-material/Login";
 import PersonAddAlt1Icon from "@mui/icons-material/PersonAddAlt1";
 import PetsIcon from "@mui/icons-material/Pets";
+import StorefrontIcon from "@mui/icons-material/Storefront";
+import ReportIcon from "@mui/icons-material/Report";
 import {
   Link as RouterLink,
   useNavigate,
@@ -31,20 +29,16 @@ import {
   CITIZEN_SIGNUP_PATH,
 } from "../config/routes";
 import { useAuthz } from "../context/AuthzContext";
-import AppBrandHeader from "../components/branding/AppBrandHeader";
-import AuthSplitLayout from "../components/branding/AuthSplitLayout";
-import {
-  BRAND_COLORS,
-  BRAND_TEXT,
-} from "../config/branding";
+import { BRAND_TEXT } from "../config/branding";
+import DepartmentSiteFrame, { SITE } from "../components/branding/DepartmentSiteFrame";
 
 function Copyright() {
   return (
     <Box sx={{ mt: 3, textAlign: "center" }}>
-      <Typography variant="body2" color="text.secondary">
+      <Typography variant="body2" sx={{ color: SITE.muted }}>
         {BRAND_TEXT.footer}
       </Typography>
-      <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
+      <Typography variant="caption" display="block" sx={{ mt: 0.5, color: SITE.muted }}>
         {BRAND_TEXT.developer} © {new Date().getFullYear()}
       </Typography>
     </Box>
@@ -128,147 +122,206 @@ return;
     }
   };
 
+  const fieldSx = {
+    "& .MuiOutlinedInput-root": {
+      backgroundColor: "#fff",
+      "&.Mui-focused fieldset": { borderColor: SITE.teal },
+    },
+    "& .MuiInputLabel-root.Mui-focused": { color: SITE.teal },
+  };
+
+  const outlineButtonSx = {
+    mb: 1.25,
+    textTransform: "none",
+    borderColor: SITE.green,
+    color: SITE.green,
+    borderRadius: 999,
+    "&:hover": {
+      borderColor: SITE.greenDark,
+      backgroundColor: "#f3faf5",
+    },
+  };
+
   return (
-    <AuthSplitLayout>
-      <CssBaseline />
-
-      <Box sx={{ display: { xs: "block", md: "none" }, mb: 2 }}>
-        <AppBrandHeader
-          compact
-          title={BRAND_TEXT.portalTitle}
-          subtitle="Pet shop, dog breeder, and departmental user access"
-        />
-      </Box>
-
-      <Card
+    <DepartmentSiteFrame>
+      <Box
         sx={{
-          borderRadius: 2,
-          backgroundColor: BRAND_COLORS.white,
-          border: `1px solid ${BRAND_COLORS.border}`,
-          boxShadow: "0 10px 30px rgba(15, 23, 42, 0.08)",
+          maxWidth: 1180,
+          mx: "auto",
+          px: { xs: 2, md: 3 },
+          py: { xs: 3, md: 6 },
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", md: "1.15fr 0.85fr" },
+          gap: { xs: 3, md: 5 },
+          alignItems: "center",
         }}
       >
-        <CardHeader
-          title="Sign In"
-          subheader="Use your username and password to access the portal"
-          sx={{ textAlign: "center", mt: 1 }}
-        />
+        <Box>
+          <Typography
+            sx={{
+              color: SITE.green,
+              fontWeight: 800,
+              letterSpacing: 0.6,
+              fontSize: { xs: 28, sm: 36 },
+              lineHeight: 1.15,
+              textTransform: "uppercase",
+              maxWidth: 560,
+            }}
+          >
+            Animal Welfare Management System
+          </Typography>
 
-        <CardContent>
-          <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              id="username"
-              label="Username"
-              name="username"
-              autoComplete="username"
-              autoFocus
-              variant="outlined"
-            />
-
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              name="password"
-              label="Password"
-              type="password"
-              id="password"
-              autoComplete="current-password"
-              variant="outlined"
-            />
-
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              startIcon={<LoginIcon />}
-              sx={{
-                mt: 3,
-                mb: 2,
-                textTransform: "none",
-                backgroundColor: BRAND_COLORS.primary,
-                "&:hover": {
-                  backgroundColor: BRAND_COLORS.primaryDark,
-                },
-              }}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? "Signing In..." : "Sign In"}
-            </Button>
-
-            <Divider sx={{ my: 2 }}>
-              <Typography variant="caption" color="text.secondary">
-                New applicant registration
-              </Typography>
-            </Divider>
-
-            <Button
-              component={RouterLink}
-              to={`/${PET_SHOP_OWNER_SIGNUP_PATH}`}
-              fullWidth
-              variant="outlined"
-              startIcon={<PersonAddAlt1Icon />}
-              sx={{
-                mb: 2,
-                textTransform: "none",
-                borderColor: BRAND_COLORS.primary,
-                color: BRAND_COLORS.primary,
-              }}
-            >
-              Register as Pet Shop Owner
-            </Button>
-
-            <Button
-              component={RouterLink}
-              to={`/${PET_SHOP_OWNER_SIGNUP_PATH}?ownerType=DOG_BREEDER`}
-              fullWidth
-              variant="outlined"
-              startIcon={<PetsIcon />}
-              sx={{
-                mb: 1,
-                textTransform: "none",
-                borderColor: BRAND_COLORS.primary,
-                color: BRAND_COLORS.primary,
-              }}
-            >
-              Register as Dog Breeder
-            </Button>
-            <Button
-  component={RouterLink}
-  to={`/${CITIZEN_SIGNUP_PATH}`}
-  fullWidth
-  variant="outlined"
-  startIcon={<PersonAddAlt1Icon />}
-  sx={{
-    mb: 1,
-    textTransform: "none",
-    borderColor: BRAND_COLORS.primary,
-    color: BRAND_COLORS.primary,
-  }}
->
-  Register as Citizen
-</Button>
+          <Box sx={{ display: "flex", gap: 2.5, mt: 4, flexWrap: "wrap" }}>
+            {[
+              { icon: <StorefrontIcon />, label: "Pet shop" },
+              { icon: <PetsIcon />, label: "Dog breeder" },
+              { icon: <ReportIcon />, label: "Complaints" },
+            ].map((item) => (
+              <Box key={item.label} sx={{ textAlign: "center", width: 108 }}>
+                <Box
+                  sx={{
+                    width: 92,
+                    height: 92,
+                    mx: "auto",
+                    borderRadius: "50%",
+                    border: "6px solid #e7d7c3",
+                    bgcolor: "#fff",
+                    color: SITE.green,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    boxShadow: "0 8px 18px rgba(12, 60, 76, 0.08)",
+                    "& svg": { fontSize: 36 },
+                  }}
+                >
+                  {item.icon}
+                </Box>
+                <Typography
+                  sx={{
+                    mt: 1,
+                    fontSize: 12,
+                    fontWeight: 800,
+                    letterSpacing: 0.4,
+                    color: SITE.green,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {item.label}
+                </Typography>
+              </Box>
+            ))}
           </Box>
-        </CardContent>
-      </Card>
+        </Box>
 
-     <Typography
-  variant="body2"
-  align="center"
-  sx={{ mt: 2, color: BRAND_COLORS.grey }}
->
-  New applicant?{" "}
-  <Link component={RouterLink} to={`/${CITIZEN_SIGNUP_PATH}`}>
-    Register as Citizen
-  </Link>{" "}
-  or choose one of the registration options above.
-</Typography>
+        <Card
+          sx={{
+            borderRadius: 2,
+            backgroundColor: "#fff",
+            border: `1px solid ${SITE.line}`,
+            boxShadow: "0 16px 40px rgba(12, 60, 76, 0.08)",
+          }}
+        >
+          <CardContent sx={{ p: { xs: 2.5, sm: 3.5 } }}>
+            <Typography sx={{ fontWeight: 800, fontSize: 22, color: SITE.teal }}>
+              Sign in
+            </Typography>
+            <Typography sx={{ mt: 0.5, mb: 1, color: SITE.muted, fontSize: 14 }}>
+              Use your username and password to access the portal
+            </Typography>
 
-      <Copyright />
-    </AuthSplitLayout>
+            <Box component="form" onSubmit={handleSubmit} noValidate>
+              <TextField
+                margin="normal"
+                required
+                fullWidth
+                id="username"
+                label="Username"
+                name="username"
+                autoComplete="username"
+                autoFocus
+                variant="outlined"
+                sx={fieldSx}
+              />
+
+              <TextField
+                margin="normal"
+                required
+                fullWidth
+                name="password"
+                label="Password"
+                type="password"
+                id="password"
+                autoComplete="current-password"
+                variant="outlined"
+                sx={fieldSx}
+              />
+
+              <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                startIcon={<LoginIcon />}
+                sx={{
+                  mt: 3,
+                  mb: 2,
+                  textTransform: "none",
+                  borderRadius: 999,
+                  backgroundColor: SITE.teal,
+                  boxShadow: "none",
+                  "&:hover": { backgroundColor: SITE.tealDark, boxShadow: "none" },
+                }}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Signing In..." : "Sign In"}
+              </Button>
+
+              <Divider sx={{ my: 2 }}>
+                <Typography variant="caption" sx={{ color: SITE.muted }}>
+                  New applicant registration
+                </Typography>
+              </Divider>
+
+              <Button
+                component={RouterLink}
+                to={`/${PET_SHOP_OWNER_SIGNUP_PATH}`}
+                fullWidth
+                variant="outlined"
+                startIcon={<PersonAddAlt1Icon />}
+                sx={outlineButtonSx}
+              >
+                Register as Pet Shop Owner
+              </Button>
+
+              <Button
+                component={RouterLink}
+                to={`/${PET_SHOP_OWNER_SIGNUP_PATH}?ownerType=DOG_BREEDER`}
+                fullWidth
+                variant="outlined"
+                startIcon={<PetsIcon />}
+                sx={outlineButtonSx}
+              >
+                Register as Dog Breeder
+              </Button>
+
+              <Button
+                component={RouterLink}
+                to={`/${CITIZEN_SIGNUP_PATH}`}
+                fullWidth
+                variant="outlined"
+                startIcon={<PersonAddAlt1Icon />}
+                sx={outlineButtonSx}
+              >
+                Register as Citizen
+              </Button>
+            </Box>
+          </CardContent>
+        </Card>
+      </Box>
+
+      <Box sx={{ textAlign: "center", pb: 3 }}>
+        <Copyright />
+      </Box>
+    </DepartmentSiteFrame>
   );
 };
 

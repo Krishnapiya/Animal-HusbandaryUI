@@ -237,7 +237,7 @@ const Step5Documents = ({
       return;
     }
 
-    if (documentId === 21 && !selectedFile.type.startsWith("image/")) {
+    if (documentId === 14 && !selectedFile.type.startsWith("image/")) {
       toast.error("Please upload a JPG or PNG format signature.");
       event.target.value = "";
       return;
@@ -324,7 +324,7 @@ const Step5Documents = ({
           {dogBreederDocumentList.map((document) => {
             const docObj = getDocumentFile(document.id);
             const fileName = docObj?.fileName || docObj?.name || "";
-            const isSignature = document.id === 21;
+            const isSignature = document.id === 14;
             const savedDraft = isSavedDocument(document.id);
 
             return (

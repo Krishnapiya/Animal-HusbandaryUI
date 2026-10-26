@@ -74,7 +74,7 @@ const DataTable = (props) => {
     handleFilterTable,
     handleResetTable,
     handleRefreshTable,
-  } = useFetchTable(props.list_url, props.selectedStatus);
+  } = useFetchTable(props.list_url, props.selectedStatus, props.refreshKey);
 
   // Notification logic
   const loadUnreadCount = async () => {

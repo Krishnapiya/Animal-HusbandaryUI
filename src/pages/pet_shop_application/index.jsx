@@ -7,6 +7,12 @@ import { useState } from "react";
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
+import TextField from "@mui/material/TextField";
 import { useAuthz } from "../../context/AuthzContext";
 import {
   PET_SHOP_REGISTRATION_APPLICATION_API_URL,
@@ -23,6 +29,10 @@ import {
 } from "../../api-client/petShopRegistration";
 const PetShopApplicationPage = () => {
 const [selectedStatus, setSelectedStatus] = useState("");
+const [listRefreshKey, setListRefreshKey] = useState(0);
+const [rejectTargetId, setRejectTargetId] = useState(null);
+const [rejectRemarks, setRejectRemarks] = useState("");
+const [isRejecting, setIsRejecting] = useState(false);
   const handleForwardClick = async (id) => {
   try {
     const baseUrl = import.meta.env.VITE_APP_BASE_API_URL.replace(/\/$/, "");
@@ -56,16 +66,54 @@ const handleApproveClick = async (id) => {
     toast.error("Approval failed");
   }
 };
-const handleRejectClick = async (id) => {
+const handleRejectClick = (id) => {
+  setRejectTargetId(id);
+  setRejectRemarks("");
+};
+
+const handleCloseRejectDialog = () => {
+  if (isRejecting) {
+    return;
+  }
+
+  setRejectTargetId(null);
+  setRejectRemarks("");
+};
+
+const handleRejectSubmit = async () => {
+  const rejectionReason = rejectRemarks.trim();
+
+  if (!rejectionReason) {
+    toast.error("Please enter the reason for rejection");
+    return;
+  }
+
   try {
-    await rejectApplication(id);
+    setIsRejecting(true);
 
-    toast.success("Application rejected successfully");
+    const response = await rejectApplication(
+      rejectTargetId,
+      rejectionReason
+    );
 
-    window.location.reload();
+    if (!response?.isSuccess) {
+      toast.error(
+        response?.data?.message ||
+          response?.data?.detail ||
+          "Rejection failed"
+      );
+      return;
+    }
+
+    toast.success("Application rejected");
+    setRejectTargetId(null);
+    setRejectRemarks("");
+    setListRefreshKey((current) => current + 1);
   } catch (error) {
     console.error(error);
     toast.error("Rejection failed");
+  } finally {
+    setIsRejecting(false);
   }
 };
   const { can } = useAuthz();
@@ -150,6 +198,7 @@ const handleRejectClick = async (id) => {
       list_url={PET_SHOP_REGISTRATION_APPLICATION_LIST_URL}
 
 selectedStatus={selectedStatus}
+      refreshKey={listRefreshKey}
 
       handleForwardClick={handleForwardClick}
       alertString="Pet Shop Registration"
@@ -166,12 +215,47 @@ handleRejectClick={handleRejectClick}
     >
       <Filter />
 
-      <FormDialog maxWidth="xl">
+      <FormDialog maxWidth="lg" title="Pet Shop Application Details">
         <Form />
       </FormDialog>
 
       <List />
-   </DataTable>
+    </DataTable>
+
+    <Dialog
+      open={Boolean(rejectTargetId)}
+      onClose={handleCloseRejectDialog}
+      maxWidth="sm"
+      fullWidth
+    >
+      <DialogTitle>Reject Application</DialogTitle>
+      <DialogContent>
+        <TextField
+          autoFocus
+          fullWidth
+          required
+          multiline
+          minRows={4}
+          margin="dense"
+          label="Reason for rejection"
+          value={rejectRemarks}
+          onChange={(event) => setRejectRemarks(event.target.value)}
+        />
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={handleCloseRejectDialog} disabled={isRejecting}>
+          Cancel
+        </Button>
+        <Button
+          variant="contained"
+          color="error"
+          onClick={handleRejectSubmit}
+          disabled={isRejecting || !rejectRemarks.trim()}
+        >
+          {isRejecting ? "Rejecting..." : "Reject"}
+        </Button>
+      </DialogActions>
+    </Dialog>
   </>
 );
   

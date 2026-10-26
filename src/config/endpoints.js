@@ -190,6 +190,9 @@ export const DOG_BREEDER_APPLICATION_LIST_URL =
 
 export const DOG_BREEDER_APPLICATION_DOWNLOAD_URL =
   "/dogbreeder/auth/registration-application/download/";
+
+export const DOG_BREEDER_MY_APPLICATION_DOWNLOAD_URL =
+  "/dogbreeder/auth/registration-application/my-applications/download/";
   export const DOG_BREEDER_DOCUMENT_VIEW_URL =
   "/dogbreeder/auth/awb/application-document/view/";
 
@@ -267,6 +270,9 @@ export const DOG_BREEDER_MY_APPLICATION_LIST_URL =
 
   export const DOG_BREEDER_INSPECTION_VIEW_URL =
   "/dogbreeder/auth/registration-inspection/application/";
+
+export const DOG_BREEDER_INSPECTION_REPORT_URL =
+  "/dogbreeder/auth/registration-inspection/report/";
 
 
 export const CITIZEN_COMPLAINT_API_URL =

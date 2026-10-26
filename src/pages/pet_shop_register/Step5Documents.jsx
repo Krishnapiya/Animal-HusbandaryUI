@@ -200,12 +200,21 @@ const Step5Documents = ({
             const currentId = Number(item?.id ?? 0);
 
             if (!existing || currentId >= existingId) {
+              const documentType = documentList.find(
+                (entry) => Number(entry.id) === Number(documentTypeId)
+              );
+
               acc[documentTypeId] = {
                 ...item,
                 name: item.fileName || item.name || "",
                 fileName: item.fileName || item.name || "",
                 documentTypeId: Number(documentTypeId),
-                documentTypeName: item.documentTypeName || docMeta?.name || "",
+                documentTypeName:
+                  item.documentTypeName ||
+                  item.documentType?.name ||
+                  docMeta?.name ||
+                  documentType?.name ||
+                  "",
                 label: docMeta?.name || item.documentTypeName || "",
                 isDraft: true,
               };
@@ -273,6 +282,10 @@ const Step5Documents = ({
       return;
     }
 
+    const documentType =
+      docMeta ||
+      documentList.find((entry) => Number(entry.id) === Number(documentId));
+
     setDocuments((prev) => ({
       ...prev,
       [documentId]: {
@@ -282,9 +295,9 @@ const Step5Documents = ({
         fileName: file.name,
         mimeType: file.type || (isPdf ? "application/pdf" : "image/jpeg"),
         fileSizeBytes: file.size,
-        documentTypeId: documentId,
-        documentTypeName: docMeta?.name || "Document",
-        label: docMeta?.name || "Document",
+        documentTypeId: Number(documentId),
+        documentTypeName: documentType?.name || "Document",
+        label: documentType?.name || "Document",
         isDraft: false,
       },
     }));
@@ -326,20 +339,29 @@ const Step5Documents = ({
 
         const savedDocument = getPayload(response);
 
+        const documentType = documentList.find(
+          (entry) => Number(entry.id) === Number(documentId)
+        );
+
         setDocuments((prev) => ({
           ...prev,
           [documentId]: {
             ...document,
             ...savedDocument,
             id: savedDocument.id ?? document.id,
+            documentTypeId: Number(
+              savedDocument?.documentTypeId || documentId
+            ),
+            documentTypeName:
+              savedDocument?.documentTypeName ||
+              document.documentTypeName ||
+              documentType?.name ||
+              "",
             file: null,
             name: savedDocument?.fileName || file.name,
             fileName: savedDocument?.fileName || file.name,
             filePath: savedDocument?.filePath || prev[documentId]?.filePath,
             mimeType: savedDocument?.mimeType || file.type,
-            documentTypeId: Number(documentId),
-            documentTypeName:
-              savedDocument?.documentTypeName || document.documentTypeName,
             label:
               savedDocument?.documentTypeName ||
               document.label ||
