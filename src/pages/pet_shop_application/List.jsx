@@ -13,14 +13,49 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 import Box from "@mui/material/Box";
-import Dialog from "@mui/material/Dialog";
-import DialogTitle from "@mui/material/DialogTitle";
-import DialogContent from "@mui/material/DialogContent";
-import InspectionReportSection from "./InspectionReportSection";
+import AssignmentIcon from "@mui/icons-material/Assignment";
+import PetShopInspectionReportDialog from "../../components/PetShopInspectionReportDialog";
+
+const normalizeStatusName = (value) => {
+  const raw =
+    typeof value === "string"
+      ? value
+      : value?.name ||
+        value?.status ||
+        value?.statusName ||
+        value?.statusCode ||
+        value?.currentStatus ||
+        value?.applicationStatus ||
+        value?.applicationStatusName ||
+        value?.approvalStatus ||
+        value?.value ||
+        value?.code ||
+        "";
+
+  return String(raw)
+    .trim()
+    .replace(/[_\s-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .toLowerCase();
+};
+
+const matchesStatus = (value, ...expected) => {
+  const normalized = normalizeStatusName(value);
+  return expected.some((status) => {
+    const expectedNormalized = normalizeStatusName(status);
+    return normalized === expectedNormalized || normalized.includes(expectedNormalized);
+  });
+};
 
 const List = (props) => {
   const [historyApplicationId, setHistoryApplicationId] = useState("");
-  const [reportApplicationId, setReportApplicationId] = useState("");
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const [selectedReportRow, setSelectedReportRow] = useState(null);
+
+  const handleOpenReportModal = (row) => {
+    setSelectedReportRow(row);
+    setReportDialogOpen(true);
+  };
 
   return (
     <>
@@ -45,6 +80,7 @@ const List = (props) => {
 
            <TableCell align="center">View</TableCell>
             <TableCell align="center">History</TableCell>
+            <TableCell align="center">Report</TableCell>
 <TableCell align="center">Actions</TableCell>
           </TableRow>
         </TableHead>
@@ -60,6 +96,14 @@ const List = (props) => {
                 row?.applicationStatusName ||
                 row?.approvalStatus
             );
+            const isInspectionDone =
+              matchesStatus(
+                status,
+                "verified by cvo",
+                "rejected by cvo",
+                "application approved",
+                "application rejected"
+              ) || Boolean(row?.inspectionReport);
 
             return (
               <TableRow key={index}>
@@ -83,6 +127,19 @@ const List = (props) => {
                     <IconButton onClick={() => setHistoryApplicationId(row.id)}>
                       <HistoryIcon color="primary" />
                     </IconButton>
+                  </Tooltip>
+                </TableCell>
+                <TableCell align="center">
+                  <Tooltip title={isInspectionDone ? "View Inspection Report" : "No Inspection Report"}>
+                    <span>
+                      <IconButton
+                        color={isInspectionDone ? "primary" : "default"}
+                        disabled={!isInspectionDone}
+                        onClick={() => handleOpenReportModal(row)}
+                      >
+                        <AssignmentIcon />
+                      </IconButton>
+                    </span>
                   </Tooltip>
                 </TableCell>
 
@@ -129,39 +186,44 @@ const List = (props) => {
                       );
                     }
 
-    if (
-      status === "verified by cvo" ||
-      status === "rejected by cvo"
-    ) {
-      return (
-        <Box display="flex" gap={1} justifyContent="center" flexWrap="wrap">
-          <Button
-            variant="outlined"
-            size="small"
-            onClick={() => setReportApplicationId(row.id)}
-          >
-            VIEW REPORT
-          </Button>
-          <Button
-            variant="contained"
-            color="success"
-            size="small"
-            onClick={() => props.handleApproveClick(row.id)}
-          >
-            APPROVE
-          </Button>
+                    if (
+                      matchesStatus(
+                        status,
+                        "verified by cvo",
+                        "rejected by cvo"
+                      )
+                    ) {
+                      return (
+                        <Box display="flex" gap={1} justifyContent="center" flexWrap="wrap">
+                          <Button
+                            variant="outlined"
+                            color="info"
+                            size="small"
+                            onClick={() => handleOpenReportModal(row)}
+                          >
+                            VIEW REPORT
+                          </Button>
 
-          <Button
-            variant="contained"
-            color="error"
-            size="small"
-            onClick={() => props.handleRejectClick(row.id)}
-          >
-            REJECT
-          </Button>
-        </Box>
-      );
-    }
+                          <Button
+                            variant="contained"
+                            color="success"
+                            size="small"
+                            onClick={() => props.handleApproveClick(row.id)}
+                          >
+                            APPROVE
+                          </Button>
+
+                          <Button
+                            variant="contained"
+                            color="error"
+                            size="small"
+                            onClick={() => props.handleRejectClick(row.id)}
+                          >
+                            REJECT
+                          </Button>
+                        </Box>
+                      );
+                    }
 
                     if (status === "application approved") {
                       return (
@@ -202,17 +264,15 @@ const List = (props) => {
         applicationId={historyApplicationId}
         setApplicationId={setHistoryApplicationId}
       />
-      <Dialog
-        open={Boolean(reportApplicationId)}
-        onClose={() => setReportApplicationId("")}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>Inspection Report</DialogTitle>
-        <DialogContent>
-          <InspectionReportSection applicationId={reportApplicationId} />
-        </DialogContent>
-      </Dialog>
+      <PetShopInspectionReportDialog
+        open={reportDialogOpen}
+        onClose={() => {
+          setReportDialogOpen(false);
+          setSelectedReportRow(null);
+        }}
+        applicationId={selectedReportRow?.id}
+        applicationNumber={selectedReportRow?.applicationNumber}
+      />
     </>
   );
 };

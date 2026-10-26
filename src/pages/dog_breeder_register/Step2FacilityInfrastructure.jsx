@@ -1,6 +1,7 @@
 /* eslint-disable */
 import PropTypes from "prop-types";
 import {
+  Alert,
   Box,
   Grid2 as Grid,
   Typography,
@@ -11,7 +12,9 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Button
+  Button,
+  TextField,
+  FormHelperText,
 } from "@mui/material";
 import SaveIcon from "@mui/icons-material/Save";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -29,6 +32,34 @@ const Step2FacilityInfrastructure = ({
   onSave,
 }) => {
   const values = formValues || {};
+
+  const openingTime =
+    values.openingTime ||
+    (values.workingHours && values.workingHours.includes(" - ")
+      ? values.workingHours.split(" - ")[0]
+      : values.workingHours || "");
+
+  const closingTime =
+    values.closingTime ||
+    (values.workingHours && values.workingHours.includes(" - ")
+      ? values.workingHours.split(" - ")[1]
+      : "");
+
+  const holidayValue = Array.isArray(values.holiday)
+    ? values.holiday
+    : values.holiday
+    ? String(values.holiday)
+        .split(",")
+        .map((d) => d.trim())
+        .filter(Boolean)
+    : Array.isArray(values.restDay)
+    ? values.restDay
+    : values.restDay
+    ? String(values.restDay)
+        .split(",")
+        .map((d) => d.trim())
+        .filter(Boolean)
+    : [];
 
   return (
     <Box>
@@ -63,25 +94,66 @@ const Step2FacilityInfrastructure = ({
         </Grid>
 
         <Grid size={{ xs: 12, md: 6 }}>
-          <TextInput
-            label="2. Working hours"
-            name="workingHours"
-            value={values.workingHours || ""}
-            onChange={onChange}
-            errors={errors}
-            required
-          />
+          <Box sx={{ display: "flex", gap: 2 }}>
+            <TextField
+              fullWidth
+              type="time"
+              label="Opening Time"
+              name="openingTime"
+              value={openingTime}
+              onChange={onChange}
+              InputLabelProps={{
+                shrink: true,
+              }}
+              error={Boolean(errors?.openingTime || errors?.workingHours)}
+              helperText={errors?.openingTime}
+            />
+
+            <TextField
+              fullWidth
+              type="time"
+              label="Closing Time"
+              name="closingTime"
+              value={closingTime}
+              onChange={onChange}
+              InputLabelProps={{
+                shrink: true,
+              }}
+              error={Boolean(errors?.closingTime || errors?.workingHours)}
+              helperText={errors?.closingTime}
+            />
+          </Box>
+          {errors?.workingHours && !errors?.openingTime && !errors?.closingTime && (
+            <Typography variant="caption" color="error" sx={{ mt: 0.5, display: "block" }}>
+              {errors.workingHours}
+            </Typography>
+          )}
         </Grid>
 
         <Grid size={{ xs: 12, md: 6 }}>
-          <TextInput
-            label="3. Holiday"
-            name="holiday"
-            value={values.holiday || ""}
-            onChange={onChange}
-            errors={errors}
-            required
-          />
+          <FormControl fullWidth error={Boolean(errors?.holiday)}>
+            <InputLabel id="holiday-select-label">Holiday</InputLabel>
+
+            <Select
+              labelId="holiday-select-label"
+              multiple
+              name="holiday"
+              label="Holiday"
+              value={holidayValue}
+              onChange={onChange}
+            >
+              <MenuItem value="Monday">Monday</MenuItem>
+              <MenuItem value="Tuesday">Tuesday</MenuItem>
+              <MenuItem value="Wednesday">Wednesday</MenuItem>
+              <MenuItem value="Thursday">Thursday</MenuItem>
+              <MenuItem value="Friday">Friday</MenuItem>
+              <MenuItem value="Saturday">Saturday</MenuItem>
+              <MenuItem value="Sunday">Sunday</MenuItem>
+            </Select>
+            {errors?.holiday && (
+              <FormHelperText>{errors.holiday}</FormHelperText>
+            )}
+          </FormControl>
         </Grid>
 
         <Grid size={{ xs: 12, md: 6 }}>

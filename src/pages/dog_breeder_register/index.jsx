@@ -39,6 +39,7 @@ const initialStep1 = {
   applicationId: "",
   district: null,
   breederName: "",
+  panNumber: "",
   addressLine1: "",
   addressLine2: "",
   city: "",
@@ -63,7 +64,10 @@ const initialStep2 = {
 
   accommodationInfrastructure: "",
   workingHours: "",
-  holiday: "",
+  openingTime: "",
+  closingTime: "",
+  holiday: [],
+  restDay: [],
 
   ventilationArrangement: "",
   lightingArrangement: "",
@@ -76,12 +80,31 @@ const initialStep2 = {
   cageEnclosureDetails: "",
 };
 
+const initialBreedItem = {
+  id: "",
+  speciesId: null,
+  species: null,
+  customSpeciesName: "",
+  breed: "",
+  breedId: "",
+  breedObject: null,
+  customBreedName: "",
+  gender: "",
+  dogCount: "",
+  ageDescription: "",
+  priceOffered: "",
+  description: "",
+  displayOrder: 0,
+};
+
 const initialStep3 = {
   id: "",
   dogBreederDetailId: "",
   breedName: "",
+  gender: "",
   dogCount: "",
   ageDescription: "",
+  breedsList: [initialBreedItem],
 };
 
 const initialStep4 = {
@@ -572,6 +595,7 @@ const [isSubmitting, setIsSubmitting] = useState(false);
           applicationId: applicationId || "",
           district: buildDistrictFromDraft(detail) || prev.district,
           breederName: detail?.breederName || prev.breederName,
+          panNumber: detail?.panNumber || prev.panNumber || "",
           addressLine1: detail?.addressLine1 || prev.addressLine1,
           addressLine2: detail?.addressLine2 || prev.addressLine2,
           city: detail?.city || prev.city,
@@ -622,10 +646,43 @@ setFacilityValues((prev) => ({
     prev.accommodationInfrastructure,
 
   workingHours:
-    facility?.workingHours || prev.workingHours,
+    facility?.workingHours || prev.workingHours || "",
+
+  openingTime:
+    (facility?.workingHours && facility.workingHours.includes(" - "))
+      ? facility.workingHours.split(" - ")[0]
+      : facility?.openingTime || prev.openingTime || "",
+
+  closingTime:
+    (facility?.workingHours && facility.workingHours.includes(" - "))
+      ? facility.workingHours.split(" - ")[1]
+      : facility?.closingTime || prev.closingTime || "",
 
   holiday:
-    facility?.holiday || prev.holiday,
+    Array.isArray(facility?.holiday)
+      ? facility.holiday
+      : facility?.holiday
+      ? String(facility.holiday).split(",").map((d) => d.trim()).filter(Boolean)
+      : Array.isArray(facility?.restDay)
+      ? facility.restDay
+      : facility?.restDay
+      ? String(facility.restDay).split(",").map((d) => d.trim()).filter(Boolean)
+      : Array.isArray(prev.holiday)
+      ? prev.holiday
+      : [],
+
+  restDay:
+    Array.isArray(facility?.holiday)
+      ? facility.holiday
+      : facility?.holiday
+      ? String(facility.holiday).split(",").map((d) => d.trim()).filter(Boolean)
+      : Array.isArray(facility?.restDay)
+      ? facility.restDay
+      : facility?.restDay
+      ? String(facility.restDay).split(",").map((d) => d.trim()).filter(Boolean)
+      : Array.isArray(prev.holiday)
+      ? prev.holiday
+      : [],
 
   ventilationArrangement:
     facility?.ventilationArrangement ||
@@ -660,17 +717,61 @@ setFacilityValues((prev) => ({
     prev.cageEnclosureDetails,
 }));
 
+        const rawBreeds =
+          draftPayload?.dogBreederBreeds ||
+          draftPayload?.dogBreederBreedList ||
+          draftPayload?.breedDetails ||
+          draftPayload?.breeds ||
+          draftPayload?.dogBreedDetails ||
+          (draftPayload?.dogBreederBreed ? [draftPayload.dogBreederBreed] : []);
+
+        const loadedBreeds = (Array.isArray(rawBreeds) && rawBreeds.length > 0)
+          ? rawBreeds.map((b, i) => {
+              const specId = b.species?.id ?? b.speciesId ?? null;
+              const isOtherBrd = Boolean(b.customBreedName && String(b.customBreedName).trim() !== "");
+
+              return {
+                id: b.id || "",
+                dogBreederDetailId:
+                  b.dogBreederDetailId ||
+                  b.dogBreederDetail?.id ||
+                  dogBreederDetailId ||
+                  "",
+                species: b.species || null,
+                speciesId: specId,
+                customSpeciesName: b.customSpeciesName || "",
+                breed: isOtherBrd ? "Other" : (b.breed || b.breedName || ""),
+                breedId: isOtherBrd ? "OTHER" : (b.breedId || ""),
+                breedObject: null,
+                customBreedName: b.customBreedName || "",
+                breedName: b.breedName || "",
+                gender: b.gender || "",
+                dogCount: b.dogCount ?? "",
+                ageDescription: b.ageDescription || "",
+                priceOffered: b.priceOffered ?? "",
+                description: b.description || "",
+                displayOrder: b.displayOrder ?? i,
+              };
+            })
+          : [initialBreedItem];
+
         setBreedValues((prev) => ({
           ...prev,
-          id: breed?.id || prev.id,
+          id: loadedBreeds[0]?.id || breed?.id || prev.id,
           dogBreederDetailId:
             dogBreederDetailId ||
+            loadedBreeds[0]?.dogBreederDetailId ||
             breed?.dogBreederDetailId ||
             breed?.dogBreederDetail?.id ||
             prev.dogBreederDetailId,
-          breedName: breed?.breedName || prev.breedName,
-          dogCount: breed?.dogCount ?? prev.dogCount,
-          ageDescription: breed?.ageDescription || prev.ageDescription,
+          breedName: loadedBreeds[0]?.breedName || breed?.breedName || prev.breedName,
+          gender: loadedBreeds[0]?.gender || breed?.gender || prev.gender,
+          dogCount: loadedBreeds[0]?.dogCount ?? breed?.dogCount ?? prev.dogCount,
+          ageDescription:
+            loadedBreeds[0]?.ageDescription || breed?.ageDescription || prev.ageDescription,
+          priceOffered: loadedBreeds[0]?.priceOffered ?? breed?.priceOffered ?? "",
+          description: loadedBreeds[0]?.description || breed?.description || "",
+          breedsList: loadedBreeds,
         }));
 
         setDeclarationValues((prev) => ({
@@ -803,8 +904,50 @@ const handlePreviewClick = () => {
 
   setPreviewValues({
     breederDetails: formValues,
-    facilityDetails: facilityValues,
-    breedDetails: breedValues?.breedName ? [breedValues] : [],
+    facilityDetails: {
+      ...facilityValues,
+      workingHours:
+        facilityValues.workingHours ||
+        (facilityValues.openingTime && facilityValues.closingTime
+          ? `${facilityValues.openingTime} - ${facilityValues.closingTime}`
+          : ""),
+      holiday: facilityValues.holiday,
+      restDay: facilityValues.holiday,
+    },
+    breedDetails:
+      Array.isArray(breedValues?.breedsList) && breedValues.breedsList.length > 0
+        ? breedValues.breedsList.map((item) => {
+            const isOtherSpec =
+              Number(item.speciesId) === 24 ||
+              (item.species?.speciesName || item.species?.name || "").toLowerCase() ===
+                "other";
+            const isOtherBrd =
+              item.breedId === "OTHER" ||
+              (typeof item.breed === "string" &&
+                item.breed.toLowerCase() === "other") ||
+              Boolean(
+                item.customBreedName && String(item.customBreedName).trim() !== ""
+              );
+
+            let displayName = "";
+            if (isOtherSpec) {
+              const spec = (item.customSpeciesName || "Other").trim();
+              const brd = (item.customBreedName || item.breed || "").trim();
+              displayName = brd ? `${spec} - ${brd}` : spec;
+            } else if (isOtherBrd) {
+              displayName = (item.customBreedName || "Other").trim();
+            } else {
+              displayName = (item.breed || item.breedName || "").trim();
+            }
+
+            return {
+              ...item,
+              breedName: displayName,
+            };
+          })
+        : breedValues?.breedName
+        ? [breedValues]
+        : [],
     declarationDetails: declarationValues,
     documentDetails: selectedDocuments,
 
@@ -813,14 +956,18 @@ const handlePreviewClick = () => {
   });
 };
   const handleChange = (event) => {
+    const { name, value } = event.target;
+    const finalValue =
+      name === "panNumber" ? (value || "").toUpperCase().slice(0, 10) : value;
+
     setFormValues((prev) => ({
       ...prev,
-      [event.target.name]: event.target.value,
+      [name]: finalValue,
     }));
 
     setErrors((prev) => ({
       ...prev,
-      [event.target.name]: "",
+      [name]: "",
     }));
   };
 
@@ -845,6 +992,14 @@ const handlePreviewClick = () => {
 
     if (!formValues.breederName) {
       newErrors.breederName = "Breeder name is required";
+    }
+
+    const PAN_REGEX = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+    const pan = (formValues.panNumber || "").trim().toUpperCase();
+    if (!pan) {
+      newErrors.panNumber = "PAN Card Number is required";
+    } else if (!PAN_REGEX.test(pan)) {
+      newErrors.panNumber = "Invalid PAN Card Number format (e.g. ABCDE1234F)";
     }
 
     if (!formValues.addressLine1) {
@@ -882,6 +1037,9 @@ const handlePreviewClick = () => {
     applicationId: formValues.applicationId || null,
     districtId: formValues.district?.id ?? null,
     breederName: formValues.breederName,
+    panNumber: formValues.panNumber
+      ? formValues.panNumber.trim().toUpperCase()
+      : "",
     addressLine1: formValues.addressLine1,
     addressLine2: formValues.addressLine2,
     city: formValues.city,
@@ -988,30 +1146,84 @@ const handlePreviewClick = () => {
   };
 
   const handleFacilityChange = (event) => {
-    setFacilityValues((prev) => ({
-      ...prev,
-      [event.target.name]: event.target.value,
-    }));
+    const { name, value } = event.target;
+
+    setFacilityValues((prev) => {
+      const updated = {
+        ...prev,
+        [name]: value,
+      };
+
+      if (name === "openingTime" || name === "closingTime") {
+        const op =
+          name === "openingTime"
+            ? value
+            : prev.openingTime ||
+              (prev.workingHours && prev.workingHours.includes(" - ")
+                ? prev.workingHours.split(" - ")[0]
+                : "");
+        const cl =
+          name === "closingTime"
+            ? value
+            : prev.closingTime ||
+              (prev.workingHours && prev.workingHours.includes(" - ")
+                ? prev.workingHours.split(" - ")[1]
+                : "");
+        updated.openingTime = op;
+        updated.closingTime = cl;
+        updated.workingHours = op && cl ? `${op} - ${cl}` : op || cl || "";
+      }
+
+      if (name === "holiday") {
+        updated.holiday = value;
+        updated.restDay = value;
+      }
+
+      return updated;
+    });
 
     setFacilityErrors((prev) => ({
       ...prev,
-      [event.target.name]: "",
+      [name]: "",
+      ...(name === "openingTime" || name === "closingTime"
+        ? { workingHours: "" }
+        : {}),
     }));
   };
 
   const validateFacility = () => {
     const newErrors = {};
 
-    if (!facilityValues.accommodationInfrastructure) {
+    if (!facilityValues.accommodationInfrastructure?.trim()) {
       newErrors.accommodationInfrastructure =
         "Accommodation infrastructure is required";
     }
 
-    if (!facilityValues.workingHours) {
+    const hasWorkingHours =
+      (facilityValues.openingTime && facilityValues.closingTime) ||
+      (facilityValues.workingHours && facilityValues.workingHours.trim());
+
+    if (!hasWorkingHours) {
+      if (!facilityValues.openingTime) {
+        newErrors.openingTime = "Opening time is required";
+      }
+      if (!facilityValues.closingTime) {
+        newErrors.closingTime = "Closing time is required";
+      }
       newErrors.workingHours = "Working hours is required";
     }
 
-    if (!facilityValues.holiday) {
+    const hasHoliday =
+      (Array.isArray(facilityValues.holiday) &&
+        facilityValues.holiday.length > 0) ||
+      (typeof facilityValues.holiday === "string" &&
+        facilityValues.holiday.trim() !== "") ||
+      (Array.isArray(facilityValues.restDay) &&
+        facilityValues.restDay.length > 0) ||
+      (typeof facilityValues.restDay === "string" &&
+        facilityValues.restDay.trim() !== "");
+
+    if (!hasHoliday) {
       newErrors.holiday = "Holiday is required";
     }
 
@@ -1048,50 +1260,54 @@ const handlePreviewClick = () => {
       setIsSavingFacility(true);
       setFacilityErrors({});
 
-   const payload = {
-    id: facilityValues.id || null,
-    dogBreederDetailId,
+      const resolvedWorkingHours =
+        facilityValues.openingTime && facilityValues.closingTime
+          ? `${facilityValues.openingTime} - ${facilityValues.closingTime}`
+          : facilityValues.workingHours || "";
 
-    ventilationAvailable: facilityValues.ventilationAvailable,
-    lightingAvailable: facilityValues.lightingAvailable,
-    heatingCoolingAvailable: facilityValues.heatingCoolingAvailable,
-    foodStorageAvailable: facilityValues.foodStorageAvailable,
-    cleanlinessWasteAvailable: facilityValues.cleanlinessWasteAvailable,
-    deadAnimalDisposalAvailable:
-        facilityValues.deadAnimalDisposalAvailable,
-    veterinarySupportAvailable:
-        facilityValues.veterinarySupportAvailable,
+      const resolvedHoliday = Array.isArray(facilityValues.holiday)
+        ? facilityValues.holiday.join(",")
+        : Array.isArray(facilityValues.restDay)
+        ? facilityValues.restDay.join(",")
+        : facilityValues.holiday || facilityValues.restDay || "";
 
-    accommodationInfrastructure:
-        facilityValues.accommodationInfrastructure,
+      const payload = {
+        id: facilityValues.id || null,
+        dogBreederDetailId,
 
-    workingHours: facilityValues.workingHours,
-    holiday: facilityValues.holiday,
+        ventilationAvailable: facilityValues.ventilationAvailable,
+        lightingAvailable: facilityValues.lightingAvailable,
+        heatingCoolingAvailable: facilityValues.heatingCoolingAvailable,
+        foodStorageAvailable: facilityValues.foodStorageAvailable,
+        cleanlinessWasteAvailable: facilityValues.cleanlinessWasteAvailable,
+        deadAnimalDisposalAvailable:
+            facilityValues.deadAnimalDisposalAvailable,
+        veterinarySupportAvailable:
+            facilityValues.veterinarySupportAvailable,
 
-    ventilationArrangement:
-        facilityValues.ventilationArrangement,
+        accommodationInfrastructure:
+            facilityValues.accommodationInfrastructure,
 
-    lightingArrangement:
-        facilityValues.lightingArrangement,
+        workingHours: resolvedWorkingHours,
+        holiday: resolvedHoliday,
 
-    heatingCoolingArrangement:
-        facilityValues.heatingCoolingArrangement,
-
-    foodStorageArrangement:
-        facilityValues.foodStorageArrangement,
-
-    cleanlinessWasteArrangement:
-        facilityValues.cleanlinessWasteArrangement,
-
-    deadAnimalDisposalArrangement:
-        facilityValues.deadAnimalDisposalArrangement,
-
-    veterinarySupportArrangement:
-        facilityValues.veterinarySupportArrangement,
-
-    cageEnclosureDetails:
-        facilityValues.cageEnclosureDetails,
-};
+        ventilationArrangement:
+            facilityValues.ventilationArrangement,
+        lightingArrangement:
+            facilityValues.lightingArrangement,
+        heatingCoolingArrangement:
+            facilityValues.heatingCoolingArrangement,
+        foodStorageArrangement:
+            facilityValues.foodStorageArrangement,
+        cleanlinessWasteArrangement:
+            facilityValues.cleanlinessWasteArrangement,
+        deadAnimalDisposalArrangement:
+            facilityValues.deadAnimalDisposalArrangement,
+        veterinarySupportArrangement:
+            facilityValues.veterinarySupportArrangement,
+        cageEnclosureDetails:
+            facilityValues.cageEnclosureDetails,
+      };
 
       const response = await saveDogBreederFacility(payload);
 
@@ -1116,6 +1332,27 @@ const handlePreviewClick = () => {
       setFacilityValues((prev) => ({
         ...prev,
         ...savedData,
+        workingHours: resolvedWorkingHours,
+        openingTime:
+          facilityValues.openingTime ||
+          (resolvedWorkingHours.includes(" - ")
+            ? resolvedWorkingHours.split(" - ")[0]
+            : ""),
+        closingTime:
+          facilityValues.closingTime ||
+          (resolvedWorkingHours.includes(" - ")
+            ? resolvedWorkingHours.split(" - ")[1]
+            : ""),
+        holiday: Array.isArray(facilityValues.holiday)
+          ? facilityValues.holiday
+          : resolvedHoliday
+          ? resolvedHoliday.split(",").map((d) => d.trim()).filter(Boolean)
+          : [],
+        restDay: Array.isArray(facilityValues.holiday)
+          ? facilityValues.holiday
+          : resolvedHoliday
+          ? resolvedHoliday.split(",").map((d) => d.trim()).filter(Boolean)
+          : [],
         dogBreederDetailId,
       }));
 
@@ -1163,97 +1400,255 @@ const handlePreviewClick = () => {
   };
 
   const validateBreed = () => {
-    const newErrors = {};
+    const list =
+      Array.isArray(breedValues?.breedsList) &&
+      breedValues.breedsList.length > 0
+        ? breedValues.breedsList
+        : [breedValues];
 
-    // If breedsList is provided (new UI), validate each entry
-    const list = Array.isArray(breedValues.breedsList)
-      ? breedValues.breedsList
-      : null;
+    const listErrors = {};
+    let hasError = false;
+    const seenBreedNames = new Set();
 
-    if (list) {
-      const listErrors = {};
+    list.forEach((item, idx) => {
+      const itemErrors = {};
 
-      list.forEach((item, idx) => {
-        const itemErrors = {};
+      // 1. Validate Species
+      const specId =
+        item?.species?.id ??
+        item?.speciesId ??
+        (typeof item?.species === "number"
+          ? item.species
+          : item?.species != null &&
+            !isNaN(Number(item.species)) &&
+            String(item.species).trim() !== ""
+          ? Number(item.species)
+          : null);
 
-        if (!item?.breedName) {
-          itemErrors.breedName = "Breed name is required";
+      const specName =
+        item?.species?.speciesName ||
+        item?.species?.name ||
+        (typeof item?.species === "string" ? item.species : "");
+
+      const isOtherSpecies =
+        specId === 24 ||
+        (specName && specName.toLowerCase() === "other") ||
+        (item?.speciesId != null && Number(item.speciesId) === 24);
+
+      if (specId == null && !item?.breedName && !item?.breed) {
+        itemErrors.speciesId = "Animal species is required";
+      }
+
+      if (isOtherSpecies) {
+        if (!item?.customSpeciesName || !item.customSpeciesName.trim()) {
+          itemErrors.customSpeciesName = "Custom species name is required";
+        } else if (item.customSpeciesName.trim().length > 120) {
+          itemErrors.customSpeciesName =
+            "Custom species name must not exceed 120 characters";
         }
+      }
 
-        const count = item?.dogCount;
+      // 2. Validate Breed
+      const isOtherBreed =
+        item?.breedId === "OTHER" ||
+        item?.breed === "Other" ||
+        (typeof item?.breed === "string" &&
+          item.breed.toLowerCase() === "other") ||
+        Boolean(
+          item?.customBreedName && String(item.customBreedName).trim() !== ""
+        );
 
-        if (count === "" || count === null || Number(count) < 0) {
-          itemErrors.dogCount = "Valid dog count is required";
+      const hasBreed =
+        item?.breedId != null && item.breedId !== ""
+          ? true
+          : Boolean(item?.breed && String(item.breed).trim() !== "") ||
+            Boolean(item?.breedName && String(item.breedName).trim() !== "");
+
+      if (!hasBreed && !isOtherBreed) {
+        itemErrors.breedId = "Breed is required";
+      }
+
+      if (isOtherBreed) {
+        if (!item?.customBreedName || !item.customBreedName.trim()) {
+          itemErrors.customBreedName = "Custom breed name is required";
+        } else if (item.customBreedName.trim().length > 120) {
+          itemErrors.customBreedName =
+            "Custom breed name must not exceed 120 characters";
         }
+      }
 
-        if (Object.keys(itemErrors).length > 0) {
-          listErrors[`breedsList_${idx}`] = itemErrors;
+      // 3. Validate Gender
+      if (!item?.gender) {
+        itemErrors.gender = "Gender is required";
+      }
+
+      // 4. Validate Dog Count
+      const count = item?.dogCount;
+      if (
+        count === "" ||
+        count === null ||
+        count === undefined ||
+        isNaN(Number(count)) ||
+        Number(count) < 0
+      ) {
+        itemErrors.dogCount = "Valid number of dogs is required";
+      }
+
+      // 5. Duplicate Check
+      let resolvedName = "";
+      if (isOtherSpecies) {
+        resolvedName = `${(item.customSpeciesName || "Other").trim().toLowerCase()} - ${(item.customBreedName || item.breed || "").trim().toLowerCase()}`;
+      } else if (isOtherBreed) {
+        resolvedName = (item.customBreedName || "Other").trim().toLowerCase();
+      } else {
+        resolvedName = (item.breed || item.breedName || "").trim().toLowerCase();
+      }
+
+      if (resolvedName) {
+        if (seenBreedNames.has(resolvedName)) {
+          itemErrors.breedId =
+            "Duplicate breed entry. Each breed entry must be unique.";
+        } else {
+          seenBreedNames.add(resolvedName);
         }
-      });
+      }
 
+      if (Object.keys(itemErrors).length > 0) {
+        hasError = true;
+        listErrors[`breedsList_${idx}`] = itemErrors;
+        if (idx === 0) {
+          Object.assign(listErrors, itemErrors);
+        }
+      }
+    });
+
+    if (hasError) {
       setBreedErrors(listErrors);
-
-      return Object.keys(listErrors).length === 0;
+      toast.error("Please fill all mandatory breed fields");
+      return false;
     }
 
-    // Fallback: validate single-value shape
-    if (!breedValues.breedName) {
-      newErrors.breedName = "Breed name is required";
-    }
-
-    if (
-      breedValues.dogCount === "" ||
-      breedValues.dogCount === null ||
-      Number(breedValues.dogCount) < 0
-    ) {
-      newErrors.dogCount = "Valid dog count is required";
-    }
-
-    setBreedErrors(newErrors);
-
-    return Object.keys(newErrors).length === 0;
+    setBreedErrors({});
+    return true;
   };
 
- const handleSaveBreed = async () => {
-  if (!validateBreed()) {
-    return;
-  }
+  const handleSaveBreed = async () => {
+    if (!validateBreed()) {
+      return;
+    }
 
-  const dogBreederDetailId =
-    toValidNumber(breedValues.dogBreederDetailId) ||
-    toValidNumber(facilityValues.dogBreederDetailId) ||
-    toValidNumber(formValues.id);
+    const dogBreederDetailId =
+      toValidNumber(breedValues.dogBreederDetailId) ||
+      toValidNumber(facilityValues.dogBreederDetailId) ||
+      toValidNumber(formValues.id);
 
-  if (!dogBreederDetailId) {
-    toast.error("Please save Step 1 first. Dog breeder detail ID missing.");
-    return;
-  }
+    if (!dogBreederDetailId) {
+      toast.error("Please save Step 1 first. Dog breeder detail ID missing.");
+      return;
+    }
 
-  // Support saving multiple breeds if `breedsList` is present
-  const list = Array.isArray(breedValues.breedsList)
-    ? breedValues.breedsList
-    : null;
+    // Support saving multiple breeds if `breedsList` is present
+    const list =
+      Array.isArray(breedValues.breedsList) &&
+      breedValues.breedsList.length > 0
+        ? [...breedValues.breedsList]
+        : [
+            {
+              id: breedValues.id || "",
+              breedName: breedValues.breedName || "",
+              breed: breedValues.breed || breedValues.breedName || "",
+              breedId: breedValues.breedId || "",
+              customBreedName: breedValues.customBreedName || "",
+              gender: breedValues.gender || "",
+              dogCount: breedValues.dogCount ?? 0,
+              ageDescription: breedValues.ageDescription || "",
+            },
+          ];
 
-  try {
-    setIsSavingBreed(true);
-    setBreedErrors({});
+    try {
+      setIsSavingBreed(true);
+      setBreedErrors({});
 
-    if (list && list.length > 0) {
       const itemErrors = {};
 
       for (let i = 0; i < list.length; i++) {
         const item = list[i] || {};
 
+        const specId =
+          item.species?.id ??
+          item.speciesId ??
+          (typeof item.species === "number"
+            ? item.species
+            : item.species != null &&
+              !isNaN(Number(item.species)) &&
+              String(item.species).trim() !== ""
+            ? Number(item.species)
+            : null);
+
+        const specName =
+          item.species?.speciesName ||
+          item.species?.name ||
+          (typeof item.species === "string" ? item.species : "");
+
+        const isOtherSpec =
+          specId === 24 ||
+          (specName && specName.toLowerCase() === "other") ||
+          (item.speciesId != null && Number(item.speciesId) === 24);
+
+        const isOtherBrd =
+          item.breedId === "OTHER" ||
+          (typeof item.breed === "string" &&
+            item.breed.toLowerCase() === "other") ||
+          Boolean(
+            item.customBreedName && String(item.customBreedName).trim() !== ""
+          );
+
+        let resolvedBreedName = "";
+        if (isOtherSpec) {
+          const specPart = (item.customSpeciesName || "Other").trim();
+          const brdPart = (item.customBreedName || item.breed || "").trim();
+          resolvedBreedName = brdPart ? `${specPart} - ${brdPart}` : specPart;
+        } else if (isOtherBrd) {
+          resolvedBreedName = (item.customBreedName || "Other").trim();
+        } else {
+          resolvedBreedName = (item.breed || item.breedName || "").trim();
+        }
+
+        if (resolvedBreedName.length > 200) {
+          resolvedBreedName = resolvedBreedName.slice(0, 200);
+        }
+
         const payload = {
           id: item.id ? Number(item.id) : null,
           dogBreederDetail: { id: Number(dogBreederDetailId) },
-          breedName: (item.breedName || "").trim(),
+          species: item.speciesId ? { id: Number(item.speciesId) } : null,
+          speciesId: item.speciesId ? Number(item.speciesId) : null,
+          breedName: resolvedBreedName,
+          customSpeciesName:
+            isOtherSpec && item.customSpeciesName
+              ? item.customSpeciesName.trim()
+              : null,
+          customBreedName:
+            isOtherBrd && item.customBreedName
+              ? item.customBreedName.trim()
+              : null,
           dogCount:
-            item.dogCount === "" || item.dogCount === null || item.dogCount === undefined
+            item.dogCount === "" ||
+            item.dogCount === null ||
+            item.dogCount === undefined
               ? 0
               : Number(item.dogCount),
           ageDescription: (item.ageDescription || "").trim(),
-          gender: item.gender || "",
+          gender: (item.gender || "MALE").toUpperCase(),
+          priceOffered:
+            item.priceOffered !== "" &&
+            item.priceOffered !== null &&
+            item.priceOffered !== undefined &&
+            !isNaN(Number(item.priceOffered))
+              ? Number(item.priceOffered)
+              : null,
+          description: (item.description || "").trim(),
+          displayOrder: i,
         };
 
         console.log("DOG BREED SAVE PAYLOAD (item):", payload);
@@ -1266,13 +1661,17 @@ const handlePreviewClick = () => {
             itemErrors[`breedsList_${i}`] = data?.errors || { _error: data };
           } else {
             const savedData = getResponsePayload(response) || payload;
-
-            // update item id in list
-            list[i] = { ...item, ...savedData };
+            list[i] = {
+              ...item,
+              ...savedData,
+              breedName: resolvedBreedName,
+            };
           }
         } catch (err) {
           console.error("DOG BREED ITEM SAVE ERROR:", err);
-          itemErrors[`breedsList_${i}`] = { _error: err?.message || "Save failed" };
+          itemErrors[`breedsList_${i}`] = {
+            _error: err?.message || "Save failed",
+          };
         }
       }
 
@@ -1286,80 +1685,46 @@ const handlePreviewClick = () => {
       setBreedValues((prev) => ({
         ...prev,
         breedsList: list,
+        id: list[0]?.id || prev.id,
+        breedName: list[0]?.breedName || prev.breedName,
+        dogCount: list[0]?.dogCount ?? prev.dogCount,
+        gender: list[0]?.gender || prev.gender,
+        ageDescription: list[0]?.ageDescription || prev.ageDescription,
+        priceOffered: list[0]?.priceOffered ?? "",
+        description: list[0]?.description || "",
         dogBreederDetailId,
       }));
-    } else {
-      // Single-item save (backwards compatibility)
-      const payload = {
-        id: breedValues.id ? Number(breedValues.id) : null,
-        dogBreederDetail: { id: Number(dogBreederDetailId) },
-        breedName: (breedValues.breedName || "").trim(),
-        dogCount:
-          breedValues.dogCount === "" ||
-          breedValues.dogCount === null ||
-          breedValues.dogCount === undefined
-            ? 0
-            : Number(breedValues.dogCount),
-        ageDescription: (breedValues.ageDescription || "").trim(),
-        gender: breedValues.gender || "",
-      };
 
-      console.log("DOG BREED SAVE PAYLOAD:", payload);
+      setDeclarationValues((prev) => ({
+        ...prev,
+        dogBreederDetailId,
+        applicantName: prev.applicantName || formValues.breederName,
+        signatureName: prev.signatureName || formValues.breederName,
+      }));
 
-      const response = await saveDogBreederBreed(payload);
+      setPreviewValues(null);
 
-      if (response?.isSuccess === false) {
-        const data = response?.data ?? {};
+      toast.success("Dog breed details saved successfully");
 
-        if (typeof data === "object") {
-          setBreedErrors(data?.errors || data);
-        }
+      goToStep(3);
+    } catch (error) {
+      console.error("DOG BREED SAVE ERROR:", error);
 
-        toast.error(
-          data?.resultString || data?.detail || "Could not save dog breed details"
-        );
+      const data = error?.response?.data;
 
-        return;
+      if (typeof data === "object") {
+        setBreedErrors(data?.errors || {});
       }
 
-      const savedData = getResponsePayload(response) || payload;
-
-      setBreedValues((prev) => ({
-        ...prev,
-        ...savedData,
-        id: savedData?.id || prev.id,
-        dogBreederDetailId,
-      }));
+      toast.error(
+        data?.resultString ||
+          data?.detail ||
+          "Could not save dog breed details"
+      );
+    } finally {
+      setIsSavingBreed(false);
     }
-
-    setDeclarationValues((prev) => ({
-      ...prev,
-      dogBreederDetailId,
-      applicantName: prev.applicantName || formValues.breederName,
-      signatureName: prev.signatureName || formValues.breederName,
-    }));
-
-    setPreviewValues(null);
-
-    toast.success("Dog breed details saved successfully");
-
-    goToStep(3);
-  } catch (error) {
-    console.error("DOG BREED SAVE ERROR:", error);
-
-    const data = error?.response?.data;
-
-    if (typeof data === "object") {
-      setBreedErrors(data?.errors || {});
-    }
-
-    toast.error(
-      data?.resultString || data?.detail || "Could not save dog breed details"
-    );
-  } finally {
-    setIsSavingBreed(false);
-  }
-};
+  };
 
   const handleDeclarationChange = (event) => {
     setDeclarationValues((prev) => ({
@@ -1683,6 +2048,23 @@ const handleSubmitApplication = async () => {
     return;
   }
 
+  const docs = Object.values(documentValues || {});
+  const hasPanCard = docs.some((doc) => {
+    const typeId = doc?.documentTypeId ?? doc?.documentType?.id ?? doc?.id;
+    const code = doc?.documentType?.code || doc?.documentTypeCode || doc?.code;
+    const name = doc?.documentTypeName || doc?.documentType?.name || doc?.name || doc?.fileName || "";
+    const hasFile = Boolean(doc?.id || doc?.filePath || doc?.file);
+    return (
+      (Number(typeId) === 32 || code === "PAN_CARD" || /pan\s*card/i.test(name)) &&
+      hasFile
+    );
+  });
+
+  if (!hasPanCard) {
+    toast.error("Mandatory PAN Card document is missing. Please upload your PAN Card in Documents step.");
+    return;
+  }
+
   try {
     setIsSubmitting(true);
 
@@ -1691,7 +2073,15 @@ const handleSubmitApplication = async () => {
     toast.success("Application submitted successfully.");
   } catch (error) {
     console.error(error);
-    toast.error("Submission failed.");
+    const data = error?.response?.data;
+    const serverMsg =
+      data?.detail ||
+      data?.message ||
+      data?.payLoad ||
+      data?.resultString ||
+      (Array.isArray(data?.errors) ? data.errors.join(", ") : null) ||
+      "Submission failed.";
+    toast.error(serverMsg);
   } finally {
     setIsSubmitting(false);
   }

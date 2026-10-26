@@ -4,8 +4,11 @@ import { useState } from "react";
 import {
   Box,
   Button,
+  FormControlLabel,
   Grid,
+  Switch,
   TextField,
+  Typography,
 } from "@mui/material";
 
 const ScheduleInspectionForm = ({
@@ -15,12 +18,15 @@ const ScheduleInspectionForm = ({
 }) => {
   const [inspectionDate, setInspectionDate] = useState("");
   const [remarks, setRemarks] = useState("");
+  const [inspectionDateVisible, setInspectionDateVisible] = useState(false);
 
 const handleSchedule = () => {
   const inspectionDetails = {
     applicationId,
     inspectionDate,
     remarks,
+    inspectionRemarks: remarks,
+    inspectionDateVisible,
   };
 
   if (onSubmit) {
@@ -51,6 +57,30 @@ const handleSchedule = () => {
             label="Remarks"
             value={remarks}
             onChange={(e) => setRemarks(e.target.value)}
+          />
+        </Grid>
+
+        <Grid item xs={12}>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={inspectionDateVisible}
+                onChange={(e) => setInspectionDateVisible(e.target.checked)}
+                color="primary"
+              />
+            }
+            label={
+              <Box>
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  Show Inspection Date to Applicant
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {inspectionDateVisible
+                    ? "Applicant will be able to see the scheduled inspection date."
+                    : "Surprise Inspection: Date will remain hidden from applicant until revealed."}
+                </Typography>
+              </Box>
+            }
           />
         </Grid>
 

@@ -4,6 +4,7 @@ import {
   Button,
   Card,
   CardContent,
+  Chip,
   Grid,
   Paper,
   Table,
@@ -17,9 +18,17 @@ import {
 import DownloadIcon from "@mui/icons-material/Download";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import VisibilityIcon from "@mui/icons-material/Visibility";
+import AssignmentIcon from "@mui/icons-material/Assignment";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import CancelIcon from "@mui/icons-material/Cancel";
 import PropTypes from "prop-types";
 import { BASE_API_URL } from "../../api-client/apiCall";
-import { fetchApplicationDocumentBlob } from "../../api-client/petShopRegistration";
+import {
+  downloadInspectionReport,
+  fetchInspectionReportBlob,
+  getInspectionReportViewUrl,
+  fetchApplicationDocumentBlob,
+} from "../../api-client/petShopRegistration";
 
 const getFormattedValue = (value) => {
   if (value === null || value === undefined || value === "") {
@@ -81,6 +90,9 @@ const getDocumentTypeId = (document) =>
   );
 
 const getDocumentLabel = (document) => {
+  const title = getDocumentTypeTitle(document);
+  if (title && title !== "Document") return title;
+
   const typeName =
     document?.documentTypeName ||
     document?.documentType?.name ||
@@ -116,6 +128,9 @@ const getDocumentName = (document) => {
   if (document?.fileName) {
     return document.fileName;
   }
+  if (document?.name) {
+    return document.name;
+  }
   if (document?.filename) {
     return document.filename;
   }
@@ -123,6 +138,21 @@ const getDocumentName = (document) => {
     return document.filePath.split("/").pop();
   }
   return "Document";
+};
+
+const getDocumentTypeTitle = (doc) => {
+  if (doc?.documentTypeName) return doc.documentTypeName;
+  if (doc?.documentType?.name) return doc.documentType.name;
+  if (doc?.label) return doc.label;
+  const typeId = Number(doc?.documentTypeId ?? doc?.documentType?.id ?? doc?.id);
+  if (typeId === 31 || doc?.code === "PAN_CARD") return "PAN Card";
+  if (typeId === 1 || doc?.code === "ID_PROOF") return "Identity Proof";
+  if (typeId === 2 || doc?.code === "ADDRESS_PROOF") return "Address Proof";
+  if (typeId === 3 || doc?.code === "FACILITY_PHOTO") return "Shop Photograph";
+  if (typeId === 4 || doc?.code === "SHOP_LICENSE") return "Infrastructure Photograph";
+  if (typeId === 5 || doc?.code === "AFFIDAVIT") return "Affidavit";
+  if (typeId === 9 || doc?.code === "APPLICANT_SIGNATURE") return "Applicant Signature";
+  return doc?.documentType || "Document";
 };
 
 const encodeDocumentFilePath = (filePath) =>
@@ -323,12 +353,203 @@ const downloadDocumentFile = async (document) => {
   URL.revokeObjectURL(objectUrl);
 };
 
+const InspectionReportSection = ({ inspectionData, applicationId }) => {
+  const [downloading, setDownloading] = useState(false);
+  const [viewing, setViewing] = useState(false);
+
+  if (!inspectionData) return null;
+
+  const rawFilePath = inspectionData.inspectionReport || "";
+  const fileName = rawFilePath ? rawFilePath.split("/").pop() : "Inspection_Report";
+  const appId = inspectionData.applicationId || applicationId;
+  const isImage = isImageFile(fileName);
+  const isPdf = isPdfFile(fileName);
+
+  const recommendation = String(inspectionData.recommendation || "").toUpperCase();
+  const isApproved = recommendation === "APPROVED";
+  const isRejected = recommendation === "REJECTED";
+
+  const handleDownload = async () => {
+    setDownloading(true);
+    try {
+      await downloadInspectionReport(appId, rawFilePath, fileName);
+    } catch (err) {
+      console.error("Failed to download inspection report", err);
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const handleView = async () => {
+    setViewing(true);
+    try {
+      const blob = await fetchInspectionReportBlob(appId, rawFilePath);
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank", "noopener,noreferrer");
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+    } catch (err) {
+      console.warn("Failed to view inspection report blob, opening view URL", err);
+      const viewUrl = getInspectionReportViewUrl(appId, rawFilePath);
+      if (viewUrl) {
+        window.open(viewUrl, "_blank", "noopener,noreferrer");
+      }
+    } finally {
+      setViewing(false);
+    }
+  };
+
+  return (
+    <Box sx={{ mt: 4, pt: 3, borderTop: "2px solid #2e7d32" }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          mb: 2,
+          flexWrap: "wrap",
+          gap: 1,
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <AssignmentIcon color="primary" sx={{ fontSize: 28 }} />
+          <Typography variant="h6" sx={{ fontWeight: 700, color: "#1b5e20" }}>
+            CVO INSPECTION & VERIFICATION REPORT
+          </Typography>
+        </Box>
+
+        {recommendation && (
+          <Chip
+            icon={isApproved ? <CheckCircleIcon /> : isRejected ? <CancelIcon /> : undefined}
+            label={`CVO Recommendation: ${recommendation}`}
+            color={isApproved ? "success" : isRejected ? "error" : "default"}
+            variant="filled"
+            sx={{ fontWeight: "bold", fontSize: "0.85rem", py: 0.5 }}
+          />
+        )}
+      </Box>
+
+      <TableContainer component={Paper} variant="outlined" sx={{ mb: 3 }}>
+        <Table size="small">
+          <TableBody>
+            <TableRow>
+              <TableCell sx={{ fontWeight: "bold", width: "30%", backgroundColor: "#f9f9f9" }}>
+                Inspection Date
+              </TableCell>
+              <TableCell>
+                {inspectionData.inspectionDate ? (
+                  String(inspectionData.inspectionDate)
+                ) : (
+                  <Typography variant="body2" sx={{ color: "#d32f2f", fontStyle: "italic", fontWeight: 500 }}>
+                    Inspection has been scheduled. Details will be made available by the department.
+                  </Typography>
+                )}
+              </TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell sx={{ fontWeight: "bold", width: "30%", backgroundColor: "#f9f9f9" }}>
+                CVO Recommendation
+              </TableCell>
+              <TableCell sx={{ fontWeight: "bold", color: isApproved ? "success.main" : isRejected ? "error.main" : "text.primary" }}>
+                {inspectionData.recommendation || "-"}
+              </TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell sx={{ fontWeight: "bold", width: "30%", backgroundColor: "#f9f9f9" }}>
+                Inspection Remarks / Findings
+              </TableCell>
+              <TableCell sx={{ whiteSpace: "pre-wrap" }}>
+                {inspectionData.inspectionRemarks || "-"}
+              </TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
+      </TableContainer>
+
+      {rawFilePath && (
+        <Box sx={{ mt: 2 }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: "bold", mb: 1 }}>
+            Uploaded Inspection Report Document:
+          </Typography>
+          <Card
+            sx={{
+              maxWidth: 420,
+              border: "1px solid #1b5e20",
+              boxShadow: 2,
+              borderRadius: 2,
+            }}
+          >
+            <Box
+              sx={{
+                height: 120,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: "#e8f5e9",
+              }}
+            >
+              {isPdf ? (
+                <PictureAsPdfIcon sx={{ fontSize: 56, color: "#d32f2f" }} />
+              ) : isImage ? (
+                <AssignmentIcon sx={{ fontSize: 56, color: "#2e7d32" }} />
+              ) : (
+                <AssignmentIcon sx={{ fontSize: 56, color: "#1976d2" }} />
+              )}
+            </Box>
+            <CardContent>
+              <Typography fontWeight="bold" noWrap title={fileName}>
+                {fileName}
+              </Typography>
+              <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 2 }}>
+                Official CVO Verified Inspection Document
+              </Typography>
+
+              <Box sx={{ display: "flex", gap: 1 }}>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  startIcon={<VisibilityIcon />}
+                  onClick={handleView}
+                  disabled={viewing}
+                >
+                  {viewing ? "Opening..." : "View Report"}
+                </Button>
+                <Button
+                  size="small"
+                  variant="contained"
+                  color="success"
+                  startIcon={<DownloadIcon />}
+                  onClick={handleDownload}
+                  disabled={downloading}
+                >
+                  {downloading ? "Downloading..." : "Download Report"}
+                </Button>
+              </Box>
+            </CardContent>
+          </Card>
+        </Box>
+      )}
+    </Box>
+  );
+};
+
+InspectionReportSection.propTypes = {
+  inspectionData: PropTypes.shape({
+    applicationId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    inspectionDate: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
+    inspectionRemarks: PropTypes.string,
+    recommendation: PropTypes.string,
+    inspectionReport: PropTypes.string,
+  }),
+  applicationId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+};
+
 const Step5Preview = ({
   formValues = {},
   facilityForm = {},
   animals = [],
   declaration = {},
   supportingDocuments = [],
+  inspectionData = null,
 }) => {
   const declarationDate = declaration?.declarationDate
     ? new Date(declaration.declarationDate)
@@ -552,7 +773,16 @@ maxWidth: "210mm",
                 <Typography fontWeight="bold" variant="body2">
                   Application Type
                 </Typography>
-                <Typography>{getValue(formValues.applicationType)}</Typography>
+                <Typography>
+                  {getValue(
+                    formValues.applicationType ||
+                      (formValues.applicationKind === "RESUBMITTED"
+                        ? "Resubmitted Application"
+                        : formValues.applicationKind === "NEW"
+                        ? "New Application"
+                        : formValues.applicationKind)
+                  )}
+                </Typography>
               </Grid>
               <Grid item xs={6}>
                 <Typography fontWeight="bold" variant="body2">
@@ -606,6 +836,24 @@ maxWidth: "210mm",
                   2. Name and address of the pet shop owner:
                 </Typography>
                 <Typography>{ownerAddress || getValue("")}</Typography>
+              </Box>
+            </Grid>
+
+            <Grid item xs={12}>
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: "300px 1fr",
+                  alignItems: "center",
+                  gap: 1,
+                }}
+              >
+                <Typography fontWeight="bold">
+                  PAN Card Number:
+                </Typography>
+                <Typography>
+                  {getValue(formValues.panNumber)}
+                </Typography>
               </Box>
             </Grid>
 
@@ -901,29 +1149,46 @@ maxWidth: "210mm",
               </TableHead>
               <TableBody>
                 {animals.length > 0 ? (
-                  animals.map((animal, index) => (
-                    <TableRow key={index}>
-                      <TableCell sx={{ borderRight: "1px solid #000" }}>
-                        {index + 1}
-                      </TableCell>
-                      <TableCell sx={{ borderRight: "1px solid #000" }}>
-                        {getFormattedValue(animal?.species)}
-                      </TableCell>
-                      <TableCell sx={{ borderRight: "1px solid #000" }}>
-                        {getValue(animal?.breed)}
-                      </TableCell>
-                      <TableCell sx={{ borderRight: "1px solid #000" }}>
-                        {getValue(animal?.quantity)}
-                      </TableCell>
-                      <TableCell sx={{ borderRight: "1px solid #000" }}>
-                        {getValue(animal?.ageDescription)}
-                      </TableCell>
-                      <TableCell sx={{ borderRight: "1px solid #000" }}>
-                        {getValue(animal?.priceOffered)}
-                      </TableCell>
-                      <TableCell>{getValue(animal?.description)}</TableCell>
-                    </TableRow>
-                  ))
+                  animals.map((animal, index) => {
+                    const customSpecies =
+                      animal?.customSpeciesName || animal?.custom_species_name || "";
+                    const customBreed =
+                      animal?.customBreedName || animal?.custom_breed_name || "";
+
+                    const speciesDisplay =
+                      customSpecies && customSpecies.trim() !== ""
+                        ? `Other - ${customSpecies.trim()}`
+                        : getFormattedValue(animal?.species);
+
+                    const breedDisplay =
+                      customBreed && customBreed.trim() !== ""
+                        ? `Other - ${customBreed.trim()}`
+                        : getValue(animal?.breed);
+
+                    return (
+                      <TableRow key={index}>
+                        <TableCell sx={{ borderRight: "1px solid #000" }}>
+                          {index + 1}
+                        </TableCell>
+                        <TableCell sx={{ borderRight: "1px solid #000" }}>
+                          {speciesDisplay}
+                        </TableCell>
+                        <TableCell sx={{ borderRight: "1px solid #000" }}>
+                          {breedDisplay}
+                        </TableCell>
+                        <TableCell sx={{ borderRight: "1px solid #000" }}>
+                          {getValue(animal?.quantity)}
+                        </TableCell>
+                        <TableCell sx={{ borderRight: "1px solid #000" }}>
+                          {getValue(animal?.ageDescription)}
+                        </TableCell>
+                        <TableCell sx={{ borderRight: "1px solid #000" }}>
+                          {getValue(animal?.priceOffered)}
+                        </TableCell>
+                        <TableCell>{getValue(animal?.description)}</TableCell>
+                      </TableRow>
+                    );
+                  })
                 ) : (
                   <TableRow>
                     <TableCell colSpan={7} sx={{ textAlign: "center", py: 4 }}>
@@ -1151,6 +1416,13 @@ maxWidth: "210mm",
             )}
           </Grid>
         </Box>
+
+        {inspectionData && (
+          <InspectionReportSection
+            inspectionData={inspectionData}
+            applicationId={formValues?.id || formValues?.applicationId}
+          />
+        )}
       </CardContent>
     </Card>
   );
@@ -1168,6 +1440,7 @@ Step5Preview.propTypes = {
     shopCity: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
     shopPincode: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     ownerName: PropTypes.string,
+    panNumber: PropTypes.string,
     ownerAddressLine1: PropTypes.string,
     ownerAddressLine2: PropTypes.string,
     ownerCity: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
@@ -1202,6 +1475,10 @@ Step5Preview.propTypes = {
         PropTypes.string,
       ]),
       breed: PropTypes.string,
+      customSpeciesName: PropTypes.string,
+      customBreedName: PropTypes.string,
+      custom_species_name: PropTypes.string,
+      custom_breed_name: PropTypes.string,
       quantity: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
       ageDescription: PropTypes.string,
       priceOffered: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
@@ -1227,6 +1504,7 @@ Step5Preview.propTypes = {
       file: PropTypes.oneOfType([PropTypes.instanceOf(File), PropTypes.object]),
     })
   ),
+  inspectionData: PropTypes.object,
 };
 
 Step5Preview.defaultProps = {
@@ -1235,6 +1513,7 @@ Step5Preview.defaultProps = {
   animals: [],
   declaration: {},
   supportingDocuments: [],
+  inspectionData: null,
 };
 
 export default Step5Preview;

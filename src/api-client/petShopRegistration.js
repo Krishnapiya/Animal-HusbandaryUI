@@ -1,5 +1,5 @@
 import { PET_SHOP_REGISTRATION_DRAFT_URL, PET_SHOP_REGISTRATION_STEP1_URL, PET_SHOP_REGISTRATION_STEP2_URL,DOCUMENT_TYPE_LIST_URL } from "../config/endpoints";
-import { addItem, getItemList,editSingleItem, } from "./apiCall";
+import { addItem, getItemList, editSingleItem, addFormDataItem } from "./apiCall";
 import { BASE_API_URL } from "./apiCall";
 import { callApi } from "./client";
 import { getHeader } from "../utils";
@@ -25,7 +25,12 @@ export const getPetShopFacility = async (petShopDetailId) => {
     return addItem( "/petshop/auth/awb/pet-shop-proposed-animal/save", { payLoad: payload,  } );};
 
     export const getAnimalSpeciesDropdown = async () => {
-  return getItemList( "/admin/auth/master/animal-species/list/all",{dropDown: true,  pageNo: 0, pageSize: 500, } );};
+  return getItemList("/admin/auth/master/animal-species/list/all", { pageNo: 0, pageSize: 500 });
+};
+
+export const getAnimalSpeciesBreeds = async (speciesId) => {
+  return getItemList(`/admin/auth/master/animal-species/${speciesId}/breeds`);
+};
 
 export const getPetShopProposedAnimals = async (applicationId) => {
   return getItemList( `/petshop/auth/awb/pet-shop-proposed-animal/draft/${applicationId}` );};
@@ -34,6 +39,9 @@ export const updatePetShopProposedAnimal = async ( payload) => {
 
 export const getDocumentTypes = () =>
   getItemList(DOCUMENT_TYPE_LIST_URL, { pageNo: 0, pageSize: 100 });
+
+export const getPetShopDocumentTypes = () =>
+  getItemList("/petshop/auth/application-document/types");
 
 export const saveApplicationDocument = (payload) =>
   addItem("/petshop/auth/application-document/save", { payLoad: payload });
@@ -76,25 +84,6 @@ export const getPetShopInspection = (applicationId) =>
     `${REGISTRATION_INSPECTION_API_URL}application/${applicationId}`
   );
 
-export const fetchInspectionReportBlob = async (applicationId) => {
-  const response = await axios({
-    method: "GET",
-    baseURL: BASE_API_URL,
-    url: `${REGISTRATION_INSPECTION_API_URL}report/${applicationId}`,
-    headers: getHeader() || {},
-    responseType: "blob",
-  });
-
-  const blob = response.data;
-
-  if (blob?.type?.includes("application/json")) {
-    const errorText = await blob.text();
-    throw new Error(errorText || "Failed to load inspection report");
-  }
-
-  return blob;
-};
-
 export const uploadInspectionReport = ({
   applicationId,
   reportFile,
@@ -108,14 +97,94 @@ export const uploadInspectionReport = ({
   formData.append("remarks", remarks);
   formData.append("recommendation", recommendation);
 
-  return callApi({
-    method: "POST",
-    baseURL: BASE_API_URL,
-    url: `${REGISTRATION_INSPECTION_API_URL}upload-report`,
-    data: formData,
-    headers: getHeader(),
-  });
+  return addFormDataItem(
+    `${REGISTRATION_INSPECTION_API_URL}upload-report`,
+    formData
+  );
 };
+
+export const togglePetShopInspectionVisibility = async (applicationId, visible) => {
+  const queryParam = visible !== undefined ? `?visible=${visible}` : "";
+  return editSingleItem(
+    `${REGISTRATION_INSPECTION_API_URL}toggle-visibility/${applicationId}${queryParam}`
+  );
+};
+
+export const fetchInspectionReportBlob = async (applicationId, filePath) => {
+  if (applicationId) {
+    try {
+      const response = await axios({
+        method: "GET",
+        baseURL: BASE_API_URL,
+        url: `/petshop/auth/registration-inspection/view-report/${applicationId}`,
+        headers: getHeader() || {},
+        responseType: "blob",
+      });
+
+      const blob = response.data;
+      if (blob && !blob?.type?.includes("application/json")) {
+        return blob;
+      }
+    } catch (err) {
+      console.warn("Direct inspection view-report failed, falling back to document view:", err?.message);
+    }
+  }
+
+  if (filePath) {
+    const fileName = filePath.includes("/")
+      ? filePath.substring(filePath.lastIndexOf("/") + 1)
+      : filePath;
+    return fetchApplicationDocumentBlob(fileName);
+  }
+
+  throw new Error("Inspection report file not available");
+};
+
+export const downloadInspectionReport = async (
+  applicationId,
+  filePath,
+  defaultFileName
+) => {
+  try {
+    const blob = await fetchInspectionReportBlob(applicationId, filePath);
+    const fileName =
+      defaultFileName ||
+      (filePath
+        ? filePath.substring(filePath.lastIndexOf("/") + 1)
+        : `InspectionReport-${applicationId}.pdf`);
+
+    const href = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = href;
+    link.setAttribute("download", fileName);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(href);
+    return { isSuccess: true };
+  } catch (error) {
+    console.error("Failed to download inspection report:", error);
+    return {
+      isSuccess: false,
+      message: error.message || "Failed to download inspection report",
+    };
+  }
+};
+
+export const getInspectionReportViewUrl = (applicationId, filePath) => {
+  const baseUrl = (BASE_API_URL || "http://localhost:8083").replace(/\/+$/, "");
+  if (applicationId) {
+    return `${baseUrl}/petshop/auth/registration-inspection/view-report/${applicationId}`;
+  }
+  if (filePath) {
+    const fileName = filePath.includes("/")
+      ? filePath.substring(filePath.lastIndexOf("/") + 1)
+      : filePath;
+    return `${baseUrl}/petshop/auth/application-document/view/${encodeURIComponent(fileName)}`;
+  }
+  return "";
+};
+
 
 export const uploadApplicationDocument = ({
   file,

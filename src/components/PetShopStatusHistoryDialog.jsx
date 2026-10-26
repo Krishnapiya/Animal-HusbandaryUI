@@ -165,9 +165,6 @@ const PetShopStatusHistoryDialog = (props) => {
                     <Chip size="small" label={`FROM: ${upperStatus(item.fromStatus)}`} variant="outlined" />
                     <Chip size="small" color="primary" label={`TO: ${upperStatus(item.toStatus)}`} />
                   </Stack>
-                  <Typography variant="body2" color="text.secondary">
-                    Changed by: {item.changedBy || "-"}
-                  </Typography>
                   {item.remarks ? (
                     <Typography variant="body2" sx={{ mt: 1 }}>
                       {String(item.toStatus || item.actionType || "")

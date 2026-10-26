@@ -47,7 +47,8 @@ const handleInspectionSubmit = async (inspectionData) => {
     const response = await scheduleInspection({
       applicationId: inspectionData.applicationId,
       inspectionDate: inspectionData.inspectionDate,
-      inspectionRemarks: inspectionData.remarks,
+      inspectionRemarks: inspectionData.remarks || inspectionData.inspectionRemarks,
+      inspectionDateVisible: Boolean(inspectionData.inspectionDateVisible),
     });
 
     if (!response?.isSuccess) {
@@ -79,17 +80,34 @@ const handleCloseReportDialog = () => {
 
 const handleReportSubmit = async (reportData) => {
   try {
-    await uploadInspectionReport({
+    const response = await uploadInspectionReport({
       applicationId: reportData.applicationId,
       reportFile: reportData.reportFile,
       remarks: reportData.remarks,
       recommendation: reportData.recommendation,
     });
 
+    if (!response?.isSuccess) {
+      const message =
+        response?.data?.resultString ||
+        response?.data?.message ||
+        response?.data?.detail ||
+        response?.data?.error ||
+        "Failed to upload inspection report";
+      toast.error(message);
+      return;
+    }
+
     handleCloseReportDialog();
     setListRefreshKey((current) => current + 1);
   } catch (error) {
     console.error(error);
+    toast.error(
+      error?.response?.data?.message ||
+        error?.response?.data?.detail ||
+        error?.message ||
+        "Failed to upload inspection report"
+    );
   }
 };
 

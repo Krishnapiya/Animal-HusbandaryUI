@@ -43,3 +43,21 @@ export const rejectComplaintApplication = (id) =>
     url: `${CITIZEN_COMPLAINT_REJECT_URL}${id}`,
     headers: getHeader(),
   });
+
+export const getComplaintInvestigation = (complaintId) =>
+  callApi({
+    method: "GET",
+    baseURL: BASE_API_URL,
+    url: `/citizen/auth/complaint-investigation/view-by-complaint/${complaintId}`,
+    headers: getHeader(),
+  });
+
+export const toggleComplaintInvestigationVisibility = (complaintId, visible) => {
+  const queryParam = visible !== undefined ? `?visible=${visible}` : "";
+  return callApi({
+    method: "PATCH",
+    baseURL: BASE_API_URL,
+    url: `/citizen/auth/complaint-investigation/toggle-visibility/${complaintId}${queryParam}`,
+    headers: getHeader(),
+  });
+};

@@ -504,17 +504,29 @@ const Step6Preview = ({
   const breedNamesAndCounts =
     normalizedBreedDetails.length > 0
       ? normalizedBreedDetails
-          .map(
-            (item) =>
-              `${item.breedName || "-"} - ${item.dogCount || "-"} dog(s)`
-          )
+          .map((item) => {
+            const name =
+              item.customSpeciesName
+                ? `${item.customSpeciesName} - ${item.customBreedName || item.breed || item.breedName || "-"}`
+                : item.customBreedName || item.breed || item.breedName || "-";
+            const genderStr = item.gender
+              ? ` (${item.gender === "MALE" ? "Male" : item.gender === "FEMALE" ? "Female" : item.gender})`
+              : "";
+            return `${name}${genderStr} - ${item.dogCount ?? "-"} dog(s)`;
+          })
           .join(", ")
       : "";
 
   const dogAges =
     normalizedBreedDetails.length > 0
       ? normalizedBreedDetails
-          .map((item) => item.ageDescription || "-")
+          .map((item) => {
+            const name =
+              item.customBreedName || item.breed || item.breedName || "";
+            return name
+              ? `${name}: ${item.ageDescription || "-"}`
+              : item.ageDescription || "-";
+          })
           .join(", ")
       : "";
 
@@ -670,6 +682,12 @@ const Step6Preview = ({
         />
 
         <FieldLine
+          number="1A"
+          label="PAN Card Number"
+          value={breederDetails.panNumber}
+        />
+
+        <FieldLine
           number="2"
           label="Name and address of the establishment"
           value={establishmentAddress}
@@ -693,8 +711,19 @@ const Step6Preview = ({
         <FieldLine
           number="5"
           label="Working hours and rest day, i.e. day on which establishment shall remain closed"
-          value={`${facilityDetails.workingHours || ""} ${
-            restDay ? `, Rest day: ${restDay}` : ""
+          value={`${
+            facilityDetails.workingHours ||
+            (facilityDetails.openingTime && facilityDetails.closingTime
+              ? `${facilityDetails.openingTime} - ${facilityDetails.closingTime}`
+              : "")
+          } ${
+            restDay
+              ? `, Rest day: ${
+                  Array.isArray(restDay)
+                    ? restDay.join(", ")
+                    : restDay
+                }`
+              : ""
           }`}
         />
 

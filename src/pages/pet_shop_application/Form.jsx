@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import axios from "axios";
-import { downloadPetShopRegistrationApplication } from "../../api-client/petShopRegistration";
+import {
+  downloadPetShopRegistrationApplication,
+  getPetShopInspection,
+} from "../../api-client/petShopRegistration";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
 import Button from "@mui/material/Button";
@@ -114,6 +117,7 @@ const preparePreviewData = (application) => {
 
 const Form = ({ rowID, onClose, handleCloseFormModal }) => {
   const [application, setApplication] = useState(null);
+  const [inspection, setInspection] = useState(null);
   const [loading, setLoading] = useState(false);
   const previewRef = useRef(null);
 
@@ -169,6 +173,23 @@ const Form = ({ rowID, onClose, handleCloseFormModal }) => {
         }
 
         setApplication(applicationData);
+
+        try {
+          const inspRes = await getPetShopInspection(rowID);
+          if (inspRes?.isSuccess) {
+            const inspData =
+              inspRes?.data?.payLoad ||
+              inspRes?.data?.data ||
+              inspRes?.data ||
+              null;
+            setInspection(inspData);
+          } else {
+            setInspection(null);
+          }
+        } catch (inspErr) {
+          console.warn("Could not load inspection data:", inspErr);
+          setInspection(null);
+        }
       } catch (error) {
         console.error("Failed to load application", error);
       } finally {
@@ -210,8 +231,8 @@ const handleDownloadPdf = async () => {
           </Box>
         ) : (
           <>
-            <Step5Preview {...previewData} />
-            <InspectionReportSection applicationId={rowID} />
+            <Step5Preview {...previewData} inspectionData={inspection} />
+            {!inspection && <InspectionReportSection applicationId={rowID} />}
           </>
         )}
       </Box>

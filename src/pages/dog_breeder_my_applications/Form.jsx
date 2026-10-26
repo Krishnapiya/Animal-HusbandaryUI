@@ -33,6 +33,7 @@ import { downloadDogBreederMyApplication } from "../../api-client/adminDogBreede
 import {
   getApplicationDocumentsByApplicationId,
 } from "../../api-client/applicationDocument";
+import { getDogBreederInspection } from "../../api-client/adminDogBreederApplication";
 
 import {
   DOG_BREEDER_APPLICATION_PREVIEW_URL,
@@ -1765,6 +1766,9 @@ const Form = ({
   const [errorMsg, setErrorMsg] =
     useState(null);
 
+  const [inspection, setInspection] =
+    useState(null);
+
   useEffect(() => {
     let cancelled = false;
     let objectUrl = "";
@@ -1781,7 +1785,7 @@ const Form = ({
           ""
       ).toLowerCase();
 
-      return typeId === "14" || typeName.includes("signature");
+      return typeId === "14" || typeId === "21" || typeName.includes("signature");
     });
 
     const signatureId = getDocumentId(signatureDocument);
@@ -2031,6 +2035,23 @@ const Form = ({
             );
 
             setErrorMsg(null);
+          }
+
+          if (applicationId) {
+            try {
+              const inspRes = await getDogBreederInspection(applicationId);
+              const inspData =
+                inspRes?.data?.payLoad ||
+                inspRes?.data?.payload ||
+                inspRes?.data?.data ||
+                inspRes?.data ||
+                null;
+              if (mounted && inspData) {
+                setInspection(inspData);
+              }
+            } catch (inspErr) {
+              console.warn("Could not load dog breeder inspection data:", inspErr);
+            }
           }
         } finally {
           if (mounted) {
@@ -3842,6 +3863,54 @@ const Form = ({
                   </Card>
                 )}
               </Box>
+
+              {inspection && (
+                <Box sx={{ mt: 3, pt: 2, borderTop: "2px solid #1976d2" }}>
+                  <Typography variant="h6" sx={{ fontWeight: 700, color: "#1565c0", mb: 2 }}>
+                    CVO INSPECTION DETAILS
+                  </Typography>
+                  <TableContainer component={Paper} variant="outlined">
+                    <Table size="small">
+                      <TableBody>
+                        <TableRow>
+                          <TableCell sx={{ fontWeight: "bold", width: "30%", backgroundColor: "#f9f9f9" }}>
+                            Inspection Date
+                          </TableCell>
+                          <TableCell>
+                            {inspection.inspectionDate ? (
+                              inspection.inspectionDate
+                            ) : (
+                              <Typography variant="body2" sx={{ color: "#d32f2f", fontStyle: "italic", fontWeight: 500 }}>
+                                Inspection has been scheduled. Details will be made available by the department.
+                              </Typography>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                        {inspection.recommendation && (
+                          <TableRow>
+                            <TableCell sx={{ fontWeight: "bold", width: "30%", backgroundColor: "#f9f9f9" }}>
+                              Recommendation
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>
+                              {inspection.recommendation}
+                            </TableCell>
+                          </TableRow>
+                        )}
+                        {inspection.reportRemarks && (
+                          <TableRow>
+                            <TableCell sx={{ fontWeight: "bold", width: "30%", backgroundColor: "#f9f9f9" }}>
+                              Remarks / Findings
+                            </TableCell>
+                            <TableCell sx={{ whiteSpace: "pre-wrap" }}>
+                              {inspection.reportRemarks}
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Box>
+              )}
             </Box>
           </Box>
         )}

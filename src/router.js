@@ -87,7 +87,7 @@ const CitizenComplaintForwardedApplicationPageWithPermission = () =>
   createElement(
     PermissionGate,
     {
-      menuKey: CITIZEN_COMPLAINT_FORWARDED_APPLICATION_PATH,
+      menuKey: CITIZEN_COMPLAINT_FORWARDED_PATH,
       action: "list",
     },
     createElement(CitizenComplaintForwardedApplicationPage)
@@ -112,15 +112,6 @@ const CitizenComplaintRegistrationPageWithPermission = () =>
     createElement(CitizenComplaintRegistrationPage)
   );
 
-const CitizenComplaintApplicationPageWithPermission = () =>
-  createElement(
-    PermissionGate,
-    {
-      menuKey: CITIZEN_COMPLAINT_APPLICATION_PATH,
-      action: "list",
-    },
-    createElement(CitizenComplaintRegistrationPage)
-  );
 
 const CitizenComplaintForwardedPageWithPermission = () =>
   createElement(
@@ -355,7 +346,7 @@ export const router = createBrowserRouter([
             Component: MainLayout,
             children: [
               {
-  path: CITIZEN_COMPLAINT_FORWARDED_APPLICATION_PATH,
+  path: CITIZEN_COMPLAINT_FORWARDED_PATH,
   Component:
     CitizenComplaintForwardedApplicationPageWithPermission,
 },

@@ -13,6 +13,7 @@ import FormButtons from "../../components/FormComponents/FormButtons";
 
 import useForm from "../../hooks/useForm";
 import { addFormDataItem } from "../../api-client/apiCall";
+import { getUserAttributes } from "../../utils";
 
 const Form = (props) => {
 
@@ -113,9 +114,9 @@ const Form = (props) => {
       documentTypeId
     );
 
-    // TEMPORARY
-    // We will later take this from the logged-in user.
-    formData.append("uploadedBy", 1);
+    const loggedInUser = getUserAttributes();
+    const uploadedBy = loggedInUser?.id ?? 1;
+    formData.append("uploadedBy", uploadedBy);
 
     console.log(
       "Uploading complaint document:",
@@ -366,7 +367,7 @@ const Form = (props) => {
             fontWeight="bold"
             color="primary"
           >
-            🐾 Citizen Complaint Registration
+            🐾 Complaint Registration
           </Typography>
 
           <Typography

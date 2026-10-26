@@ -15,27 +15,36 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
+import Grid from "@mui/material/Grid2";
+import Divider from "@mui/material/Divider";
 import CircularProgress from "@mui/material/CircularProgress";
 import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import Switch from "@mui/material/Switch";
+import Tabs from "@mui/material/Tabs";
+import Tab from "@mui/material/Tab";
+import Badge from "@mui/material/Badge";
 
 import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import DownloadIcon from "@mui/icons-material/Download";
 import EventIcon from "@mui/icons-material/Event";
 
 import { toast } from "material-react-toastify";
 
 import { getUserAttributes } from "../../utils";
-import InspectionReportDialog from "./InspectionReportDialog";
-import Step6Preview from "../dog_breeder_register/Step6Preview";
 
 import {
   getAdminDogBreederApplicationPreview,
   downloadDogBreederApplication,
+  viewDogBreederDocument,
+  downloadDogBreederDocument,
   forwardDogBreederApplication,
   saveDogBreederInspection,
   uploadDogBreederInspectionReport,
   getDogBreederInspection,
+  toggleDogBreederInspectionVisibility,
   approveDogBreederApplication,
   rejectDogBreederApplication,
 } from "../../api-client/adminDogBreederApplication";
@@ -102,8 +111,13 @@ const getValue = (value) => {
   return value;
 };
 
-const getArray = (value) =>
-  Array.isArray(value) ? value : [];
+/* =========================================================
+   ARRAY
+========================================================= */
+
+const getArray = (value) => {
+  return Array.isArray(value) ? value : [];
+};
 
 /* =========================================================
    STATUS NORMALIZER
@@ -458,41 +472,7 @@ const getTodayLocalDate = () => {
    MAIN COMPONENT
 ========================================================= */
 
-  const [
-    scheduleModalOpen,
-    setScheduleModalOpen,
-  ] = useState(false);
-
-  const [
-    selectedRowForInspection,
-    setSelectedRowForInspection,
-  ] = useState(null);
-
-  const [
-    inspectionDate,
-    setInspectionDate,
-  ] = useState("");
-
-  const [
-    inspectionRemarks,
-    setInspectionRemarks,
-  ] = useState("");
-
-  const [
-    isScheduling,
-    setIsScheduling,
-  ] = useState(false);
-
-  const [
-    reportApplicationId,
-    setReportApplicationId,
-  ] = useState(null);
-
-  const [
-    scheduledInspectionIds,
-    setScheduledInspectionIds,
-  ] = useState(new Set());
-
+const List = (props) => {
   /* =======================================================
      PREVIEW
   ======================================================= */
@@ -520,6 +500,7 @@ const getTodayLocalDate = () => {
 
   const [inspectionDate, setInspectionDate] = useState("");
   const [inspectionRemarks, setInspectionRemarks] = useState("");
+  const [inspectionDateVisible, setInspectionDateVisible] = useState(false);
   const [isScheduling, setIsScheduling] = useState(false);
 
   /* =======================================================
@@ -546,9 +527,8 @@ const getTodayLocalDate = () => {
   const [scheduledInspectionIds, setScheduledInspectionIds] =
     useState(new Set());
 
-  const isCvo =
-    loggedInRoles.includes("CVO") ||
-    loggedInRoles.includes("DISTRICT_OFFICER");
+  const [locallyForwardedIds, setLocallyForwardedIds] =
+    useState(new Set());
 
   /* =======================================================
      ROLE
@@ -558,7 +538,11 @@ const getTodayLocalDate = () => {
 
   const isAdmin = loggedInRoles.includes("ADMIN");
 
-  const isCvo = loggedInRoles.includes("CVO");
+  const isCvo =
+    loggedInRoles.includes("CVO") ||
+    loggedInRoles.includes("DISTRICT_OFFICER") ||
+    loggedInRoles.includes("DISTRICTOFFICER") ||
+    loggedInRoles.includes("DISTRICT_OFFICE");
 
   const isDogBreeder =
     loggedInRoles.includes("DOG_BREEDER") ||
@@ -1028,51 +1012,23 @@ const filteredRows = useMemo(() => {
           applicationId
         );
 
-        const contentType =
-          response.headers?.[
-            "content-type"
-          ] || "application/zip";
-
-        const disposition =
-          response.headers?.[
-            "content-disposition"
-          ] || "";
-
-        const fileNameMatch =
-          disposition.match(
-            /filename="?([^"]+)"?/i
-          );
-
-        const isPdf =
-          contentType.includes("pdf");
-
-        const blob =
-          new Blob(
-            [response.data],
-            {
-              type: contentType,
-            }
-          );
+      const blob = new Blob([response.data], {
+        type:
+          response?.headers?.["content-type"] ||
+          "application/pdf",
+      });
 
       const url =
         URL.createObjectURL(blob);
 
-        const extension = isPdf
-          ? "pdf"
-          : "zip";
-
-        const link =
-          document.createElement(
-            "a"
-          );
+      const link =
+        document.createElement("a");
 
       link.href = url;
 
-        link.download =
-          fileNameMatch?.[1] ||
-          (applicationNumber !== "-"
-            ? `${applicationNumber}.${extension}`
-            : `dog-breeder-application-${applicationId}.${extension}`);
+      link.download =
+        row?.applicationNumber ||
+        `dog-breeder-application-${applicationId}.pdf`;
 
       document.body.appendChild(link);
 
@@ -1326,6 +1282,7 @@ const filteredRows = useMemo(() => {
     setSelectedRowForInspection(row);
     setInspectionDate("");
     setInspectionRemarks("");
+    setInspectionDateVisible(false);
     setScheduleModalOpen(true);
   };
 
@@ -1342,6 +1299,7 @@ const filteredRows = useMemo(() => {
     setSelectedRowForInspection(null);
     setInspectionDate("");
     setInspectionRemarks("");
+    setInspectionDateVisible(false);
   };
 
   /* =======================================================
@@ -1377,6 +1335,7 @@ const filteredRows = useMemo(() => {
         inspectionRemarks:
           inspectionRemarks?.trim() ||
           "",
+        inspectionDateVisible,
       });
 
       toast.success(
@@ -1398,6 +1357,7 @@ const filteredRows = useMemo(() => {
       setSelectedRowForInspection(null);
       setInspectionDate("");
       setInspectionRemarks("");
+      setInspectionDateVisible(false);
 
       await refreshList();
     } catch (error) {
@@ -1419,6 +1379,29 @@ const filteredRows = useMemo(() => {
       toast.error(message);
     } finally {
       setIsScheduling(false);
+    }
+  };
+
+  /* =======================================================
+     TOGGLE INSPECTION VISIBILITY
+  ======================================================= */
+
+  const handleToggleDogBreederVisibility = async (applicationId, nextVisible) => {
+    try {
+      const res = await toggleDogBreederInspectionVisibility(applicationId, nextVisible);
+      if (res?.isSuccess !== false) {
+        toast.success(
+          nextVisible
+            ? "Inspection date revealed to applicant"
+            : "Inspection date hidden from applicant"
+        );
+        await refreshList();
+      } else {
+        toast.error("Failed to update visibility");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error(error?.response?.data?.message || "Failed to update visibility");
     }
   };
 
@@ -1786,76 +1769,26 @@ const handleUploadReportClick = async (row) => {
     {};
 
   const facility =
-    previewData?.facilityDetails &&
-    typeof previewData.facilityDetails === "object"
-      ? previewData.facilityDetails
-      : registration?.facilityDetails &&
-          typeof registration.facilityDetails === "object"
-        ? registration.facilityDetails
-        : {};
-
-  const declaration =
-    previewData?.declarationDetails ||
-    registration?.declarationDetails ||
+    previewData?.facilityDetails ||
+    previewData?.facility ||
     {};
 
-  const breeds =
-    getArray(
-      previewData?.breedDetails
-    ).length > 0
-      ? getArray(
-          previewData?.breedDetails
-        )
-      : getArray(
-          registration?.breedDetails
-        ).length > 0
-      ? getArray(
-          registration?.breedDetails
-        )
-      : getArray(
-          previewData?.breeds
-        ).length > 0
-      ? getArray(
-          previewData?.breeds
-        )
-      : getArray(
-          registration?.breeds
-        );
+  const breeds = getArray(
+    previewData?.breedDetails ||
+      previewData?.breeds ||
+      previewData?.breedDetailsList
+  );
 
-  const documents =
-    getArray(
-      previewData?.documentDetails
-    ).length > 0
-      ? getArray(
-          previewData?.documentDetails
-        )
-      : getArray(
-          previewData?.documents
-        ).length > 0
-      ? getArray(
-          previewData?.documents
-        )
-      : getArray(
-          previewData?.applicationDocuments
-        ).length > 0
-      ? getArray(
-          previewData?.applicationDocuments
-        )
-      : getArray(
-          previewData?.applicationDocumentList
-        ).length > 0
-      ? getArray(
-          previewData?.applicationDocumentList
-        )
-      : getArray(
-          registration?.documentDetails
-        ).length > 0
-      ? getArray(
-          registration?.documentDetails
-        )
-      : getArray(
-          registration?.documents
-        );
+  const documents = getArray(
+    previewData?.documentDetails ||
+      previewData?.documents ||
+      previewData?.applicationDocuments ||
+      previewData?.applicationDocumentList ||
+      previewData?.registrationDetails
+        ?.documentDetails ||
+      previewData?.registrationDetails
+        ?.documents
+  );
 
   /* =======================================================
      TABLE COLUMN COUNT
@@ -2199,114 +2132,17 @@ const handleUploadReportClick = async (row) => {
                       {isAdmin &&
                         showForwardAction && (
                           <>
-                            {applicationApproved ? (
-                              <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-                                <Button
-                                  variant="outlined"
-                                  size="small"
-                                  onClick={() =>
-                                    setReportApplicationId(getApplicationId(row))
-                                  }
-                                >
-                                  VIEW REPORT
-                                </Button>
-                                <Button
-                                  variant="contained"
-                                  size="small"
-                                  disabled
-                                  sx={{
-                                    "&.Mui-disabled":
-                                      {
-                                        backgroundColor:
-                                          "#e8f5e9",
-                                        color:
-                                          "#2e7d32",
-                                        fontWeight:
-                                          "bold",
-                                      },
-                                  }}
-                                >
-                                  APPROVED
-                                </Button>
-                              </Box>
-                            ) : applicationRejected ? (
-                              <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-                                <Button
-                                  variant="outlined"
-                                  size="small"
-                                  onClick={() =>
-                                    setReportApplicationId(getApplicationId(row))
-                                  }
-                                >
-                                  VIEW REPORT
-                                </Button>
-                                <Button
-                                  variant="contained"
-                                  size="small"
-                                  disabled
-                                  sx={{
-                                    "&.Mui-disabled":
-                                      {
-                                        backgroundColor:
-                                          "#ffebee",
-                                        color:
-                                          "#d32f2f",
-                                        fontWeight:
-                                          "bold",
-                                      },
-                                  }}
-                                >
-                                  REJECTED
-                                </Button>
-                              </Box>
-                            ) : inspectionRejected ? (
-                              <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-                                <Button
-                                  variant="outlined"
-                                  size="small"
-                                  onClick={() =>
-                                    setReportApplicationId(getApplicationId(row))
-                                  }
-                                >
-                                  VIEW REPORT
-                                </Button>
-                                <Button
-                                  variant="contained"
-                                  size="small"
-                                  disabled
-                                  sx={{
-                                    "&.Mui-disabled":
-                                      {
-                                        backgroundColor:
-                                          "#ffebee",
-                                        color:
-                                          "#d32f2f",
-                                        fontWeight:
-                                          "bold",
-                                      },
-                                  }}
-                                >
-                                  REJECTED BY CVO
-                                </Button>
-                              </Box>
-                            ) : inspectionVerified ? (
+                            {currentStatus ===
+                            "VERIFIED_BY_CVO" ? (
                               <Box
                                 sx={{
                                   display:
                                     "flex",
                                   gap: 1,
-                                  flexWrap: "wrap",
+                                  flexWrap:
+                                    "wrap",
                                 }}
                               >
-                                <Button
-                                  variant="outlined"
-                                  size="small"
-                                  onClick={() =>
-                                    setReportApplicationId(getApplicationId(row))
-                                  }
-                                >
-                                  VIEW REPORT
-                                </Button>
                                 <Button
                                   variant="contained"
                                   size="small"
@@ -2341,6 +2177,64 @@ const handleUploadReportClick = async (row) => {
                                   REJECT
                                 </Button>
                               </Box>
+                            ) : isFinalRejected ? (
+                              <Button
+                                variant="contained"
+                                size="small"
+                                disabled
+                                sx={{
+                                  "&.Mui-disabled":
+                                    {
+                                      backgroundColor:
+                                        "#ffebee",
+                                      color:
+                                        "#d32f2f",
+                                      fontWeight:
+                                        "bold",
+                                    },
+                                }}
+                              >
+                                REJECTED
+                              </Button>
+                            ) : isFinalApproved ? (
+                              <Button
+                                variant="contained"
+                                size="small"
+                                disabled
+                                sx={{
+                                  "&.Mui-disabled":
+                                    {
+                                      backgroundColor:
+                                        "#e8f5e9",
+                                      color:
+                                        "#2e7d32",
+                                      fontWeight:
+                                        "bold",
+                                    },
+                                }}
+                              >
+                                APPROVED
+                              </Button>
+                            ) : currentStatus ===
+                              "REJECTED_BY_CVO" ? (
+                              <Button
+                                variant="contained"
+                                size="small"
+                                disabled
+                                sx={{
+                                  "&.Mui-disabled":
+                                    {
+                                      backgroundColor:
+                                        "#ffebee",
+                                      color:
+                                        "#d32f2f",
+                                      fontWeight:
+                                        "bold",
+                                    },
+                                }}
+                              >
+                                REJECTED BY CVO
+                              </Button>
                             ) : isInspectionScheduled ? (
                               <Button
                                 variant="contained"
@@ -2412,24 +2306,34 @@ const handleUploadReportClick = async (row) => {
                         showScheduleInspectionAction && (
                           <>
                             {isInspectionScheduled ? (
-                              <Button
-                                variant="contained"
-                                size="small"
-                                disabled
-                                sx={{
-                                  "&.Mui-disabled":
-                                    {
-                                      backgroundColor:
-                                        "#e0e0e0",
-                                      color:
-                                        "#757575",
-                                    },
-                                }}
-                              >
-                                INSPECTION
-                                {" "}
-                                SCHEDULED
-                              </Button>
+                              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, alignItems: "center" }}>
+                                <Button
+                                  variant="contained"
+                                  size="small"
+                                  disabled
+                                  sx={{
+                                    "&.Mui-disabled":
+                                      {
+                                        backgroundColor:
+                                          "#e0e0e0",
+                                        color:
+                                          "#757575",
+                                      },
+                                  }}
+                                >
+                                  INSPECTION SCHEDULED
+                                </Button>
+                                <Button
+                                  variant="outlined"
+                                  size="small"
+                                  color={row?.inspectionDateVisible ? "success" : "warning"}
+                                  startIcon={row?.inspectionDateVisible ? <VisibilityIcon /> : <VisibilityOffIcon />}
+                                  onClick={() => handleToggleDogBreederVisibility(applicationId, !row?.inspectionDateVisible)}
+                                  sx={{ fontSize: "0.72rem", py: 0.2, px: 0.8, textTransform: "none", whiteSpace: "nowrap" }}
+                                >
+                                  {row?.inspectionDateVisible ? "Date Revealed" : "Date Hidden"}
+                                </Button>
+                              </Box>
                             ) : currentStatus ===
                               "VERIFIED_BY_CVO" ? (
                               <Button
@@ -2639,6 +2543,28 @@ const handleUploadReportClick = async (row) => {
                 )
               }
             />
+
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={inspectionDateVisible}
+                  onChange={(e) => setInspectionDateVisible(e.target.checked)}
+                  color="primary"
+                />
+              }
+              label={
+                <Box>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    Show Inspection Date to Applicant
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {inspectionDateVisible
+                      ? "Applicant will be able to see the scheduled inspection date."
+                      : "Surprise Inspection: Date will remain hidden from applicant until revealed."}
+                  </Typography>
+                </Box>
+              }
+            />
           </Box>
         </DialogContent>
 
@@ -2842,7 +2768,7 @@ const handleUploadReportClick = async (row) => {
         onClose={
           handleClosePreview
         }
-        maxWidth="lg"
+        maxWidth="md"
         fullWidth
       >
         <DialogTitle>
@@ -2855,21 +2781,421 @@ const handleUploadReportClick = async (row) => {
           {previewLoading ? (
             <Box
               sx={{
-                display: "flex",
-                justifyContent: "center",
+                display:
+                  "flex",
+                justifyContent:
+                  "center",
                 my: 4,
               }}
             >
               <CircularProgress />
             </Box>
           ) : (
-            <Step6Preview
-              breederDetails={breeder}
-              facilityDetails={facility}
-              breedDetails={breeds}
-              declarationDetails={declaration}
-              documents={documents}
-            />
+            <>
+             {/* REGISTRATION */}
+
+<SectionTitle>
+  Registration Details
+</SectionTitle>
+
+<Grid
+  container
+  spacing={2}
+>
+  <PreviewRow
+    label="Application Number"
+    value={
+      registration.applicationNumber
+    }
+  />
+
+  <PreviewRow
+    label="District"
+    value={
+      registration.districtName ||
+      registration.district
+    }
+  />
+
+  <PreviewRow
+    label="Breeder Name"
+    value={
+      breeder?.breederName ||
+      breeder?.name ||
+      breeder?.breeder_name
+    }
+  />
+
+  <PreviewRow
+    label="Address Line 1"
+    value={
+      breeder?.addressLine1 ||
+      breeder?.address_line1
+    }
+  />
+
+  <PreviewRow
+    label="Address Line 2"
+    value={
+      breeder?.addressLine2 ||
+      breeder?.address_line2
+    }
+  />
+
+  <PreviewRow
+    label="City"
+    value={
+      breeder?.city
+    }
+  />
+
+  <PreviewRow
+    label="Pincode"
+    value={
+      breeder?.pincode
+    }
+  />
+
+  <PreviewRow
+    label="Contact Mobile"
+    value={
+      breeder?.contactMobile ||
+      breeder?.mobileNumber ||
+      breeder?.contact_mobile
+    }
+  />
+
+  <PreviewRow
+    label="Contact Email"
+    value={
+      breeder?.contactEmail ||
+      breeder?.email ||
+      breeder?.contact_email
+    }
+  />
+
+  <PreviewRow
+    label="Facility Details"
+    value={
+      breeder?.facilityDetails ||
+      breeder?.facility_details
+    }
+  />
+
+  <PreviewRow
+    label="Total Dogs Count"
+    value={
+      breeder?.totalDogsCount ??
+      breeder?.total_dogs_count
+    }
+  />
+
+  <PreviewRow
+    label="Application Status"
+    value={getStatusLabel(
+      getRowStatus(previewData)
+    )}
+  />
+</Grid>
+
+              {/* FACILITY */}
+
+<SectionTitle>
+  Facility Details
+</SectionTitle>
+
+<Grid
+  container
+  spacing={2}
+>
+  <PreviewRow
+    label="Accommodation / Infrastructure"
+    value={
+      facility.accommodationInfrastructure ??
+      facility.accommodation_infrastructure ??
+      ""
+    }
+  />
+
+  <PreviewRow
+    label="Working Hours"
+    value={
+      facility.workingHours ??
+      facility.working_hours ??
+      ""
+    }
+  />
+
+  <PreviewRow
+    label="Holiday"
+    value={
+      facility.holiday ?? ""
+    }
+  />
+
+  <PreviewRow
+    label="Ventilation Available"
+    value={
+      facility.ventilationAvailable ??
+      facility.ventilation_available ??
+      false
+        ? "Yes"
+        : "No"
+    }
+  />
+
+
+  <PreviewRow
+    label="Lighting Available"
+    value={
+      facility.lightingAvailable ??
+      facility.lighting_available ??
+      false
+        ? "Yes"
+        : "No"
+    }
+  />
+
+
+  <PreviewRow
+    label="Heating / Cooling Available"
+    value={
+      facility.heatingCoolingAvailable ??
+      facility.heating_cooling_available ??
+      false
+        ? "Yes"
+        : "No"
+    }
+  />
+
+  <PreviewRow
+    label="Food Storage Available"
+    value={
+      facility.foodStorageAvailable ??
+      facility.food_storage_available ??
+      false
+        ? "Yes"
+        : "No"
+    }
+  />
+
+  <PreviewRow
+    label="Cleanliness / Waste Management Available"
+    value={
+      facility.cleanlinessWasteAvailable ??
+      facility.cleanliness_waste_available ??
+      false
+        ? "Yes"
+        : "No"
+    }
+  />
+
+
+  <PreviewRow
+    label="Dead Animal Disposal Available"
+    value={
+      facility.deadAnimalDisposalAvailable ??
+      facility.dead_animal_disposal_available ??
+      false
+        ? "Yes"
+        : "No"
+    }
+  />
+
+
+  <PreviewRow
+    label="Veterinary Support Available"
+    value={
+      facility.veterinarySupportAvailable ??
+      facility.veterinary_support_available ??
+      false
+        ? "Yes"
+        : "No"
+    }
+  />
+
+
+
+  <PreviewRow
+    label="Cage / Enclosure Details"
+    value={
+      facility.cageEnclosureDetails ??
+      facility.cage_enclosure_details ??
+      ""
+    }
+  />
+</Grid>
+            {/* BREEDS */}
+
+{breeds.length > 0 && (
+  <>
+    <SectionTitle>
+      Breed Details
+    </SectionTitle>
+
+    <Grid
+      container
+      spacing={2}
+    >
+      {breeds.map((breed, idx) => {
+        const breedName =
+          breed?.breedName ??
+          breed?.breed_name ??
+          breed?.name ??
+          "-";
+
+        const dogCount =
+          breed?.dogCount ??
+          breed?.dog_count ??
+          0;
+
+        const gender =
+          breed?.gender ??
+          "-";
+
+        const ageDescription =
+          breed?.ageDescription ??
+          breed?.age_description ??
+          "-";
+
+        return (
+          <Grid
+            item
+            xs={12}
+            key={breed?.id ?? idx}
+          >
+            {/* Breed Number */}
+            <Typography
+              variant="subtitle2"
+              sx={{
+                fontWeight: 600,
+                mb: 1,
+              }}
+            >
+              Breed {idx + 1}
+            </Typography>
+
+            {/* Breed Details in One Row */}
+            <Grid
+              container
+              spacing={2}
+            >
+           
+                <PreviewRow
+                  label="Breed Name"
+                  value={breedName}
+                />
+             
+                <PreviewRow
+                  label="Dog Count"
+                  value={dogCount}
+                />
+              
+                <PreviewRow
+                  label="Gender"
+                  value={gender}
+                />
+
+                <PreviewRow
+                  label="Age Description"
+                  value={ageDescription}
+                />
+            </Grid>
+          </Grid>
+        );
+      })}
+    </Grid>
+  </>
+)}
+              {/* DOCUMENTS */}
+
+              {documents.length > 0 && (
+                <>
+                  <SectionTitle>
+                    Uploaded Documents
+                  </SectionTitle>
+
+                  <Table
+                    size="small"
+                  >
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>
+                          Document Type
+                        </TableCell>
+
+                        <TableCell>
+                          File Name
+                        </TableCell>
+
+                        <TableCell align="right">
+                          Actions
+                        </TableCell>
+                      </TableRow>
+                    </TableHead>
+
+                    <TableBody>
+                      {documents.map(
+                        (
+                          doc,
+                          idx
+                        ) => (
+                          <TableRow
+                            key={
+                              doc?.id ||
+                              idx
+                            }
+                          >
+                            <TableCell>
+                              {doc?.documentTypeName ||
+                                doc?.documentType?.name ||
+                                doc?.documentType ||
+                                "-"}
+                            </TableCell>
+
+                            <TableCell>
+                              {doc?.fileName ||
+                                doc?.name ||
+                                "-"}
+                            </TableCell>
+
+                            <TableCell align="right">
+                              <Tooltip title="View Document">
+                                <IconButton
+                                  size="small"
+                                  color="primary"
+                                  onClick={() =>
+                                    handleViewDocument(
+                                      doc
+                                    )
+                                  }
+                                >
+                                  <VisibilityIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+
+                              <Tooltip title="Download Document">
+                                <IconButton
+                                  size="small"
+                                  color="success"
+                                  onClick={() =>
+                                    handleDownloadDocument(
+                                      doc
+                                    )
+                                  }
+                                >
+                                  <DownloadIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            </TableCell>
+                          </TableRow>
+                        )
+                      )}
+                    </TableBody>
+                  </Table>
+                </>
+              )}
+            </>
           )}
         </DialogContent>
 
@@ -2883,10 +3209,6 @@ const handleUploadReportClick = async (row) => {
           </Button>
         </DialogActions>
       </Dialog>
-      <InspectionReportDialog
-        applicationId={reportApplicationId}
-        onClose={() => setReportApplicationId(null)}
-      />
     </>
   );
 };

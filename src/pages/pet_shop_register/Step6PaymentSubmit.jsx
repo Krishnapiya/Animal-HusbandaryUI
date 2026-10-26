@@ -42,6 +42,23 @@ const Step6PaymentSubmit = ({
       return;
     }
 
+    const docs = Object.values(documents || {});
+    const hasPanCard = docs.some((doc) => {
+      const typeId = doc?.documentTypeId ?? doc?.documentType?.id;
+      const code = doc?.documentType?.code || doc?.documentTypeCode || doc?.code;
+      const name = doc?.documentTypeName || doc?.documentType?.name || doc?.name || "";
+      const hasFile = Boolean(doc?.id || doc?.filePath || doc?.file);
+      return (
+        (Number(typeId) === 31 || code === "PAN_CARD" || /pan\s*card/i.test(name)) &&
+        hasFile
+      );
+    });
+
+    if (!hasPanCard) {
+      toast.error("Mandatory PAN Card document is missing. Please upload your PAN Card in Documents step.");
+      return;
+    }
+
     try {
       await axios.patch(
         `${String(BASE_API_URL).replace(/\/$/, "")}/petshop/auth/registration-application/submit/${applicationId}`,
@@ -55,7 +72,14 @@ const Step6PaymentSubmit = ({
       setSubmitted(true);
     } catch (error) {
       console.error(error);
-      toast.error("Submission failed.");
+      const serverMsg =
+        error?.response?.data?.message ||
+        error?.response?.data?.payLoad ||
+        (Array.isArray(error?.response?.data?.errors)
+          ? error.response.data.errors.join(", ")
+          : null) ||
+        "Submission failed.";
+      toast.error(serverMsg);
     }
   };
 

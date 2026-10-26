@@ -202,9 +202,6 @@ const ComplaintRegistrationStatusHistoryDialog = (props) => {
                       label={`TO: ${upperStatus(item.toStatus)}`}
                     />
                   </Stack>
-                  <Typography variant="body2" color="text.secondary">
-                    Changed by: {item.changedBy || "-"}
-                  </Typography>
                   {item.remarks ? (
                     <Typography variant="body2" sx={{ mt: 1 }}>
                       Remarks: {item.remarks}

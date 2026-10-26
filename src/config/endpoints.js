@@ -246,6 +246,10 @@ export const DOG_BREEDER_APPLICATION_CVO_LIST_URL =
    export const DOG_BREEDER_MY_APPLICATION_URL = "/dogbreeder/auth/registration-application/my-applications";
 
    export const REGISTRATION_INSPECTION_API_URL = "/petshop/auth/registration-inspection/";
+export const PET_SHOP_INSPECTION_APPLICATION_URL =
+  "/petshop/auth/registration-inspection/application/";
+export const PET_SHOP_INSPECTION_REPORT_VIEW_URL =
+  "/petshop/auth/registration-inspection/view-report/";
 export const REGISTRATION_APPLICATION_STATUS_HISTORY_API_URL =
     "/petshop/auth/registration-application-status-history/application/";
      export const DOG_BREEDER_MY_APPLICATION_API_URL =
@@ -275,6 +279,8 @@ export const CITIZEN_COMPLAINT_API_URL =
 "/citizen/auth/complaint-registration/";
 export const CITIZEN_COMPLAINT_LIST_URL =
   "/citizen/auth/complaint-registration/list/all";
+export const CITIZEN_COMPLAINT_MY_LIST_URL =
+  "/citizen/auth/complaint-registration/my-complaints";
 export const CITIZEN_COMPLAINT_INSPECTION_REPORT_UPLOAD_URL =
   "/citizen/auth/complaint-investigation/upload/";
 export const CITIZEN_COMPLAINT_APPROVE_URL =

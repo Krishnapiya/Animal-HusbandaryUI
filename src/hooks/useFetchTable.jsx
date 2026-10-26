@@ -103,6 +103,7 @@ if (selectedStatus) {
         const shouldAppendListAll =
           !cleanApi.includes("list/all") &&
           !cleanApi.includes("my-applications") &&
+          !cleanApi.includes("my-complaints") &&
           !cleanApi.includes("my-forwarded");
 
         const url = shouldAppendListAll

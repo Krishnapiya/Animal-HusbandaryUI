@@ -8,11 +8,21 @@ import {
 } from "@mui/material";
 
 import TextInput from "../../components/FormComponents/TextInput";
+import { getTodayLocalDate, normalizeDateToYYYYMMDD } from "../../utils";
 
 const Step4DeclarationAffidavit = ({
   declaration,
   setDeclaration,
 }) => {
+  const todayDate = getTodayLocalDate();
+  const isInvalidDate = Boolean(
+    declaration.declarationDate &&
+      normalizeDateToYYYYMMDD(declaration.declarationDate) !== todayDate
+  );
+  const dateError = isInvalidDate
+    ? "Declaration date must be today's date."
+    : "";
+
   console.log(
   "STEP4 DECLARATION DATA",
   declaration
@@ -48,7 +58,19 @@ const Step4DeclarationAffidavit = ({
           <TextInput
             label="Declaration Date"
             type="date"
+            name="declarationDate"
             InputLabelProps={{ shrink: true }}
+            inputProps={{
+              min: todayDate,
+              max: todayDate,
+            }}
+            slotProps={{
+              inputLabel: { shrink: true },
+              htmlInput: {
+                min: todayDate,
+                max: todayDate,
+              },
+            }}
             value={declaration.declarationDate || ""}
             onChange={(e) =>
               handleChange(
@@ -56,6 +78,9 @@ const Step4DeclarationAffidavit = ({
                 e.target.value
               )
             }
+            error={Boolean(dateError)}
+            helperText={dateError}
+            errors={dateError ? { declarationDate: dateError } : undefined}
           />
         </Grid>
 

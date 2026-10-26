@@ -146,3 +146,10 @@ export const getDogBreederApplicationHistory = async (applicationId) => {
     `${DOG_BREEDER_APPLICATION_STATUS_HISTORY_API_URL}${applicationId}`
   );
 };
+
+export const toggleDogBreederInspectionVisibility = async (applicationId, visible) => {
+  const queryParam = visible !== undefined ? `?visible=${visible}` : "";
+  return editSingleItem(
+    `/dogbreeder/auth/registration-inspection/toggle-visibility/${applicationId}${queryParam}`
+  );
+};

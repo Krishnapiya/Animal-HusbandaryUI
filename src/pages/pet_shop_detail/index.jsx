@@ -20,6 +20,7 @@ const PetShopDetailPage = () => {
   const tableColumns = [
     { attr: "shopName", header: "Shop Name" },
     { attr: "ownerName", header: "Owner Name" },
+    { attr: "panNumber", header: "PAN Number" },
     { attr: "city", header: "City" },
     { attr: "contactMobile", header: "Mobile" },
   ];

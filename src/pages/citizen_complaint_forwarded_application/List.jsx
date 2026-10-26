@@ -7,13 +7,17 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TableSortLabel from "@mui/material/TableSortLabel";
 import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import HistoryIcon from "@mui/icons-material/History";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 import Button from "@mui/material/Button";
+import Box from "@mui/material/Box";
 import EventIcon from "@mui/icons-material/Event";
 import RateReviewIcon from "@mui/icons-material/RateReview";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import { toast } from "material-react-toastify";
+import { toggleComplaintInvestigationVisibility } from "../../api-client/citizenComplaint";
 import ComplaintRegistrationStatusHistoryDialog from "../../components/ComplaintRegistrationStatusHistoryDialog";
 
 const normalizeStatusName = (value) => {
@@ -54,6 +58,29 @@ const matchesStatus = (value, ...expected) => {
 
 const List = (props) => {
   const [historyComplaintId, setHistoryComplaintId] = useState("");
+
+  const handleToggleVisibility = async (complaintId, nextVisible) => {
+    try {
+      const res = await toggleComplaintInvestigationVisibility(complaintId, nextVisible);
+      if (res?.isSuccess !== false) {
+        toast.success(
+          nextVisible
+            ? "Investigation date revealed to citizen"
+            : "Investigation date hidden from citizen"
+        );
+        if (typeof props.handleRefreshTable === "function") {
+          props.handleRefreshTable();
+        } else {
+          window.location.reload();
+        }
+      } else {
+        toast.error("Failed to update visibility");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error(err?.response?.data?.message || "Failed to update visibility");
+    }
+  };
 
   return (
     <>
@@ -184,17 +211,29 @@ const List = (props) => {
                   )}
 
                   {isInvestigationScheduled && (
-                    <Button
-                      variant="contained"
-                      color="success"
-                      size="small"
-                      startIcon={<CheckCircleIcon />}
-                      onClick={() =>
-                        props.handleActionTaken(row.id)
-                      }
-                    >
-                      Verify / Reject
-                    </Button>
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, alignItems: "center" }}>
+                      <Button
+                        variant="contained"
+                        color="success"
+                        size="small"
+                        startIcon={<CheckCircleIcon />}
+                        onClick={() =>
+                          props.handleActionTaken(row.id)
+                        }
+                      >
+                        Verify / Reject
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        color={row?.investigationDateVisible ? "success" : "warning"}
+                        startIcon={row?.investigationDateVisible ? <VisibilityIcon /> : <VisibilityOffIcon />}
+                        onClick={() => handleToggleVisibility(row.id, !row?.investigationDateVisible)}
+                        sx={{ fontSize: "0.72rem", py: 0.2, px: 0.8, textTransform: "none", whiteSpace: "nowrap" }}
+                      >
+                        {row?.investigationDateVisible ? "Date Revealed" : "Date Hidden"}
+                      </Button>
+                    </Box>
                   )}
 
                   {isVerifiedByCvo && (
