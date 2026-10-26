@@ -40,18 +40,18 @@ const FormDialog = (props) => {
         <DialogContent>
           {/* Form */}
           {cloneElement(children_array[0], {
-            api_url: props.api_url,
-            operationType: props.operationType,
-            rowID: props.rowID,
-            rowData: props.rowData,
-            setRowID: props.setRowID,
-            onClose: props.handleCloseFormModal,
-            handleCloseFormModal: props.handleCloseFormModal,
-            handleRefreshTable: props.handleRefreshTable,
-            alertString: props.alertString,
-            dropDownLists: props.dropDownLists,
-            tableColumns: props.tableColumns,
-            canSave: props.canSave,
+            api_url: props.api_url ?? children_array[0]?.props?.api_url,
+            operationType: props.operationType ?? children_array[0]?.props?.operationType,
+            rowID: props.rowID ?? children_array[0]?.props?.rowID,
+            rowData: props.rowData ?? children_array[0]?.props?.rowData,
+            setRowID: props.setRowID ?? children_array[0]?.props?.setRowID,
+            onClose: props.handleCloseFormModal ?? children_array[0]?.props?.onClose,
+            handleCloseFormModal: props.handleCloseFormModal ?? children_array[0]?.props?.handleCloseFormModal,
+            handleRefreshTable: props.handleRefreshTable ?? children_array[0]?.props?.handleRefreshTable,
+            alertString: props.alertString ?? children_array[0]?.props?.alertString,
+            dropDownLists: props.dropDownLists ?? children_array[0]?.props?.dropDownLists,
+            tableColumns: props.tableColumns ?? children_array[0]?.props?.tableColumns,
+            canSave: props.canSave ?? children_array[0]?.props?.canSave,
           })}
         </DialogContent>
       </Dialog>

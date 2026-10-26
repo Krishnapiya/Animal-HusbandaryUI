@@ -120,6 +120,9 @@ const Form = ({ rowID, onClose }) => {
   const [complaint, setComplaint] =
     useState(null);
 
+  const [investigation, setInvestigation] =
+    useState(null);
+
   const [loading, setLoading] =
     useState(false);
 
@@ -182,6 +185,19 @@ const Form = ({ rowID, onClose }) => {
         setComplaint(
           normalizeDeepKeys(complaintData)
         );
+
+        try {
+          const invResponse = await axios.get(
+            `${String(BASE_API_URL || "").replace(/\/+$/, "")}/citizen/auth/complaint-investigation/view-by-complaint/${rowID}`,
+            { headers: getHeader() }
+          );
+          const invPayload = getPayload(invResponse);
+          if (invPayload) {
+            setInvestigation(normalizeDeepKeys(invPayload));
+          }
+        } catch (invErr) {
+          console.warn("No investigation found for complaint:", invErr?.message);
+        }
       } catch (error) {
         console.error(
           "Failed to load citizen complaint:",
@@ -301,7 +317,7 @@ const Form = ({ rowID, onClose }) => {
           fontWeight={600}
           mb={3}
         >
-          Citizen Complaint Details
+          Complaint Details
         </Typography>
 
         <Grid container spacing={3}>
@@ -398,6 +414,56 @@ const Form = ({ rowID, onClose }) => {
               {description}
             </Typography>
           </Grid>
+
+          {investigation && (
+            <Grid size={{ xs: 12 }}>
+              <Box sx={{ mt: 2, pt: 2, borderTop: "2px solid #1976d2" }}>
+                <Typography variant="h6" sx={{ fontWeight: 600, color: "#1565c0", mb: 2 }}>
+                  Investigation Details
+                </Typography>
+                <Grid container spacing={2}>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      Investigation Date
+                    </Typography>
+                    <Box sx={{ mt: 0.5 }}>
+                      {investigation.investigationDate ? (
+                        <Typography fontWeight={600}>
+                          {investigation.investigationDate}
+                        </Typography>
+                      ) : (
+                        <Typography variant="body2" sx={{ color: "#d32f2f", fontStyle: "italic", fontWeight: 500 }}>
+                          Investigation has been scheduled. Details will be made available by the department.
+                        </Typography>
+                      )}
+                    </Box>
+                  </Grid>
+
+                  {investigation.recommendation && (
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        Recommendation
+                      </Typography>
+                      <Typography fontWeight={600}>
+                        {investigation.recommendation}
+                      </Typography>
+                    </Grid>
+                  )}
+
+                  {investigation.investigationRemarks && (
+                    <Grid size={{ xs: 12 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        Investigation Remarks
+                      </Typography>
+                      <Typography fontWeight={500} sx={{ whiteSpace: "pre-wrap" }}>
+                        {investigation.investigationRemarks}
+                      </Typography>
+                    </Grid>
+                  )}
+                </Grid>
+              </Box>
+            </Grid>
+          )}
         </Grid>
       </Paper>
 

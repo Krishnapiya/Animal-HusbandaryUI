@@ -10,7 +10,9 @@ import useCan from "../../hooks/useCan";
 
 import {
   DOG_BREEDER_APPLICATION_API_URL,
+  DOG_BREEDER_APPLICATION_LIST_URL,
   DOG_BREEDER_APPLICATION_CVO_API_URL,
+  DOG_BREEDER_APPLICATION_CVO_LIST_URL,
 } from "../../config/endpoints";
 
 import {
@@ -75,7 +77,11 @@ const DogBreederApplicationPage = () => {
 
   const isAdmin = userRoles.includes("ADMIN");
 
-  const isCvo = userRoles.includes("CVO");
+  const isCvo =
+    userRoles.includes("CVO") ||
+    userRoles.includes("DISTRICT_OFFICER") ||
+    userRoles.includes("DISTRICTOFFICER") ||
+    userRoles.includes("DISTRICT_OFFICE");
 
   // Allow list access for ADMIN, CVO, or if useCan returns true
   const canAccessList = isAdmin || isCvo || canList;
@@ -130,7 +136,11 @@ const DogBreederApplicationPage = () => {
     <DataTable
       key={`${isCvo}-${selectedApiUrl}`}
       api_url={selectedApiUrl}
-      list_url={selectedApiUrl}
+      list_url={
+        isCvo
+          ? DOG_BREEDER_APPLICATION_CVO_LIST_URL
+          : DOG_BREEDER_APPLICATION_LIST_URL
+      }
       alertString="Dog Breeder Registration Application"
       tableColumns={tableColumns}
       includeFilter={canAccessList}

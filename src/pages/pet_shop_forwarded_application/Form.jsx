@@ -5,7 +5,10 @@ import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
-import { downloadPetShopRegistrationApplication,} from "../../api-client/petShopRegistration";
+import {
+  downloadPetShopRegistrationApplication,
+  getPetShopInspection,
+} from "../../api-client/petShopRegistration";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import DownloadIcon from "@mui/icons-material/Download";
 
@@ -112,6 +115,7 @@ const preparePreviewData = (application) => {
 
 const Form = ({ rowID, onClose }) => {
   const [application, setApplication] = useState(null);
+  const [inspection, setInspection] = useState(null);
   const [loading, setLoading] = useState(false);
   const previewRef = useRef(null);
 
@@ -167,6 +171,23 @@ const Form = ({ rowID, onClose }) => {
         }
 
         setApplication(applicationData);
+
+        try {
+          const inspRes = await getPetShopInspection(rowID);
+          if (inspRes?.isSuccess) {
+            const inspData =
+              inspRes?.data?.payLoad ||
+              inspRes?.data?.data ||
+              inspRes?.data ||
+              null;
+            setInspection(inspData);
+          } else {
+            setInspection(null);
+          }
+        } catch (inspErr) {
+          console.warn("Could not load inspection data:", inspErr);
+          setInspection(null);
+        }
       } catch (error) {
         console.error("Failed to load application", error);
       } finally {
@@ -206,7 +227,7 @@ const handleDownloadPdf = async () => {
             <Typography>No application found.</Typography>
           </Box>
         ) : (
-          <Step5Preview {...previewData} />
+          <Step5Preview {...previewData} inspectionData={inspection} />
         )}
       </Box>
 

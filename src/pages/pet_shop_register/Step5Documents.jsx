@@ -16,41 +16,54 @@ import SaveIcon from "@mui/icons-material/Save";
 import DocumentPreview from "./DocumentPreview";
 import {
   getApplicationDocuments,
+  getPetShopDocumentTypes,
   uploadApplicationDocument,
 } from "../../api-client/petShopRegistration";
 import { getUserAttributes } from "../../utils";
 
-const documentList = [
+const DEFAULT_DOCUMENT_LIST = [
   {
     id: 1,
+    code: "ID_PROOF",
     name: "Identity Proof",
     mandatory: true,
   },
   {
+    id: 31,
+    code: "PAN_CARD",
+    name: "PAN Card",
+    mandatory: true,
+  },
+  {
     id: 2,
+    code: "ADDRESS_PROOF",
     name: "Address Proof",
     mandatory: true,
   },
   {
     id: 3,
+    code: "FACILITY_PHOTO",
     name: "Shop Photograph",
     mandatory: true,
   },
   {
     id: 4,
+    code: "SHOP_LICENSE",
     name: "Infrastructure Photograph",
     mandatory: true,
   },
   {
     id: 5,
+    code: "AFFIDAVIT",
     name: "Affidavit",
     mandatory: true,
   },
   {
-  id: 9,
-  name: "Applicant Signature",
-  mandatory: true,
-},
+    id: 9,
+    code: "APPLICANT_SIGNATURE",
+    name: "Applicant Signature",
+    mandatory: true,
+  },
 ];
 
 const getPayload = (response) =>
@@ -85,7 +98,7 @@ const getApplicationId = (document) =>
   document?.registrationApplication?.id;
 
 const isSavedDocument = (document) =>
-  Boolean(document?.id) && !document?.file;
+  Boolean(document?.id || document?.filePath) && !document?.file;
 
 const Step5Documents = ({
   formValues,
@@ -93,11 +106,52 @@ const Step5Documents = ({
   setDocuments: setDocumentsProp,
   setActiveStep,
 }) => {
+  const [documentList, setDocumentList] = useState(DEFAULT_DOCUMENT_LIST);
   const [localDocuments, setLocalDocuments] = useState({});
   const documents = documentsProp ?? localDocuments;
   const setDocuments = setDocumentsProp ?? setLocalDocuments;
 
   const [isLoadingDocuments, setIsLoadingDocuments] = useState(false);
+
+  // Dynamically resolve document types from backend if available
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const response = await getPetShopDocumentTypes();
+        if (cancelled || !response?.isSuccess) return;
+
+        const types = getPayload(response);
+        const rows = Array.isArray(types) ? types : types?.content || [];
+        if (rows.length > 0) {
+          const merged = DEFAULT_DOCUMENT_LIST.map((def) => {
+            const match = rows.find(
+              (r) =>
+                (r.code && def.code && r.code.toUpperCase() === def.code.toUpperCase()) ||
+                Number(r.id) === Number(def.id)
+            );
+            if (match) {
+              return {
+                ...def,
+                id: Number(match.id),
+                code: match.code || def.code,
+                name: def.name || match.name,
+                mandatory: match.mandatory !== undefined ? match.mandatory : def.mandatory,
+              };
+            }
+            return def;
+          });
+          setDocumentList(merged);
+        }
+      } catch (error) {
+        console.warn("Using default document list:", error);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -137,6 +191,10 @@ const Step5Documents = ({
               return acc;
             }
 
+            const docMeta = documentList.find(
+              (d) => Number(d.id) === Number(documentTypeId)
+            );
+
             const existing = acc[documentTypeId];
             const existingId = Number(existing?.id ?? 0);
             const currentId = Number(item?.id ?? 0);
@@ -145,6 +203,10 @@ const Step5Documents = ({
               acc[documentTypeId] = {
                 ...item,
                 name: item.fileName || item.name || "",
+                fileName: item.fileName || item.name || "",
+                documentTypeId: Number(documentTypeId),
+                documentTypeName: item.documentTypeName || docMeta?.name || "",
+                label: docMeta?.name || item.documentTypeName || "",
                 isDraft: true,
               };
             }
@@ -171,96 +233,82 @@ const Step5Documents = ({
     return () => {
       cancelled = true;
     };
-  }, [formValues?.applicationId, setDocuments]);
+  }, [formValues?.applicationId, setDocuments, documentList]);
 
- const handleFileChange = (
-  documentId,
-  event
-) => {
-  const file = event.target.files?.[0];
+  const handleFileChange = (documentId, event) => {
+    const file = event.target.files?.[0];
 
-  if (!file) {
-    return;
-  }
+    if (!file) {
+      return;
+    }
 
-  if (
-    documentId === 9 &&
-    !file.type.startsWith("image/")
-  ) {
-    toast.error(
-      "Please upload a JPG or PNG signature."
-    );
+    const docMeta = documentList.find((d) => d.id === documentId);
+    const isSignature =
+      documentId === 9 ||
+      docMeta?.code === "APPLICANT_SIGNATURE" ||
+      /signature/i.test(docMeta?.name || "");
 
-    event.target.value = "";
+    if (isSignature && !file.type.startsWith("image/")) {
+      toast.error("Please upload a JPG or PNG signature.");
+      event.target.value = "";
+      return;
+    }
 
-    return;
-  }
+    const isPdf =
+      file.type === "application/pdf" || /\.pdf$/i.test(file.name);
+    const isImage =
+      file.type.startsWith("image/") || /\.(png|jpe?g)$/i.test(file.name);
 
-  const maxSize = 6 * 1024 * 1024;
+    if (!isPdf && !isImage) {
+      toast.error("Please upload a valid PDF, JPG, JPEG, or PNG file.");
+      event.target.value = "";
+      return;
+    }
 
-  if (file.size > maxSize) {
-    alert("File size cannot exceed 6 MB");
-    event.target.value = "";
-    return;
-  }
+    const maxSize = 6 * 1024 * 1024;
 
-  setDocuments((prev) => ({
-    ...prev,
-    [documentId]: {
-      ...(prev[documentId] || {}),
-      file,
-      name: file.name,
-      fileName: file.name,
-      mimeType: file.type,
-      fileSizeBytes: file.size,
-      isDraft: false,
-    },
-  }));
-};
+    if (file.size > maxSize) {
+      toast.error("File size cannot exceed 6 MB");
+      event.target.value = "";
+      return;
+    }
+
+    setDocuments((prev) => ({
+      ...prev,
+      [documentId]: {
+        ...(prev[documentId] || {}),
+        file,
+        name: file.name,
+        fileName: file.name,
+        mimeType: file.type || (isPdf ? "application/pdf" : "image/jpeg"),
+        fileSizeBytes: file.size,
+        documentTypeId: documentId,
+        documentTypeName: docMeta?.name || "Document",
+        label: docMeta?.name || "Document",
+        isDraft: false,
+      },
+    }));
+  };
 
   const handleSaveDocuments = async () => {
     try {
       const applicationId = formValues?.applicationId;
       const selectedDocuments = Object.entries(documents).filter(
-        ([, document]) => document?.file
+        ([, document]) => Boolean(document?.file)
       );
 
       if (!applicationId) {
-        toast.error(
-          "Please save shop details before uploading documents"
-        );
+        toast.error("Please save shop details before uploading documents");
         return false;
       }
 
       if (selectedDocuments.length === 0) {
-        toast.info(
-          "No new documents selected. Saved draft documents are already available."
-        );
         return true;
       }
 
       for (const [documentId, document] of selectedDocuments) {
         const file = document.file;
-        const existingSavedDocument =
-          documents?.[documentId] &&
-          (documents[documentId]?.id || documents[documentId]?.documentId || documents[documentId]?.applicationDocumentId || documents[documentId]?.isDraft);
-
-        if (existingSavedDocument && !document?.isDraft && !document?.saved) {
-          toast.info(
-            `${document.fileName || file.name} is already saved for this application.`
-          );
-          setDocuments((prev) => ({
-            ...prev,
-            [documentId]: {
-              ...prev[documentId],
-              ...document,
-              file: null,
-              isDraft: true,
-              saved: true,
-            },
-          }));
-          continue;
-        }
+        if (!file) continue;
 
         const response = await uploadApplicationDocument({
           file,
@@ -287,7 +335,15 @@ const Step5Documents = ({
             file: null,
             name: savedDocument?.fileName || file.name,
             fileName: savedDocument?.fileName || file.name,
+            filePath: savedDocument?.filePath || prev[documentId]?.filePath,
             mimeType: savedDocument?.mimeType || file.type,
+            documentTypeId: Number(documentId),
+            documentTypeName:
+              savedDocument?.documentTypeName || document.documentTypeName,
+            label:
+              savedDocument?.documentTypeName ||
+              document.label ||
+              document.documentTypeName,
             isDraft: true,
             saved: true,
           },
@@ -311,6 +367,21 @@ const Step5Documents = ({
         return;
       }
 
+      // Enforce mandatory documents
+      const missingMandatory = documentList.filter((doc) => {
+        if (!doc.mandatory) return false;
+        const currentDoc = documents[doc.id];
+        const hasSaved = Boolean(currentDoc?.id || currentDoc?.filePath);
+        const hasFile = Boolean(currentDoc?.file);
+        return !hasSaved && !hasFile;
+      });
+
+      if (missingMandatory.length > 0) {
+        const names = missingMandatory.map((d) => d.name).join(", ");
+        toast.error(`Please upload mandatory document(s): ${names}`);
+        return;
+      }
+
       setActiveStep(5);
     } catch (error) {
       console.error(error);
@@ -320,23 +391,23 @@ const Step5Documents = ({
   return (
     <>
       <Typography
-  variant="h5"
-  sx={{
-    fontWeight: 600,
-    mb: 1,
-  }}
->
-  Documents Upload
-</Typography>
+        variant="h5"
+        sx={{
+          fontWeight: 600,
+          mb: 1,
+        }}
+      >
+        Documents Upload
+      </Typography>
 
-<Typography
-  variant="body2"
-  color="text.secondary"
-  sx={{ mb: 3 }}
->
-  Supported file types: <strong>PDF, JPG, JPEG, PNG</strong> &nbsp;|&nbsp;
-  Maximum file size: <strong>6 MB</strong> per file
-</Typography>
+      <Typography
+        variant="body2"
+        color="text.secondary"
+        sx={{ mb: 3 }}
+      >
+        Supported file types: <strong>PDF, JPG, JPEG, PNG</strong> &nbsp;|&nbsp;
+        Maximum file size: <strong>6 MB</strong> per file
+      </Typography>
 
       {isLoadingDocuments && (
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -373,7 +444,14 @@ const Step5Documents = ({
                   <Box sx={{ width: { xs: "100%", md: "250px" } }}>
                     <Typography fontWeight={500}>{document.name}</Typography>
 
-                    <Box sx={{ mt: 0.5, display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                    <Box
+                      sx={{
+                        mt: 0.5,
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: 0.5,
+                      }}
+                    >
                       {document.mandatory && (
                         <Chip size="small" color="error" label="Mandatory" />
                       )}
@@ -404,22 +482,21 @@ const Step5Documents = ({
                     startIcon={<UploadFileIcon />}
                     sx={{ flexShrink: 0 }}
                   >
-                    Upload
+                    {documents[document.id]?.filePath ||
+                    documents[document.id]?.file
+                      ? "Change / Upload"
+                      : "Upload"}
                     <input
-  hidden
-  type="file"
-  accept={
-    document.id === 9
-      ? "image/png,image/jpeg,image/jpg"
-      : ".pdf,.jpg,.jpeg,.png"
-  }
-  onChange={(e) =>
-    handleFileChange(
-      document.id,
-      e
-    )
-  }
-/>
+                      hidden
+                      type="file"
+                      accept={
+                        document.id === 9 ||
+                        document.code === "APPLICANT_SIGNATURE"
+                          ? "image/png,image/jpeg,image/jpg"
+                          : ".pdf,.jpg,.jpeg,.png"
+                      }
+                      onChange={(e) => handleFileChange(document.id, e)}
+                    />
                   </Button>
                 </Box>
 
@@ -450,12 +527,8 @@ const Step5Documents = ({
           >
             Save & Continue
           </Button>
-
-         
         </Box>
       </Paper>
-
-    
     </>
   );
 };

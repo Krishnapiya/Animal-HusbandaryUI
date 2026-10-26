@@ -13,6 +13,7 @@ const Form = (props) => {
     applicationId: "",
     shopName: "",
     ownerName: "",
+    panNumber: "",
     addressLine1: "",
     addressLine2: "",
     city: "",
@@ -86,6 +87,18 @@ const Form = (props) => {
               onChange={handleChangeFormValues}
               errors={errors}
               required
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12 }}>
+            <TextInput
+              label="PAN Card Number"
+              name="panNumber"
+              value={formValues.panNumber}
+              onChange={handleChangeFormValues}
+              errors={errors}
+              required
+              inputProps={{ maxLength: 10, style: { textTransform: "uppercase" } }}
             />
           </Grid>
 

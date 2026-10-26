@@ -57,6 +57,19 @@ const Step1BreederDetails = ({
     };
   }, []);
 
+  const handlePanChange = (e) => {
+    const rawValue = e?.target?.value ?? "";
+    const upperValue = rawValue.toUpperCase().slice(0, 10);
+    onChange({
+      ...e,
+      target: {
+        ...(e?.target || {}),
+        name: "panNumber",
+        value: upperValue,
+      },
+    });
+  };
+
   return (
     <Box>
       <Typography variant="h6" sx={{ mb: 2, fontFamily: "Arial" }}>
@@ -89,6 +102,22 @@ const Step1BreederDetails = ({
             onChange={onChange}
             errors={errors}
             required
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 6 }}>
+          <TextInput
+            label="PAN Card Number"
+            name="panNumber"
+            value={formValues.panNumber || ""}
+            onChange={handlePanChange}
+            errors={errors}
+            required
+            inputProps={{
+              maxLength: 10,
+              style: { textTransform: "uppercase" },
+            }}
+            placeholder="e.g. ABCDE1234F"
           />
         </Grid>
 

@@ -7,13 +7,20 @@ import TableRow from "@mui/material/TableRow";
 import TableSortLabel from "@mui/material/TableSortLabel";
 // import Button from "@mui/material/Button";
 import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 import Button from "@mui/material/Button";
 import EventIcon from "@mui/icons-material/Event";
 import { useState } from "react";
 import HistoryIcon from "@mui/icons-material/History";
+import AssignmentIcon from "@mui/icons-material/Assignment";
+import Box from "@mui/material/Box";
+import { toast } from "material-react-toastify";
+import { togglePetShopInspectionVisibility } from "../../api-client/petShopRegistration";
 import PetShopStatusHistoryDialog from "../../components/PetShopStatusHistoryDialog";
+import PetShopInspectionReportDialog from "../../components/PetShopInspectionReportDialog";
+
 const normalizeStatusName = (value) => {
   const raw =
     typeof value === "string"
@@ -46,7 +53,34 @@ const matchesStatus = (value, ...expected) => {
 };
 
 const List = (props) => {
-const [historyApplicationId, setHistoryApplicationId] = useState("");
+  const [historyApplicationId, setHistoryApplicationId] = useState("");
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const [selectedReportRow, setSelectedReportRow] = useState(null);
+
+  const handleOpenReportModal = (row) => {
+    setSelectedReportRow(row);
+    setReportDialogOpen(true);
+  };
+
+  const handleToggleVisibility = async (applicationId, nextVisible) => {
+    try {
+      const res = await togglePetShopInspectionVisibility(applicationId, nextVisible);
+      if (res?.isSuccess !== false) {
+        toast.success(nextVisible ? "Inspection date revealed to applicant" : "Inspection date hidden from applicant");
+        if (typeof props.handleRefreshTable === "function") {
+          props.handleRefreshTable();
+        } else {
+          window.location.reload();
+        }
+      } else {
+        toast.error("Failed to update visibility");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error(err?.response?.data?.message || "Failed to update visibility");
+    }
+  };
+
   return (
     <>
       <Table stickyHeader sx={{ minWidth: 650 }}>
@@ -68,13 +102,11 @@ const [historyApplicationId, setHistoryApplicationId] = useState("");
               </TableCell>
             ))}
 
-           <TableCell align="center">View</TableCell>
-           <TableCell align="center">History</TableCell>
-           <TableCell align="center">Actions</TableCell>
-           <TableCell align="center">Decision</TableCell>
-
- 
-
+            <TableCell align="center">View</TableCell>
+            <TableCell align="center">History</TableCell>
+            <TableCell align="center">Report</TableCell>
+            <TableCell align="center">Actions</TableCell>
+            <TableCell align="center">Decision</TableCell>
           </TableRow>
         </TableHead>
 
@@ -134,6 +166,30 @@ const [historyApplicationId, setHistoryApplicationId] = useState("");
                 </TableCell>
 
                 <TableCell align="center">
+                  <Tooltip
+                    title={
+                      isCompleted || Boolean(row?.inspectionReport)
+                        ? "View Inspection Report"
+                        : "No Inspection Report"
+                    }
+                  >
+                    <span>
+                      <IconButton
+                        color={
+                          isCompleted || Boolean(row?.inspectionReport)
+                            ? "primary"
+                            : "default"
+                        }
+                        disabled={!isCompleted && !row?.inspectionReport}
+                        onClick={() => handleOpenReportModal(row)}
+                      >
+                        <AssignmentIcon />
+                      </IconButton>
+                    </span>
+                  </Tooltip>
+                </TableCell>
+
+                <TableCell align="center">
                   {(() => {
                     if (isCompleted) {
                       return (
@@ -151,15 +207,27 @@ const [historyApplicationId, setHistoryApplicationId] = useState("");
 
                     if (isInspectionScheduled) {
                       return (
-                        <Button
-                          variant="contained"
-                          color="warning"
-                          size="small"
-                          startIcon={<EventIcon />}
-                          disabled
-                        >
-                          Scheduled
-                        </Button>
+                        <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, alignItems: "center" }}>
+                          <Button
+                            variant="contained"
+                            color="warning"
+                            size="small"
+                            startIcon={<EventIcon />}
+                            disabled
+                          >
+                            Scheduled
+                          </Button>
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            color={row?.inspectionDateVisible ? "success" : "warning"}
+                            startIcon={row?.inspectionDateVisible ? <VisibilityIcon /> : <VisibilityOffIcon />}
+                            onClick={() => handleToggleVisibility(row.id, !row?.inspectionDateVisible)}
+                            sx={{ fontSize: "0.72rem", py: 0.2, px: 0.8, textTransform: "none", whiteSpace: "nowrap" }}
+                          >
+                            {row?.inspectionDateVisible ? "Date Revealed" : "Date Hidden"}
+                          </Button>
+                        </Box>
                       );
                     }
 
@@ -188,35 +256,69 @@ const [historyApplicationId, setHistoryApplicationId] = useState("");
                       Upload Report
                     </Button>
                   ) : isVerifiedByCvo ? (
-                    <Button
-                      variant="contained"
-                      size="small"
-                      disabled
+                    <Box
                       sx={{
-                        "&.Mui-disabled": {
-                          backgroundColor: "#2e7d32",
-                          color: "#fff",
-                          opacity: 1,
-                        },
+                        display: "flex",
+                        gap: 1,
+                        justifyContent: "center",
+                        alignItems: "center",
                       }}
                     >
-                      ✓ Verified by CVO
-                    </Button>
+                      <Button
+                        variant="contained"
+                        size="small"
+                        disabled
+                        sx={{
+                          "&.Mui-disabled": {
+                            backgroundColor: "#2e7d32",
+                            color: "#fff",
+                            opacity: 1,
+                          },
+                        }}
+                      >
+                        ✓ Verified by CVO
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        color="info"
+                        size="small"
+                        onClick={() => handleOpenReportModal(row)}
+                      >
+                        Report
+                      </Button>
+                    </Box>
                   ) : isRejectedByCvo ? (
-                    <Button
-                      variant="contained"
-                      size="small"
-                      disabled
+                    <Box
                       sx={{
-                        "&.Mui-disabled": {
-                          backgroundColor: "#d32f2f",
-                          color: "#fff",
-                          opacity: 1,
-                        },
+                        display: "flex",
+                        gap: 1,
+                        justifyContent: "center",
+                        alignItems: "center",
                       }}
                     >
-                      ✗ Rejected by CVO
-                    </Button>
+                      <Button
+                        variant="contained"
+                        size="small"
+                        disabled
+                        sx={{
+                          "&.Mui-disabled": {
+                            backgroundColor: "#d32f2f",
+                            color: "#fff",
+                            opacity: 1,
+                          },
+                        }}
+                      >
+                        ✗ Rejected by CVO
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        color="info"
+                        size="small"
+                        onClick={() => handleOpenReportModal(row)}
+                      >
+                        Report
+                      </Button>
+                    </Box>
                   ) : (
                     "-"
                   )}
@@ -230,6 +332,16 @@ const [historyApplicationId, setHistoryApplicationId] = useState("");
       applicationId={historyApplicationId}
       setApplicationId={setHistoryApplicationId}
     />
+
+      <PetShopInspectionReportDialog
+        open={reportDialogOpen}
+        onClose={() => {
+          setReportDialogOpen(false);
+          setSelectedReportRow(null);
+        }}
+        applicationId={selectedReportRow?.id}
+        applicationNumber={selectedReportRow?.applicationNumber}
+      />
      
     </>
   );

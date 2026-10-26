@@ -13,7 +13,7 @@ import useCan from "../../hooks/useCan";
 
 import {
   CITIZEN_COMPLAINT_API_URL,
-  CITIZEN_COMPLAINT_LIST_URL,
+  CITIZEN_COMPLAINT_MY_LIST_URL,
 } from "../../config/endpoints";
 
 import {
@@ -66,11 +66,11 @@ const CitizenComplaintRegistrationPage = () => {
     <>
       <DataTable
         api_url={CITIZEN_COMPLAINT_API_URL}
-        list_url={CITIZEN_COMPLAINT_LIST_URL}
+        list_url={CITIZEN_COMPLAINT_MY_LIST_URL}
         alertString="Citizen Complaint"
         tableColumns={tableColumns}
         includeFilter={true}
-        pageTitle="Citizen Complaint Registration"
+        pageTitle="Complaint Registration"
         canList={canList}
         canAdd={canAdd}
         canEdit={canEdit}
@@ -94,7 +94,8 @@ const CitizenComplaintRegistrationPage = () => {
         maxWidth="lg"
         open={viewDialogOpen}
         handleCloseFormModal={handleCloseViewDialog}
-        title="Citizen Complaint Details"
+        title="Complaint Details"
+        rowID={viewComplaintId}
       >
         <ComplaintDetailsForm
           rowID={viewComplaintId}

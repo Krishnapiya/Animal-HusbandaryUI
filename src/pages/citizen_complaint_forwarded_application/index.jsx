@@ -283,6 +283,9 @@ const CitizenComplaintForwardedApplicationPage = () => {
 
         investigationRemarks:
           investigationData.investigationRemarks,
+
+        investigationDateVisible:
+          Boolean(investigationData.investigationDateVisible),
       };
 
       console.log(

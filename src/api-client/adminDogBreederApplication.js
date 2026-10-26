@@ -1,4 +1,4 @@
-import { getItemList, getBlobItem, addItem } from "./apiCall";
+import { getItemList, getBlobItem, addItem, editSingleItem } from "./apiCall";
 import { addFormDataItem } from "./apiCall";
 import {
   DOG_BREEDER_APPLICATION_PREVIEW_URL,
@@ -70,5 +70,12 @@ export const resubmitDogBreederApplication = async (formData) => {
 export const getDogBreederApplicationHistory = async (applicationId) => {
   return getItemList(
     `${DOG_BREEDER_APPLICATION_STATUS_HISTORY_API_URL}${applicationId}`
+  );
+};
+
+export const toggleDogBreederInspectionVisibility = async (applicationId, visible) => {
+  const queryParam = visible !== undefined ? `?visible=${visible}` : "";
+  return editSingleItem(
+    `/dogbreeder/auth/registration-inspection/toggle-visibility/${applicationId}${queryParam}`
   );
 };

@@ -44,6 +44,7 @@ const initialStep1 = {
   shopCity: "",
   shopPincode: "",
   ownerName: "",
+  panNumber: "",
   ownerResidentialAddress: "",
   fatherOrHusbandName: "",
   age: "",
@@ -98,6 +99,7 @@ const mapDraftToFormValues = (draft, baseValues) => {
     shopCity: draft.shopCity || "",
     shopPincode: draft.shopPincode || "",
     ownerName: draft.ownerName || baseValues.ownerName,
+    panNumber: draft.panNumber || "",
     fatherOrHusbandName:
   draft.fatherOrHusbandName || "",
 
@@ -210,6 +212,8 @@ const [animals, setAnimals] = useState([
     id: "",
     species: "",
     breed: "",
+    customSpeciesName: "",
+    customBreedName: "",
     gender: "",
     quantity: "",
     ageDescription: "",
@@ -365,10 +369,25 @@ console.log(
         ageDescription: item.ageDescription || "",
         priceOffered: item.priceOffered || "",
         description: item.description || "",
+        customSpeciesName: item.customSpeciesName || item.custom_species_name || "",
+        customBreedName: item.customBreedName || item.custom_breed_name || "",
       }))
     );
   } else {
-    setAnimals([{ id: "", species: "", breed: "", quantity: "", ageDescription: "", priceOffered: "", description: "" }]);
+    setAnimals([
+      {
+        id: "",
+        species: "",
+        breed: "",
+        customSpeciesName: "",
+        customBreedName: "",
+        gender: "",
+        quantity: "",
+        ageDescription: "",
+        priceOffered: "",
+        description: "",
+      },
+    ]);
   }
 }
 
@@ -579,6 +598,29 @@ if (documentsResponse?.isSuccess) {
     : documentPayload?.content || [];
 
   setDocumentCount(documentRows.length);
+
+  const draftDocsMap = documentRows.reduce((acc, item) => {
+    const docTypeId = item?.documentTypeId ?? item?.documentType?.id;
+    if (docTypeId) {
+      acc[docTypeId] = {
+        ...item,
+        name: item.fileName || item.name || "",
+        fileName: item.fileName || item.name || "",
+        documentTypeId: Number(docTypeId),
+        documentTypeName: item.documentTypeName || "",
+        label: item.documentTypeName || "",
+        isDraft: true,
+      };
+    }
+    return acc;
+  }, {});
+
+  if (Object.keys(draftDocsMap).length > 0) {
+    setDocuments((prev) => ({
+      ...draftDocsMap,
+      ...prev,
+    }));
+  }
 }
 
           setDraftLoaded(true);
@@ -641,17 +683,71 @@ if (documentsResponse?.isSuccess) {
     documentCount,
   ]);
 
+  const PAN_REGEX = /^[A-Z]{5}[0-9]{4}[A-Z]$/;
+
+  const validateStep1 = () => {
+    const newErrors = {};
+
+    if (!formValues.district) {
+      newErrors.district = "District is required";
+    }
+    if (!formValues.shopName?.trim()) {
+      newErrors.shopName = "Pet shop name is required";
+    }
+    if (!formValues.shopAddressLine1?.trim()) {
+      newErrors.shopAddressLine1 = "Shop address is required";
+    }
+    if (!formValues.ownerName?.trim()) {
+      newErrors.ownerName = "Owner name is required";
+    }
+
+    const pan = (formValues.panNumber || "").trim().toUpperCase();
+    if (!pan) {
+      newErrors.panNumber = "PAN Card Number is required";
+    } else if (!PAN_REGEX.test(pan)) {
+      newErrors.panNumber = "Invalid PAN Card Number format (e.g. ABCDE1234F)";
+    }
+
+    if (!formValues.contactMobile?.trim()) {
+      newErrors.contactMobile = "Mobile number is required";
+    }
+    if (!formValues.contactEmail?.trim()) {
+      newErrors.contactEmail = "Email is required";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleStepClick = (step) => {
+    if (activeStep === 0 && step > 0) {
+      if (!validateStep1()) {
+        toast.error("Please fill all required fields correctly before continuing");
+        return;
+      }
+    }
     if (step <= maxAccessibleStep) {
       setActiveStep(step);
     }
   };
 
   const handleChange = (event) => {
-    setFormValues({
-      ...formValues,
-      [event.target.name]: event.target.value,
-    });
+    const { name, value } = event.target;
+    const finalValue =
+      name === "panNumber" ? (value || "").toUpperCase().slice(0, 10) : value;
+
+    setFormValues((prev) => ({
+      ...prev,
+      [name]: finalValue,
+    }));
+
+    if (errors[name]) {
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next[name];
+        return next;
+      });
+    }
   };
 
   const handleFacilityChange = (event) => {
@@ -685,13 +781,9 @@ if (documentsResponse?.isSuccess) {
     districtId: formValues.district?.id ?? null,
     shopName: formValues.shopName,
     ownerName: formValues.ownerName,
-    fatherOrHusbandName:
-  formValues.fatherOrHusbandName,
-
-age:
-  formValues.age
-    ? Number(formValues.age)
-    : null,
+    panNumber: formValues.panNumber ? formValues.panNumber.trim().toUpperCase() : "",
+    fatherOrHusbandName: formValues.fatherOrHusbandName,
+    age: formValues.age ? Number(formValues.age) : null,
     shopAddressLine1: formValues.shopAddressLine1,
     shopAddressLine2: formValues.shopAddressLine2,
     shopCity: formValues.shopCity,
@@ -709,41 +801,47 @@ age:
     longitude: formValues.longitude ? Number(formValues.longitude) : null,
   });
 
- 
-
   const handleSaveStep1 = async () => {
     if (isSaving) return;
-    try {
-    setIsSaving(true);
-    setErrors({});
-    const response = await savePetShopRegistrationStep1(buildStep1Payload());
-    console.log(
-  "STEP1 PAYLOAD",
-  response.data?.payLoad ??
-  response.data?.payload ??
-  response.data
-);
-
-    if (response.isSuccess) {
-      const payload = response.data?.payLoad ?? response.data?.payload ?? response.data;
-     setFormValues({
-  ...formValues,
-  applicationId: payload?.applicationId ?? formValues.applicationId, 
-  detailId: payload?.detailId ??payload?.detail?.id ??formValues.detailId,
-});
-      setDraftLoaded(true);
-      toast.success("Draft saved. Continue with the next sections.");
-      setActiveStep(1);
+    if (!validateStep1()) {
+      toast.error("Please fill all required fields correctly");
       return;
     }
+    try {
+      setIsSaving(true);
+      setErrors({});
+      const response = await savePetShopRegistrationStep1(buildStep1Payload());
+      console.log(
+        "STEP1 PAYLOAD",
+        response.data?.payLoad ??
+        response.data?.payload ??
+        response.data
+      );
 
-    const data = response.data ?? {};
-    if (typeof data === "object") {
-      setErrors(data);
-    }
-    toast.error("Could not save shop details");
+      if (response.isSuccess) {
+        const payload = response.data?.payLoad ?? response.data?.payload ?? response.data;
+        setFormValues({
+          ...formValues,
+          applicationId: payload?.applicationId ?? formValues.applicationId, 
+          detailId: payload?.detailId ?? payload?.detail?.id ?? formValues.detailId,
+        });
+        setDraftLoaded(true);
+        toast.success("Draft saved. Continue with the next sections.");
+        setActiveStep(1);
+        return;
+      }
+
+      const data = response.data ?? {};
+      if (typeof data === "object") {
+        setErrors(data);
+      }
+      toast.error("Could not save shop details");
     } catch (error) {
       console.error(error);
+      const errData = error?.response?.data;
+      if (errData && typeof errData === "object") {
+        setErrors(errData);
+      }
       toast.error("Could not save shop details");
     } finally {
       setIsSaving(false);
@@ -751,73 +849,152 @@ age:
   };
 
   const handleSaveStep3 = async () => {
-  if (isSaving) return;
+    if (isSaving) return;
 
-  try {
-    setIsSaving(true);
-
+    // Validate proposed animals
     for (let i = 0; i < animals.length; i++) {
       const animal = animals[i];
-     
-      const payload = {
-        id: animal.id || null,
-        application: {
-          id: Number(formValues.applicationId),
-        },
-        recordKind: "PROPOSED",
-        species: animal.species,
-        breed: animal.breed,
-        gender: animal.gender,
-        quantity: animal.quantity
-          ? Number(animal.quantity)
-          : null,
-        ageDescription: animal.ageDescription,
-        priceOffered: animal.priceOffered
-          ? Number(animal.priceOffered)
-          : null,
-        description: animal.description,
-        displayOrder: i,
-      };
-       console.log("STEP3 PAYLOAD", payload);
-       console.log("ANIMAL ID", animal.id);
-console.log("STEP3 PAYLOAD", payload);
-      const response = animal.id
-  ? await updatePetShopProposedAnimal(
-      payload
-    )
-  : await savePetShopProposedAnimal(
-      payload
-    );
+      const rowNum = i + 1;
 
-console.log("STEP3 RESPONSE", response);
-      if (!response?.isSuccess) {
-        toast.error(
-          "Failed to save animals"
-        );
-        return;
+      const specId =
+        animal.species?.id ??
+        animal.speciesId ??
+        (typeof animal.species === "number"
+          ? animal.species
+          : animal.species != null && !isNaN(Number(animal.species)) && String(animal.species).trim() !== ""
+          ? Number(animal.species)
+          : null);
+
+      const specName =
+        animal.species?.speciesName ||
+        animal.species?.name ||
+        (typeof animal.species === "string" ? animal.species : "");
+
+      const isOtherSpecies =
+        specId === 24 || (specName && specName.toLowerCase() === "other");
+
+      if (isOtherSpecies) {
+        if (!animal.customSpeciesName || !animal.customSpeciesName.trim()) {
+          toast.error(`Please enter Custom Species Name for Animal #${rowNum}`);
+          return;
+        }
+        if (animal.customSpeciesName.trim().length > 120) {
+          toast.error(`Custom Species Name for Animal #${rowNum} must not exceed 120 characters`);
+          return;
+        }
+      }
+
+      const isOtherBreed =
+        animal.breedId === "OTHER" ||
+        animal.breed === "Other" ||
+        (typeof animal.breed === "string" && animal.breed.toLowerCase() === "other");
+
+      if (isOtherBreed) {
+        if (!animal.customBreedName || !animal.customBreedName.trim()) {
+          toast.error(`Please enter Custom Breed Name for Animal #${rowNum}`);
+          return;
+        }
+        if (animal.customBreedName.trim().length > 120) {
+          toast.error(`Custom Breed Name for Animal #${rowNum} must not exceed 120 characters`);
+          return;
+        }
       }
     }
 
-    toast.success(
-      "Animals saved successfully"
-    );
+    try {
+      setIsSaving(true);
+      const updatedAnimals = [...animals];
 
-    setActiveStep(3);
+      for (let i = 0; i < updatedAnimals.length; i++) {
+        const animal = updatedAnimals[i];
 
-  } catch (error) {
-    console.error(
-      "Failed to save animals",
-      error
-    );
+        const specId =
+          animal.species?.id ??
+          animal.speciesId ??
+          (typeof animal.species === "number"
+            ? animal.species
+            : animal.species != null && !isNaN(Number(animal.species)) && String(animal.species).trim() !== ""
+            ? Number(animal.species)
+            : null);
 
-    toast.error(
-      "Failed to save animals"
-    );
+        const specName =
+          animal.species?.speciesName ||
+          animal.species?.name ||
+          (typeof animal.species === "string" ? animal.species : "");
 
-  } finally {
-    setIsSaving(false);
-  }
-};
+        const isOtherSpecies =
+          specId === 24 || (specName && specName.toLowerCase() === "other");
+
+        const isOtherBreed =
+          animal.breedId === "OTHER" ||
+          animal.breed === "Other" ||
+          (typeof animal.breed === "string" && animal.breed.toLowerCase() === "other");
+
+        const trimmedCustomSpecies =
+          isOtherSpecies && animal.customSpeciesName
+            ? animal.customSpeciesName.trim()
+            : null;
+
+        const trimmedCustomBreed =
+          isOtherBreed && animal.customBreedName
+            ? animal.customBreedName.trim()
+            : null;
+
+        const payload = {
+          id: animal.id || null,
+          application: {
+            id: Number(formValues.applicationId),
+          },
+          recordKind: "PROPOSED",
+          species: animal.species,
+          breed: isOtherBreed ? "Other" : (animal.breed || null),
+          gender: animal.gender,
+          quantity: animal.quantity
+            ? Number(animal.quantity)
+            : null,
+          ageDescription: animal.ageDescription,
+          priceOffered: animal.priceOffered
+            ? Number(animal.priceOffered)
+            : null,
+          description: animal.description,
+          displayOrder: i,
+          customSpeciesName: trimmedCustomSpecies,
+          customBreedName: trimmedCustomBreed,
+        };
+
+        console.log("STEP3 PAYLOAD", payload);
+        console.log("ANIMAL ID", animal.id);
+
+        const response = animal.id
+          ? await updatePetShopProposedAnimal(payload)
+          : await savePetShopProposedAnimal(payload);
+
+        console.log("STEP3 RESPONSE", response);
+        if (!response?.isSuccess) {
+          toast.error("Failed to save animals");
+          return;
+        }
+
+        const savedPayload =
+          response.data?.payLoad ?? response.data?.payload ?? response.data;
+        if (savedPayload?.id && !animal.id) {
+          updatedAnimals[i] = {
+            ...animal,
+            id: savedPayload.id,
+          };
+        }
+      }
+
+      setAnimals(updatedAnimals);
+      toast.success("Animals saved successfully");
+      setActiveStep(3);
+    } catch (error) {
+      console.error("Failed to save animals", error);
+      toast.error("Failed to save animals");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 const handleSaveStep4 = async () => {
   try {if (!declaration.declarationPlace.trim()) {
   toast.error("Please enter the declaration place.");

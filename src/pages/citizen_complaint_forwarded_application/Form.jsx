@@ -154,7 +154,9 @@ const normalizeDeepKeys = (input) => {
   return input;
 };
 
-const Form = ({ rowID, onClose }) => {
+const Form = (props) => {
+  const { rowID, id, onClose } = props;
+  const effectiveId = rowID ?? id;
   const [complaint, setComplaint] = useState(null);
   const [loading, setLoading] = useState(false);
   const [documentPreviewUrls, setDocumentPreviewUrls] = useState({});
@@ -173,7 +175,7 @@ const Form = ({ rowID, onClose }) => {
   }, [documentPreviewUrls]);
 
   useEffect(() => {
-    if (rowID === undefined || rowID === null || rowID === "") {
+    if (effectiveId === undefined || effectiveId === null || effectiveId === "") {
       return;
     }
 
@@ -184,11 +186,11 @@ const Form = ({ rowID, onClose }) => {
         const url = buildApiUrl(
           BASE_API_URL,
           CITIZEN_COMPLAINT_API_URL,
-          rowID
+          effectiveId
         );
 
         console.log("Complaint View URL:", url);
-        console.log("Complaint ID:", rowID);
+        console.log("Complaint ID:", effectiveId);
 
         if (!url) {
           throw new Error(
@@ -240,7 +242,7 @@ const Form = ({ rowID, onClose }) => {
     };
 
     fetchComplaint();
-  }, [rowID]);
+  }, [effectiveId]);
 
   useEffect(() => {
     if (!Array.isArray(complaint?.supportingDocuments)) {
@@ -340,10 +342,12 @@ const Form = ({ rowID, onClose }) => {
   };
 
   const statusName =
-    complaint?.status?.name ||
-    complaint?.status?.statusName ||
-    complaint?.status?.statusCode ||
-    "-";
+    typeof complaint?.status === "string"
+      ? complaint.status
+      : complaint?.status?.name ||
+        complaint?.status?.statusName ||
+        complaint?.status?.statusCode ||
+        "-";
 
   const supportingDocuments = Array.isArray(complaint?.supportingDocuments)
     ? complaint.supportingDocuments
@@ -646,6 +650,10 @@ const Form = ({ rowID, onClose }) => {
 
 Form.propTypes = {
   rowID: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.number,
+  ]),
+  id: PropTypes.oneOfType([
     PropTypes.string,
     PropTypes.number,
   ]),

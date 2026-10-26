@@ -20,11 +20,14 @@ import Divider from "@mui/material/Divider";
 import CircularProgress from "@mui/material/CircularProgress";
 import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import Switch from "@mui/material/Switch";
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 import Badge from "@mui/material/Badge";
 
 import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import DownloadIcon from "@mui/icons-material/Download";
 import EventIcon from "@mui/icons-material/Event";
 
@@ -41,6 +44,7 @@ import {
   saveDogBreederInspection,
   uploadDogBreederInspectionReport,
   getDogBreederInspection,
+  toggleDogBreederInspectionVisibility,
   approveDogBreederApplication,
   rejectDogBreederApplication,
 } from "../../api-client/adminDogBreederApplication";
@@ -496,6 +500,7 @@ const List = (props) => {
 
   const [inspectionDate, setInspectionDate] = useState("");
   const [inspectionRemarks, setInspectionRemarks] = useState("");
+  const [inspectionDateVisible, setInspectionDateVisible] = useState(false);
   const [isScheduling, setIsScheduling] = useState(false);
 
   /* =======================================================
@@ -533,7 +538,11 @@ const List = (props) => {
 
   const isAdmin = loggedInRoles.includes("ADMIN");
 
-  const isCvo = loggedInRoles.includes("CVO");
+  const isCvo =
+    loggedInRoles.includes("CVO") ||
+    loggedInRoles.includes("DISTRICT_OFFICER") ||
+    loggedInRoles.includes("DISTRICTOFFICER") ||
+    loggedInRoles.includes("DISTRICT_OFFICE");
 
   const isDogBreeder =
     loggedInRoles.includes("DOG_BREEDER") ||
@@ -1273,6 +1282,7 @@ const filteredRows = useMemo(() => {
     setSelectedRowForInspection(row);
     setInspectionDate("");
     setInspectionRemarks("");
+    setInspectionDateVisible(false);
     setScheduleModalOpen(true);
   };
 
@@ -1289,6 +1299,7 @@ const filteredRows = useMemo(() => {
     setSelectedRowForInspection(null);
     setInspectionDate("");
     setInspectionRemarks("");
+    setInspectionDateVisible(false);
   };
 
   /* =======================================================
@@ -1324,6 +1335,7 @@ const filteredRows = useMemo(() => {
         inspectionRemarks:
           inspectionRemarks?.trim() ||
           "",
+        inspectionDateVisible,
       });
 
       toast.success(
@@ -1345,6 +1357,7 @@ const filteredRows = useMemo(() => {
       setSelectedRowForInspection(null);
       setInspectionDate("");
       setInspectionRemarks("");
+      setInspectionDateVisible(false);
 
       await refreshList();
     } catch (error) {
@@ -1366,6 +1379,29 @@ const filteredRows = useMemo(() => {
       toast.error(message);
     } finally {
       setIsScheduling(false);
+    }
+  };
+
+  /* =======================================================
+     TOGGLE INSPECTION VISIBILITY
+  ======================================================= */
+
+  const handleToggleDogBreederVisibility = async (applicationId, nextVisible) => {
+    try {
+      const res = await toggleDogBreederInspectionVisibility(applicationId, nextVisible);
+      if (res?.isSuccess !== false) {
+        toast.success(
+          nextVisible
+            ? "Inspection date revealed to applicant"
+            : "Inspection date hidden from applicant"
+        );
+        await refreshList();
+      } else {
+        toast.error("Failed to update visibility");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error(error?.response?.data?.message || "Failed to update visibility");
     }
   };
 
@@ -2270,24 +2306,34 @@ const handleUploadReportClick = async (row) => {
                         showScheduleInspectionAction && (
                           <>
                             {isInspectionScheduled ? (
-                              <Button
-                                variant="contained"
-                                size="small"
-                                disabled
-                                sx={{
-                                  "&.Mui-disabled":
-                                    {
-                                      backgroundColor:
-                                        "#e0e0e0",
-                                      color:
-                                        "#757575",
-                                    },
-                                }}
-                              >
-                                INSPECTION
-                                {" "}
-                                SCHEDULED
-                              </Button>
+                              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, alignItems: "center" }}>
+                                <Button
+                                  variant="contained"
+                                  size="small"
+                                  disabled
+                                  sx={{
+                                    "&.Mui-disabled":
+                                      {
+                                        backgroundColor:
+                                          "#e0e0e0",
+                                        color:
+                                          "#757575",
+                                      },
+                                  }}
+                                >
+                                  INSPECTION SCHEDULED
+                                </Button>
+                                <Button
+                                  variant="outlined"
+                                  size="small"
+                                  color={row?.inspectionDateVisible ? "success" : "warning"}
+                                  startIcon={row?.inspectionDateVisible ? <VisibilityIcon /> : <VisibilityOffIcon />}
+                                  onClick={() => handleToggleDogBreederVisibility(applicationId, !row?.inspectionDateVisible)}
+                                  sx={{ fontSize: "0.72rem", py: 0.2, px: 0.8, textTransform: "none", whiteSpace: "nowrap" }}
+                                >
+                                  {row?.inspectionDateVisible ? "Date Revealed" : "Date Hidden"}
+                                </Button>
+                              </Box>
                             ) : currentStatus ===
                               "VERIFIED_BY_CVO" ? (
                               <Button
@@ -2495,6 +2541,28 @@ const handleUploadReportClick = async (row) => {
                   event.target
                     .value
                 )
+              }
+            />
+
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={inspectionDateVisible}
+                  onChange={(e) => setInspectionDateVisible(e.target.checked)}
+                  color="primary"
+                />
+              }
+              label={
+                <Box>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    Show Inspection Date to Applicant
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {inspectionDateVisible
+                      ? "Applicant will be able to see the scheduled inspection date."
+                      : "Surprise Inspection: Date will remain hidden from applicant until revealed."}
+                  </Typography>
+                </Box>
               }
             />
           </Box>

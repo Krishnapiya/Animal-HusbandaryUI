@@ -20,12 +20,13 @@ import { toast } from "material-react-toastify";
 import { viewApplicationDocument } from "../../api-client/applicationDocument";
 
 export const dogBreederDocumentList = [
-  { id: 22, name: "Identity Proof", mandatory: true },
-  { id: 23, name: "Address Proof", mandatory: true },
-  { id: 24, name: "Establishment Photograph", mandatory: true },
-  { id: 25, name: "Infrastructure Photograph", mandatory: true },
-  { id: 26, name: "Affidavit", mandatory: true },
-  { id: 21, name: "Applicant Signature", mandatory: true },
+  { id: 22, code: "ID_PROOF", name: "Identity Proof", mandatory: true },
+  { id: 32, code: "PAN_CARD", name: "PAN Card", mandatory: true },
+  { id: 23, code: "ADDRESS_PROOF", name: "Address Proof", mandatory: true },
+  { id: 24, code: "ESTABLISHMENT_PHOTO", name: "Establishment Photograph", mandatory: true },
+  { id: 25, code: "INFRASTRUCTURE_PHOTO", name: "Infrastructure Photograph", mandatory: true },
+  { id: 26, code: "AFFIDAVIT", name: "Affidavit", mandatory: true },
+  { id: 21, code: "APPLICANT_SIGNATURE", name: "Applicant Signature", mandatory: true },
 ];
 
 const MAX_FILE_SIZE = 6 * 1024 * 1024; // 6 MB
@@ -238,6 +239,17 @@ const Step5Documents = ({
 
     if (documentId === 21 && !selectedFile.type.startsWith("image/")) {
       toast.error("Please upload a JPG or PNG format signature.");
+      event.target.value = "";
+      return;
+    }
+
+    const isPdf =
+      selectedFile.type === "application/pdf" || /\.pdf$/i.test(selectedFile.name);
+    const isImage =
+      selectedFile.type.startsWith("image/") || /\.(png|jpe?g)$/i.test(selectedFile.name);
+
+    if (!isPdf && !isImage) {
+      toast.error("Please upload a valid PDF, JPG, JPEG, or PNG file.");
       event.target.value = "";
       return;
     }

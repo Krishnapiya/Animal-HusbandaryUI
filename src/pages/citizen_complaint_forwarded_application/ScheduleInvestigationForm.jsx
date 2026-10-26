@@ -4,8 +4,11 @@ import { useState } from "react";
 import {
   Box,
   Button,
+  FormControlLabel,
   Grid,
+  Switch,
   TextField,
+  Typography,
 } from "@mui/material";
 
 const ScheduleInvestigationForm = ({
@@ -15,12 +18,14 @@ const ScheduleInvestigationForm = ({
 }) => {
   const [investigationDate, setInvestigationDate] = useState("");
   const [remarks, setRemarks] = useState("");
+  const [investigationDateVisible, setInvestigationDateVisible] = useState(false);
 
   const handleSchedule = () => {
     const investigationDetails = {
       complaintId,
       investigationDate,
       investigationRemarks: remarks,
+      investigationDateVisible,
     };
 
     if (onSubmit) {
@@ -54,6 +59,30 @@ const ScheduleInvestigationForm = ({
             value={remarks}
             onChange={(e) =>
               setRemarks(e.target.value)
+            }
+          />
+        </Grid>
+
+        <Grid item xs={12}>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={investigationDateVisible}
+                onChange={(e) => setInvestigationDateVisible(e.target.checked)}
+                color="primary"
+              />
+            }
+            label={
+              <Box>
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  Show Investigation Date to Citizen
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {investigationDateVisible
+                    ? "Citizen will be able to see the scheduled investigation date."
+                    : "Surprise Visit: Date will remain hidden from the citizen until revealed."}
+                </Typography>
+              </Box>
             }
           />
         </Grid>

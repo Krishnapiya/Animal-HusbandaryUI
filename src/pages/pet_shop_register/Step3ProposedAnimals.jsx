@@ -61,6 +61,15 @@ const Step3ProposedAnimals = ({
     return allAnimalSpecies.filter((item) => item.parentId == null);
   }, [allAnimalSpecies]);
 
+  // Find the top-level "Other" species record if present
+  const otherSpeciesRecord = useMemo(() => {
+    return (
+      topLevelSpecies.find(
+        (item) => (item.speciesName || item.name || "").toLowerCase() === "other"
+      ) || null
+    );
+  }, [topLevelSpecies]);
+
   // Helper to extract numeric speciesId from animal object / primitive
   const getSpeciesId = useCallback((animal) => {
     if (!animal) return null;
@@ -74,6 +83,30 @@ const Step3ProposedAnimals = ({
         : null);
     return raw != null ? Number(raw) : null;
   }, []);
+
+  // Check if an animal row has "Other" species selected
+  const isOtherSpecies = useCallback(
+    (animal) => {
+      if (!animal) return false;
+      const specId = getSpeciesId(animal);
+      if (
+        otherSpeciesRecord &&
+        specId != null &&
+        Number(specId) === Number(otherSpeciesRecord.id)
+      ) {
+        return true;
+      }
+      if (specId != null && Number(specId) === 24) {
+        return true;
+      }
+      const rawName =
+        animal.species?.speciesName ||
+        animal.species?.name ||
+        (typeof animal.species === "string" ? animal.species : "");
+      return rawName.toLowerCase() === "other";
+    },
+    [getSpeciesId, otherSpeciesRecord]
+  );
 
   // Filter breeds dynamically using parentId from the loaded Animal Species records
   const getBreedsForSpecies = useCallback(
@@ -89,6 +122,16 @@ const Step3ProposedAnimals = ({
   // Helper to find selected breed ID for a row
   const getSelectedBreedId = useCallback((animal, rowBreeds) => {
     if (!animal) return "";
+
+    if (
+      animal.breedId === "OTHER" ||
+      (typeof animal.breed === "string" && animal.breed.toLowerCase() === "other") ||
+      (animal.breed?.speciesName && animal.breed.speciesName.toLowerCase() === "other") ||
+      Boolean(animal.customBreedName && String(animal.customBreedName).trim() !== "")
+    ) {
+      return "OTHER";
+    }
+
     const rawId =
       animal.breedId ??
       animal.breed?.id ??
@@ -100,6 +143,7 @@ const Step3ProposedAnimals = ({
         : null);
 
     if (rawId != null) {
+      if (String(rawId).toUpperCase() === "OTHER") return "OTHER";
       const match = rowBreeds.find((b) => Number(b.id) === Number(rawId));
       if (match) return match.id;
     }
@@ -110,6 +154,7 @@ const Step3ProposedAnimals = ({
         : (animal.breed?.speciesName || animal.breed?.name || animal.breedName || "");
 
     if (rawName) {
+      if (rawName.toLowerCase() === "other") return "OTHER";
       const match = rowBreeds.find(
         (b) =>
           (b.speciesName && b.speciesName.toLowerCase() === rawName.toLowerCase()) ||
@@ -120,6 +165,24 @@ const Step3ProposedAnimals = ({
 
     return "";
   }, []);
+
+  // Check if an animal row has "Other" breed selected
+  const isOtherBreed = useCallback(
+    (animal, rowBreeds) => {
+      if (!animal) return false;
+      const currentBreedId = getSelectedBreedId(animal, rowBreeds);
+      if (currentBreedId === "OTHER") return true;
+      if (animal.breedId === "OTHER") return true;
+      const rawBreed =
+        typeof animal.breed === "string"
+          ? animal.breed
+          : (animal.breed?.speciesName || animal.breed?.name || animal.breedName || "");
+      if (rawBreed && rawBreed.toLowerCase() === "other") return true;
+      if (animal.customBreedName && String(animal.customBreedName).trim() !== "") return true;
+      return false;
+    },
+    [getSelectedBreedId]
+  );
 
   // Hydrate draft animals once species list is available
   useEffect(() => {
@@ -135,6 +198,8 @@ const Step3ProposedAnimals = ({
         let newBreed = animal.breed;
         let newBreedId = animal.breedId;
         let newBreedObject = animal.breedObject;
+        let newCustomSpeciesName = animal.customSpeciesName ?? "";
+        let newCustomBreedName = animal.customBreedName ?? "";
 
         const specId = getSpeciesId(animal);
         if (specId != null && (!animal.species || !animal.species.name)) {
@@ -152,7 +217,20 @@ const Step3ProposedAnimals = ({
             (item) => item.parentId != null && Number(item.parentId) === Number(specId)
           );
 
-          if (rowBreeds.length > 0) {
+          const isBreedOther =
+            animal.breedId === "OTHER" ||
+            animal.breed === "Other" ||
+            (typeof animal.breed === "string" && animal.breed.toLowerCase() === "other") ||
+            Boolean(animal.customBreedName && String(animal.customBreedName).trim() !== "");
+
+          if (isBreedOther) {
+            if (animal.breedId !== "OTHER" || animal.breed !== "Other") {
+              newBreed = "Other";
+              newBreedId = "OTHER";
+              newBreedObject = { id: "OTHER", speciesName: "Other", name: "Other" };
+              changed = true;
+            }
+          } else if (rowBreeds.length > 0) {
             const matchedBreedId = getSelectedBreedId(animal, rowBreeds);
             const matched = rowBreeds.find((b) => Number(b.id) === Number(matchedBreedId));
             if (matched && (!animal.breedObject || animal.breedId !== matched.id || !animal.breed)) {
@@ -173,6 +251,8 @@ const Step3ProposedAnimals = ({
             breed: newBreed,
             breedId: newBreedId,
             breedObject: newBreedObject,
+            customSpeciesName: newCustomSpeciesName,
+            customBreedName: newCustomBreedName,
           };
         }
         return animal;
@@ -189,10 +269,12 @@ const Step3ProposedAnimals = ({
         id: "",
         species: null,
         speciesId: null,
-        gender: "",
+        customSpeciesName: "",
         breed: "",
         breedId: null,
         breedObject: null,
+        customBreedName: "",
+        gender: "",
         quantity: "",
         ageDescription: "",
         priceOffered: "",
@@ -214,28 +296,54 @@ const Step3ProposedAnimals = ({
   // When species changes: clear breed immediately!
   const handleSpeciesChange = (index, speciesId) => {
     const selected = topLevelSpecies.find((s) => Number(s.id) === Number(speciesId)) || null;
+    const isOther =
+      selected &&
+      ((selected.speciesName || selected.name || "").toLowerCase() === "other" ||
+        Number(selected.id) === 24);
+
     const updated = [...animals];
     updated[index] = {
       ...updated[index],
       species: selected,
       speciesId: selected ? selected.id : null,
+      customSpeciesName: isOther ? (updated[index].customSpeciesName || "") : "",
       breed: "", // Cleared immediately!
       breedId: null,
       breedObject: null,
+      customBreedName: "", // Cleared immediately!
     };
     setAnimals(updated);
   };
 
   // When breed changes: store selected breed
   const handleBreedChange = (index, breedId, rowBreeds) => {
-    const selectedBreed = rowBreeds.find((b) => Number(b.id) === Number(breedId)) || null;
     const updated = [...animals];
-    updated[index] = {
-      ...updated[index],
-      breed: selectedBreed ? (selectedBreed.speciesName || selectedBreed.name) : "",
-      breedId: selectedBreed ? selectedBreed.id : null,
-      breedObject: selectedBreed,
-    };
+    if (breedId === "OTHER") {
+      updated[index] = {
+        ...updated[index],
+        breed: "Other",
+        breedId: "OTHER",
+        breedObject: { id: "OTHER", speciesName: "Other", name: "Other" },
+        customBreedName: updated[index].customBreedName || "",
+      };
+    } else if (!breedId) {
+      updated[index] = {
+        ...updated[index],
+        breed: "",
+        breedId: null,
+        breedObject: null,
+        customBreedName: "",
+      };
+    } else {
+      const selectedBreed = rowBreeds.find((b) => Number(b.id) === Number(breedId)) || null;
+      updated[index] = {
+        ...updated[index],
+        breed: selectedBreed ? (selectedBreed.speciesName || selectedBreed.name) : "",
+        breedId: selectedBreed ? selectedBreed.id : null,
+        breedObject: selectedBreed,
+        customBreedName: "",
+      };
+    }
     setAnimals(updated);
   };
 
@@ -292,6 +400,21 @@ const Step3ProposedAnimals = ({
                   </FormControl>
                 </Grid>
 
+                {/* Custom Species Name Text Input */}
+                {isOtherSpecies(animal) && (
+                  <Grid size={{ xs: 12, md: 4 }}>
+                    <TextInput
+                      required
+                      label="Custom Species Name"
+                      value={animal.customSpeciesName || ""}
+                      onChange={(e) =>
+                        handleChange(index, "customSpeciesName", e.target.value)
+                      }
+                      inputProps={{ maxLength: 120 }}
+                    />
+                  </Grid>
+                )}
+
                 {/* Dependent Breed Dropdown */}
                 <Grid size={{ xs: 12, md: 4 }}>
                   <FormControl fullWidth disabled={selectedSpeciesId == null}>
@@ -301,7 +424,7 @@ const Step3ProposedAnimals = ({
 
                     <Select
                       labelId={`breed-select-label-${index}`}
-                      value={currentBreedId}
+                      value={currentBreedId || ""}
                       label="Breed"
                       onChange={(e) =>
                         handleBreedChange(index, e.target.value, rowBreeds)
@@ -311,23 +434,47 @@ const Step3ProposedAnimals = ({
                         <MenuItem value="" disabled>
                           <em>Select Species First</em>
                         </MenuItem>
-                      ) : rowBreeds.length === 0 ? (
-                        <MenuItem value="" disabled>
-                          <em>No Breeds Found</em>
-                        </MenuItem>
                       ) : (
-                        rowBreeds.map((item) => (
-                          <MenuItem
-                            key={item.id}
-                            value={item.id}
-                          >
-                            {item.speciesName || item.name}
-                          </MenuItem>
-                        ))
+                        [
+                          <MenuItem key="empty" value="">
+                            <em>Select Breed</em>
+                          </MenuItem>,
+                          ...rowBreeds.map((item) => (
+                            <MenuItem
+                              key={item.id}
+                              value={item.id}
+                            >
+                              {item.speciesName || item.name}
+                            </MenuItem>
+                          )),
+                          !rowBreeds.some(
+                            (b) =>
+                              (b.speciesName || b.name || "").toLowerCase() === "other"
+                          ) && (
+                            <MenuItem key="OTHER" value="OTHER">
+                              Other
+                            </MenuItem>
+                          ),
+                        ].filter(Boolean)
                       )}
                     </Select>
                   </FormControl>
                 </Grid>
+
+                {/* Custom Breed Name Text Input */}
+                {isOtherBreed(animal, rowBreeds) && (
+                  <Grid size={{ xs: 12, md: 4 }}>
+                    <TextInput
+                      required
+                      label="Custom Breed Name"
+                      value={animal.customBreedName || ""}
+                      onChange={(e) =>
+                        handleChange(index, "customBreedName", e.target.value)
+                      }
+                      inputProps={{ maxLength: 120 }}
+                    />
+                  </Grid>
+                )}
 
                 <Grid size={{ xs: 12, md: 4 }}>
                   <TextInput

@@ -21,6 +21,7 @@ import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 import Box from "@mui/material/Box";
 import ScheduleInspectionForm from "./ScheduleInspectionForm";
+import { toast } from "material-react-toastify";
 
 const PetShopApplicationPage = () => {
   const [selectedStatus, setSelectedStatus] = useState("");
@@ -45,7 +46,8 @@ const handleInspectionSubmit = async (inspectionData) => {
     await scheduleInspection({
       applicationId: inspectionData.applicationId,
       inspectionDate: inspectionData.inspectionDate,
-      inspectionRemarks: inspectionData.remarks,
+      inspectionRemarks: inspectionData.remarks || inspectionData.inspectionRemarks,
+      inspectionDateVisible: Boolean(inspectionData.inspectionDateVisible),
     });
 
     handleCloseScheduleDialog();
@@ -67,18 +69,35 @@ const handleCloseReportDialog = () => {
 
 const handleReportSubmit = async (reportData) => {
   try {
-    await uploadInspectionReport({
+    const response = await uploadInspectionReport({
       applicationId: reportData.applicationId,
       reportFile: reportData.reportFile,
       remarks: reportData.remarks,
       recommendation: reportData.recommendation,
     });
 
+    if (!response?.isSuccess) {
+      const message =
+        response?.data?.resultString ||
+        response?.data?.message ||
+        response?.data?.detail ||
+        response?.data?.error ||
+        "Failed to upload inspection report";
+      toast.error(message);
+      return;
+    }
+
     handleCloseReportDialog();
 
     window.location.reload();
   } catch (error) {
     console.error(error);
+    toast.error(
+      error?.response?.data?.message ||
+        error?.response?.data?.detail ||
+        error?.message ||
+        "Failed to upload inspection report"
+    );
   }
 };
 

@@ -12,6 +12,8 @@ import Button from "@mui/material/Button";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
+import AssignmentIcon from "@mui/icons-material/Assignment";
+import PetShopInspectionReportDialog from "../../components/PetShopInspectionReportDialog";
 
 const normalizeStatusName = (value) => {
   const raw =
@@ -46,6 +48,13 @@ const matchesStatus = (value, ...expected) => {
 
 const List = (props) => {
   const [historyApplicationId, setHistoryApplicationId] = useState("");
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const [selectedReportRow, setSelectedReportRow] = useState(null);
+
+  const handleOpenReportModal = (row) => {
+    setSelectedReportRow(row);
+    setReportDialogOpen(true);
+  };
 
   return (
     <>
@@ -70,6 +79,7 @@ const List = (props) => {
 
            <TableCell align="center">View</TableCell>
             <TableCell align="center">History</TableCell>
+            <TableCell align="center">Report</TableCell>
 <TableCell align="center">Actions</TableCell>
           </TableRow>
         </TableHead>
@@ -85,6 +95,14 @@ const List = (props) => {
                 row?.applicationStatusName ||
                 row?.approvalStatus
             );
+            const isInspectionDone =
+              matchesStatus(
+                status,
+                "verified by cvo",
+                "rejected by cvo",
+                "application approved",
+                "application rejected"
+              ) || Boolean(row?.inspectionReport);
 
             return (
               <TableRow key={index}>
@@ -108,6 +126,19 @@ const List = (props) => {
                     <IconButton onClick={() => setHistoryApplicationId(row.id)}>
                       <HistoryIcon color="primary" />
                     </IconButton>
+                  </Tooltip>
+                </TableCell>
+                <TableCell align="center">
+                  <Tooltip title={isInspectionDone ? "View Inspection Report" : "No Inspection Report"}>
+                    <span>
+                      <IconButton
+                        color={isInspectionDone ? "primary" : "default"}
+                        disabled={!isInspectionDone}
+                        onClick={() => handleOpenReportModal(row)}
+                      >
+                        <AssignmentIcon />
+                      </IconButton>
+                    </span>
                   </Tooltip>
                 </TableCell>
 
@@ -163,6 +194,16 @@ const List = (props) => {
                     ) {
                       return (
                         <>
+                          <Button
+                            variant="outlined"
+                            color="info"
+                            size="small"
+                            sx={{ mr: 1 }}
+                            onClick={() => handleOpenReportModal(row)}
+                          >
+                            VIEW REPORT
+                          </Button>
+
                           <Button
                             variant="contained"
                             color="success"
@@ -223,6 +264,16 @@ const List = (props) => {
      <PetShopStatusHistoryDialog
         applicationId={historyApplicationId}
         setApplicationId={setHistoryApplicationId}
+      />
+
+      <PetShopInspectionReportDialog
+        open={reportDialogOpen}
+        onClose={() => {
+          setReportDialogOpen(false);
+          setSelectedReportRow(null);
+        }}
+        applicationId={selectedReportRow?.id}
+        applicationNumber={selectedReportRow?.applicationNumber}
       />
     </>
   );
